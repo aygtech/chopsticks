@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<configuration scanPeriod="5000">
+	<appender name="console"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>
+				<![CDATA[
+	            	%-5level %d{HH:mm:ss} %thread %c{10}.%M\(%L\) %msg%n
+            	]]>
+			</pattern>
+		</encoder>
+	</appender>
+
+	<root>
+		<level value="trace" />
+		<appender-ref ref="console" />
+	</root>
+	<logger name="org.apache.rocketmq.common.utils.HttpTinyClient" level="info"></logger>
+	<logger name="io.netty" level="warn"></logger>
+	<logger name="org.apache" level="warn"></logger>
+</configuration>   
