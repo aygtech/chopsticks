@@ -10,9 +10,12 @@ import java.util.Set;
 
 import com.chopsticks.core.modern.ModernClient;
 import com.chopsticks.core.modern.caller.ExtBean;
+import com.chopsticks.core.modern.caller.NoticeBean;
 import com.chopsticks.core.rockctmq.modern.caller.BaseExtBean;
+import com.chopsticks.core.rockctmq.modern.caller.BaseNoticeBean;
 import com.chopsticks.core.rockctmq.modern.caller.BeanProxy;
 import com.chopsticks.core.rockctmq.modern.caller.ExtBeanProxy;
+import com.chopsticks.core.rockctmq.modern.caller.NoticeBeanProxy;
 import com.chopsticks.core.rockctmq.modern.handler.ModernHandler;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
@@ -78,9 +81,15 @@ public class DefaultModernClient implements ModernClient {
 
 
 	@Override
-	public ExtBean getExtBean(Class<?> clazz) {
+	public NoticeBean getNoticeBean(Class<?> clazz) {
 		checkNotNull(clazz);
 		checkArgument(clazz.isInterface(), "clazz must be interface");
-		return BaseExtBean.class.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {BaseExtBean.class, clazz}, new ExtBeanProxy(clazz, client)));
+		return BaseNoticeBean.class.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {BaseNoticeBean.class, clazz}, new NoticeBeanProxy(clazz, client)));
 	}
+	
+	@Override
+	public ExtBean getExtBean(String clazzName) {
+		return BaseExtBean.class.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {BaseExtBean.class}, new ExtBeanProxy(clazzName, client)));
+	}
+	
 }

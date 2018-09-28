@@ -15,8 +15,8 @@ public class ByClientTest {
 	
 	public static void main(String[] args) {
 		
-		DefaultModernClient client = new DefaultModernClient(groupName);
-		client.setNamesrvAddr("localhost:9876");
+		ModernClient client = new DefaultModernClient(groupName);
+		((DefaultModernClient)client).setNamesrvAddr("localhost:9876");
 		try {
 			client.start();
 			OrderService orderService = client.getBean(OrderService.class);

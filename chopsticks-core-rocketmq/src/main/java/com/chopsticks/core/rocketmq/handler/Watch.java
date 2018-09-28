@@ -1,4 +1,4 @@
-package com.chopsticks.core.rockctmq.modern.handler;
+package com.chopsticks.core.rocketmq.handler;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,6 +7,6 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ModernWatch {
+public @interface Watch {
 
 }

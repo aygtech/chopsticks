@@ -3,11 +3,11 @@ package com.chopsticks.core.modern;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
-import com.chopsticks.core.modern.caller.ExtBean;
+import com.chopsticks.core.modern.caller.NoticeBean;
 import com.chopsticks.core.modern.entity.Order;
 import com.chopsticks.core.modern.service.OrderService;
 import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
-import com.chopsticks.core.rockctmq.modern.caller.impl.DefaultExtNoticeCommand;
+import com.chopsticks.core.rockctmq.modern.caller.impl.DefaultModernNoticeCommand;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.collect.Maps;
@@ -47,12 +47,12 @@ public class ByClientDelayNoticeTest {
 		Reflect.on(Const.class).call("setDelayLevel", DELAY_LEVEL);
 		try {
 			client.start();
-			ExtBean orderServiceExt = client.getExtBean(OrderService.class);
+			NoticeBean noticeOrderService = client.getNoticeBean(OrderService.class);
 			
 			Order order = new Order();
 			order.setId(1L);
 			
-			System.out.println("saveOrder : " + orderServiceExt.notice(new DefaultExtNoticeCommand("saveOrder", order), 8L, TimeUnit.SECONDS).getId());
+			System.out.println("saveOrder : " + noticeOrderService.notice(new DefaultModernNoticeCommand("saveOrder", order), 8L, TimeUnit.SECONDS).getId());
 			
 		}finally {
 			client.shutdown();

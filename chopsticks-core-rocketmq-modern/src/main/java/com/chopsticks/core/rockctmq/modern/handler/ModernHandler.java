@@ -1,5 +1,10 @@
 package com.chopsticks.core.rockctmq.modern.handler;
 
+import java.lang.reflect.Method;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.handler.InvokeContext;
@@ -10,14 +15,14 @@ import com.chopsticks.core.rockctmq.modern.Const;
 import com.chopsticks.core.rocketmq.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
-import com.chopsticks.core.rocketmq.handler.BaseNoticeParams;
+import com.chopsticks.core.rocketmq.handler.Watch;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
-import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
-import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Charsets;
 
 public class ModernHandler extends BaseHandler{
+	
+	private static final Logger log = LoggerFactory.getLogger(ModernHandler.class);
 	
 	private Object obj;
 
@@ -35,8 +40,26 @@ public class ModernHandler extends BaseHandler{
 				args = JSON.parseArray(body).toArray();
 			}
 		}
-		Object ret = Reflect.on(obj).call(params.getMethod(), args).get();
-		if(Reflect.getMethod(obj, params.getMethod(), args).isAnnotationPresent(ModernWatch.class)) {
+		Method method;
+		try {
+			method = Reflect.getMethod(obj, params.getMethod(), args);
+		}catch (Throwable e) {
+			log.error("bean : {}, method {} , params : {}, not found.", obj, params.getMethod(), args);
+			return null;
+		}
+		Object ret;
+		try {
+			ret = Reflect.on(obj).call(params.getMethod(), args).get();
+		}catch (Throwable e) {
+			throw new HandlerExecuteException(String.format("invoke execute exception : %s, bean : %s, method : %s, params : %s"
+															, e.getMessage()
+															, obj
+															, params.getMethod()
+															, args)
+					, e);
+		}
+		
+		if(method.isAnnotationPresent(Watch.class)) {
 			return null;
 		}
 		byte[] respBody = null;
@@ -49,17 +72,29 @@ public class ModernHandler extends BaseHandler{
 	@Override
 	public void notice(NoticeParams params, NoticeContext ctx) {
 		
-		BaseNoticeParams mqParams = (BaseNoticeParams) params;
+		Object[] args = null;
+		if(params.getBody() != null && params.getBody().length > 0) {
+			String body = new String(params.getBody(), Charsets.UTF_8);
+			if(!Const.EMPTY_PARAMS.equals(body)) {
+				args = JSON.parseArray(body).toArray();
+			}
+		}
+		try {
+			Reflect.getMethod(obj, params.getMethod(), args);
+		}catch (Throwable e) {
+			log.error("bean : {}, method {} , params : {}, not found.", obj, params.getMethod(), args);
+			return;
+		}
 		BaseNoticeContext mqCtx = (BaseNoticeContext) ctx;
 		try {
-		
-			invoke(new DefaultInvokeParams(mqParams.getTopic(), mqParams.getTag(), params.getBody()), new DefaultInvokeContext());
+			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
-			throw new HandlerExecuteException(String.format("notice execute exception : %s, retry count : %s, bean : %s, method : %s"
+			throw new HandlerExecuteException(String.format("notice execute exception : %s, id : %s, retry count : %s, bean : %s, method : %s"
 														, e.getMessage()
+														, mqCtx.getId()
 														, mqCtx.getReconsumeTimes()
 														, obj
-														, mqParams.getTag())
+														, params.getMethod())
 					, e);
 		}
 		
