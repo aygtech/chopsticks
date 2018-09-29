@@ -1,6 +1,5 @@
 package com.chopsticks.core.rockctmq.modern.caller;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
@@ -17,7 +16,7 @@ import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeResult;
 import com.google.common.base.Charsets;
 
-public class ExtBeanProxy implements InvocationHandler {
+public class ExtBeanProxy extends BaseProxy {
 	private String clazzName;
 	private DefaultClient client;
 

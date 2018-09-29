@@ -18,6 +18,7 @@ import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
+import com.chopsticks.core.rocketmq.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
 import com.google.common.base.Throwables;
@@ -62,7 +63,11 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 						resp = new InvokeResponse(ext.getMsgId(), handlerResult.getBody());
 					}
 				}catch (Throwable e) {
-					log.error(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
+					if(e instanceof HandlerExecuteException) {
+						log.error(e.getMessage(), e);
+					}else {
+						log.error(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
+					}
 					resp = new InvokeResponse(ext.getMsgId(), Throwables.getStackTraceAsString(e));
 				}
 				if(resp != null) {

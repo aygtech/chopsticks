@@ -1,6 +1,5 @@
 package com.chopsticks.core.rockctmq.modern.caller;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.Collection;
@@ -15,7 +14,7 @@ import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 
-public class BeanProxy implements InvocationHandler {
+public class BeanProxy extends BaseProxy {
 
 	private Class<?> clazz;
 	private DefaultClient client;
@@ -33,7 +32,7 @@ public class BeanProxy implements InvocationHandler {
 		} else {
 			body = JSON.toJSONString(args, SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 		}
-		InvokeResult result = client.invoke(new DefaultInvokeCommand(clazz.getName(), method.getName(), body));
+		InvokeResult result = client.invoke(new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body));
 		Class<?> returnType = method.getReturnType();
 		Object ret = null;
 		if (returnType != void.class && result.getBody() != null && result.getBody().length > 0) {

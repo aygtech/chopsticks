@@ -1,6 +1,5 @@
 package com.chopsticks.core.rockctmq.modern.caller;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.util.concurrent.TimeUnit;
 
@@ -16,7 +15,7 @@ import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 
-public class NoticeBeanProxy implements InvocationHandler{
+public class NoticeBeanProxy extends BaseProxy{
 	
 	private Class<?> clazz;
 	private DefaultClient client;
@@ -40,14 +39,14 @@ public class NoticeBeanProxy implements InvocationHandler{
 		Reflect.getMethod(proxy, cmd.getMethod(), cmd.getParams());
 		BaseNoticeResult baseResult;
 		if(args.length == 1) {
-			baseResult = client.notice(new DefaultNoticeCommand(clazz.getName(), cmd.getMethod(), body));
+			baseResult = client.notice(new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body));
 		}else if(args.length == 2) {
 			Object orderKey = (String)args[1];
-			baseResult = client.notice(new DefaultNoticeCommand(clazz.getName(), cmd.getMethod(), body), orderKey);
+			baseResult = client.notice(new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body), orderKey);
 		}else if(args.length == 3){
 			Long delay = (Long)args[1];
 			TimeUnit delayTimeUnit = (TimeUnit)args[2];
-			baseResult = client.notice(new DefaultNoticeCommand(clazz.getName(), cmd.getMethod(), body), delay, delayTimeUnit);
+			baseResult = client.notice(new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body), delay, delayTimeUnit);
 		}else {
 			throw new RuntimeException("unsupport method");
 		}

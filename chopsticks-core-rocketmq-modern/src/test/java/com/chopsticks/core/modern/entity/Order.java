@@ -14,7 +14,7 @@ public class Order {
 	public void setId(long id) {
 		this.id = id;
 	}
-
+	
 	public String getCode() {
 		return code;
 	}

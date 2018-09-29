@@ -485,4 +485,18 @@ public class Reflect {
 			super(cause);
 		}
 	}
+	
+	public static void setFinalStaticField(Class<?> clazz, String fieldName, Object value) {
+		try {
+			Field field = clazz.getDeclaredField(fieldName);
+			field.setAccessible(true);
+			Field modifiersField = Field.class.getDeclaredField("modifiers");
+			modifiersField.setAccessible(true);
+		    modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+		    field.set(null, value);
+		}catch (Throwable e) {
+			throw new ReflectException(e);
+		}
+		
+	}
 }

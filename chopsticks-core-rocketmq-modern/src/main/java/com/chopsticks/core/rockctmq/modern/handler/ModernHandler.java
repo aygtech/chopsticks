@@ -15,7 +15,6 @@ import com.chopsticks.core.rockctmq.modern.Const;
 import com.chopsticks.core.rocketmq.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
-import com.chopsticks.core.rocketmq.handler.Watch;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Charsets;
@@ -44,8 +43,11 @@ public class ModernHandler extends BaseHandler{
 		try {
 			method = Reflect.getMethod(obj, params.getMethod(), args);
 		}catch (Throwable e) {
-			log.error("bean : {}, method {} , params : {}, not found.", obj, params.getMethod(), args);
-			return null;
+			if(obj.getClass().isAnnotationPresent(Watch.class)) {
+					return null;
+			}else {
+				throw new HandlerExecuteException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e);
+			}
 		}
 		Object ret;
 		try {
@@ -59,7 +61,8 @@ public class ModernHandler extends BaseHandler{
 					, e);
 		}
 		
-		if(method.isAnnotationPresent(Watch.class)) {
+		if(obj.getClass().isAnnotationPresent(Watch.class) 
+		|| method.isAnnotationPresent(Watch.class)) {
 			return null;
 		}
 		byte[] respBody = null;
