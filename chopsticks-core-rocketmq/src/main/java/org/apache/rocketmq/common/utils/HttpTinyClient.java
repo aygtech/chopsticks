@@ -24,6 +24,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.Iterator;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.common.MQVersion;
@@ -32,19 +33,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.rocketmq.Const;
+import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Stopwatch;
+import com.google.common.base.Strings;
 
 public class HttpTinyClient {
 	private static final Logger log = LoggerFactory.getLogger(HttpTinyClient.class);
+	
+	private static final String MESSAGE_DELAY_LEVEL = "messageDelayLevel";
 
     static public HttpResult httpGet(String url, List<String> headers, List<String> paramValues,
 		String encoding, long readTimeoutMs) throws IOException {
-    	log.info("execute chopsticks code");
     	String encodedContent = encodingParams(paramValues, encoding);
         url += (null == encodedContent) ? "" : ("?" + encodedContent);
 
         HttpURLConnection conn = null;
         try {
+        	log.trace(url);
             conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setRequestMethod("GET");
             conn.setConnectTimeout((int) readTimeoutMs);
@@ -59,6 +64,31 @@ public class HttpTinyClient {
             }
             
             int respCode = conn.getResponseCode();
+            String delayLevel = conn.getHeaderField(MESSAGE_DELAY_LEVEL);
+            log.trace("delayLevel : {}", delayLevel);
+            if(Strings.isNullOrEmpty(delayLevel)) {
+            	delayLevel = "10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s";
+            	log.trace("delayLevel : {}", delayLevel);
+            }
+            String[] delayLevels = delayLevel.split(" ");
+            TreeMap<Long, Integer> curDelayLevel = new TreeMap<Long, Integer>();
+            long mills;
+            String delay;
+            for(int i = 0; i < delayLevels.length; i++) {
+            	delay = delayLevels[i];
+            	if(delay.contains("s")) {
+            		mills = TimeUnit.SECONDS.toMillis(Long.parseLong(delay.replace("s", "")));
+            	}else if(delay.contains("m")){
+            		mills = TimeUnit.MINUTES.toMillis(Long.parseLong(delay.replace("m", "")));
+            	}else if(delay.contains("h")){
+            		mills = TimeUnit.HOURS.toMillis(Long.parseLong(delay.replace("h", "")));
+            	}else {
+            		mills = 10000L;
+            	}
+            	curDelayLevel.put(mills, i + 1);
+            }
+            log.trace("delayLevel : {}", curDelayLevel);
+            Reflect.on(Const.class).call("setDelayLevel", curDelayLevel);
             
             String resp = null;
 

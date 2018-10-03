@@ -23,7 +23,7 @@ public class SyncSystemMillis {
 			public void run() {
 				now += updateMillis;
 			}
-		}, 0, updateMillis, TimeUnit.MILLISECONDS);
+		}, 0L, updateMillis, TimeUnit.MILLISECONDS);
 	}
 	
 	public long getNow() {

@@ -269,7 +269,6 @@ public class Reflect {
 				}
 			}
 		};
-
 		return (P) Proxy.newProxyInstance(proxyType.getClassLoader(), new Class[] { proxyType }, handler);
 	}
 

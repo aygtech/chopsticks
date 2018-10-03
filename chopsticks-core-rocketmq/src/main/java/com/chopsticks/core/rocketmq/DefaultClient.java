@@ -140,12 +140,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 		String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.ORDERED_NOTICE_CONSUMER_SUFFIX;
 		orderedNoticeConsumer = new DefaultMQPushConsumer(groupName);
 		orderedNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
-		orderedNoticeConsumer.setConsumeThreadMin(0);
 		orderedNoticeConsumer.setConsumeThreadMin(5);
+		orderedNoticeConsumer.setConsumeThreadMax(5);
 		orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
 		orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
 		orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 		orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(topicTags, topicTagHandlers));
+		orderedNoticeConsumer.setPullThresholdSizeForTopic(20);
 		try {
 			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 				String topic = entry.getKey();
@@ -176,12 +177,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 		String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.NOTICE_CONSUMER_SUFFIX;
 		noticeConsumer = new DefaultMQPushConsumer(groupName);
 		noticeConsumer.setNamesrvAddr(getNamesrvAddr());
-		noticeConsumer.setConsumeThreadMin(0);
-		noticeConsumer.setConsumeThreadMin(15);
+		noticeConsumer.setConsumeThreadMin(10);
+		noticeConsumer.setConsumeThreadMax(10);
 		noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
 		noticeConsumer.setConsumeMessageBatchMaxSize(1);
 		noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 		noticeConsumer.registerMessageListener(new HandlerNoticeListener(topicTags, topicTagHandlers));
+		noticeConsumer.setPullThresholdSizeForTopic(50);
 		try {
 			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 				String topic = entry.getKey();
@@ -212,12 +214,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 		String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.INVOKE_CONSUMER_SUFFIX;
 		invokeConsumer = new DefaultMQPushConsumer(groupName);
 		invokeConsumer.setNamesrvAddr(getNamesrvAddr());
-		invokeConsumer.setConsumeThreadMin(0);
-		invokeConsumer.setConsumeThreadMin(10);
+		invokeConsumer.setConsumeThreadMin(15);
+		invokeConsumer.setConsumeThreadMax(15);
 		invokeConsumer.setMessageModel(MessageModel.CLUSTERING);
 		invokeConsumer.setConsumeMessageBatchMaxSize(1);
 		invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 		invokeConsumer.registerMessageListener(new HandlerInvokeListener(getProducer(), topicTagHandlers));
+		invokeConsumer.setPullThresholdSizeForTopic(50);
 		try {
 			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 				String topic = entry.getKey();

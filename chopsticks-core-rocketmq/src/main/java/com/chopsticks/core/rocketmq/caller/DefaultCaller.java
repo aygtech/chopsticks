@@ -35,6 +35,7 @@ import com.chopsticks.core.concurrent.impl.GuavaPromise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
+import com.chopsticks.core.rocketmq.exception.InvokeException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
@@ -82,10 +83,10 @@ public class DefaultCaller implements Caller {
 				String errMsg = e.getMessage();
 				if(errMsg.contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_NO_ROUTE_INFO_OF_THIS_TOPIC)){
 					// namesrv connection error
-					e = new RuntimeException("namesrv connection error");
+					e = new InvokeException("namesrv connection error", e);
 				}else if(errMsg.contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_NO_NAME_SERVER_ADDRESS)) {
 					// no namesrv ip
-					e = new RuntimeException("namesrv ip undefined");
+					e = new InvokeException("namesrv ip undefined", e);
 				}
 			}
 			Throwables.throwIfUnchecked(e);
@@ -121,12 +122,13 @@ public class DefaultCaller implements Caller {
 	private void buildAndStartCallerInvokeConsumer() {
 		callerInvokeConsumer = new DefaultMQPushConsumer(com.chopsticks.core.rocketmq.Const.CONSUMER_PREFIX + getGroupName() + com.chopsticks.core.rocketmq.Const.CALLER_INVOKE_CONSUMER_SUFFIX);
 		callerInvokeConsumer.setNamesrvAddr(namesrvAddr);
-		callerInvokeConsumer.setConsumeThreadMin(0);
 		callerInvokeConsumer.setConsumeThreadMin(Const.AVAILABLE_PROCESSORS);
+		callerInvokeConsumer.setConsumeThreadMax(Const.AVAILABLE_PROCESSORS);
 		callerInvokeConsumer.setMessageModel(MessageModel.BROADCASTING);
 		callerInvokeConsumer.setConsumeMessageBatchMaxSize(10);
 		callerInvokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 		callerInvokeConsumer.registerMessageListener(new CallerInvokeListener(callerInvokePromiseMap));
+		callerInvokeConsumer.setPullThresholdSizeForTopic(50);
 		try {
 			callerInvokeConsumer.subscribe(buildRespTopic(), com.chopsticks.core.rocketmq.Const.ALL_TAGS);
 			callerInvokeConsumer.start();
@@ -148,6 +150,7 @@ public class DefaultCaller implements Caller {
 		producer = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName());
 		producer.setNamesrvAddr(namesrvAddr);
 		producer.setRetryAnotherBrokerWhenNotStoreOK(true);
+		producer.setDefaultTopicQueueNums(16);
 		try {
 			producer.start();
 		}catch (Throwable e) {
