@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
@@ -21,6 +22,8 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.ParserConfig;
@@ -44,6 +47,9 @@ import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder; 
 
 public class DefaultCaller implements Caller {
+	
+	private static final Logger log = LoggerFactory.getLogger(DefaultCaller.class);
+	
 	static {
 		ParserConfig.getGlobalInstance().setAutoTypeSupport(true); 
 	}
@@ -250,18 +256,24 @@ public class DefaultCaller implements Caller {
 	
 	private Message buildInvokeMessage(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		Message msg = new Message(buildTopic(cmd), cmd.getTag(), cmd.getBody());
-		InvokeRequest ext = buildInvokeCommandExt(cmd, timeout, timeoutUnit);
+		InvokeRequest ext = buildInvokeRequest(cmd, timeout, timeoutUnit);
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(ext));
 		return msg;
 	}
+	
+	private DelayNoticeRequest buildDelayNoticeRequest(BaseNoticeCommand cmd, long timeout, TimeUnit timeoutUnit) {
+		DelayNoticeRequest req = new DelayNoticeRequest();
+		req.setExecuteTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow() + timeoutUnit.toMillis(timeout));
+		return req;
+	}
 
-	private InvokeRequest buildInvokeCommandExt(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
-		InvokeRequest ext = new InvokeRequest();
-		ext.setBeginTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
-		ext.setDeadline(ext.getBeginTime() + timeoutUnit.toMillis(timeout));
-		ext.setRespTopic(buildRespTopic());
-		ext.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
-		return ext;
+	private InvokeRequest buildInvokeRequest(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
+		InvokeRequest req = new InvokeRequest();
+		req.setBeginTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
+		req.setDeadline(req.getBeginTime() + timeoutUnit.toMillis(timeout));
+		req.setRespTopic(buildRespTopic());
+		req.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
+		return req;
 	}
 
 	private String buildRespTopic() {
@@ -273,9 +285,15 @@ public class DefaultCaller implements Caller {
 		if(delay != null 
 		&& delayTimeUnit != null
 		&& delay > 0) {
-			Optional<Integer> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(delayTimeUnit.toMillis(delay));
-			if(level.isPresent()) {
-				msg.setDelayTimeLevel(level.get());
+			Optional<Entry<Long, Integer>> delayLevel = com.chopsticks.core.rocketmq.Const.getDelayLevel(delayTimeUnit.toMillis(delay));
+			if(delayLevel.isPresent()) {
+				if(!delay.equals(delayLevel.get().getKey())) {
+					DelayNoticeRequest req = buildDelayNoticeRequest(cmd, delay, delayTimeUnit);
+					msg.putUserProperty(com.chopsticks.core.rocketmq.Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+				}
+				msg.setDelayTimeLevel(delayLevel.get().getValue());
+			}else {
+				log.warn("unsupport notice delay");
 			}
 		}
 		return msg;

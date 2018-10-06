@@ -66,29 +66,27 @@ public class HttpTinyClient {
             int respCode = conn.getResponseCode();
             String delayLevel = conn.getHeaderField(MESSAGE_DELAY_LEVEL);
             log.trace("delayLevel : {}", delayLevel);
-            if(Strings.isNullOrEmpty(delayLevel)) {
-            	delayLevel = "10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s 10s";
-            	log.trace("delayLevel : {}", delayLevel);
+            if(!Strings.isNullOrEmpty(delayLevel)) {
+            	String[] delayLevels = delayLevel.split(" ");
+                TreeMap<Long, Integer> curDelayLevel = new TreeMap<Long, Integer>();
+                long mills;
+                String delay;
+                for(int i = 0; i < delayLevels.length; i++) {
+                	delay = delayLevels[i];
+                	if(delay.contains("s")) {
+                		mills = TimeUnit.SECONDS.toMillis(Long.parseLong(delay.replace("s", "")));
+                	}else if(delay.contains("m")){
+                		mills = TimeUnit.MINUTES.toMillis(Long.parseLong(delay.replace("m", "")));
+                	}else if(delay.contains("h")){
+                		mills = TimeUnit.HOURS.toMillis(Long.parseLong(delay.replace("h", "")));
+                	}else {
+                		mills = 10000L;
+                	}
+                	curDelayLevel.put(mills, i + 1);
+                }
+                log.trace("delayLevel : {}", curDelayLevel);
+                Reflect.on(Const.class).call("setDelayLevel", curDelayLevel);
             }
-            String[] delayLevels = delayLevel.split(" ");
-            TreeMap<Long, Integer> curDelayLevel = new TreeMap<Long, Integer>();
-            long mills;
-            String delay;
-            for(int i = 0; i < delayLevels.length; i++) {
-            	delay = delayLevels[i];
-            	if(delay.contains("s")) {
-            		mills = TimeUnit.SECONDS.toMillis(Long.parseLong(delay.replace("s", "")));
-            	}else if(delay.contains("m")){
-            		mills = TimeUnit.MINUTES.toMillis(Long.parseLong(delay.replace("m", "")));
-            	}else if(delay.contains("h")){
-            		mills = TimeUnit.HOURS.toMillis(Long.parseLong(delay.replace("h", "")));
-            	}else {
-            		mills = 10000L;
-            	}
-            	curDelayLevel.put(mills, i + 1);
-            }
-            log.trace("delayLevel : {}", curDelayLevel);
-            Reflect.on(Const.class).call("setDelayLevel", curDelayLevel);
             
             String resp = null;
 

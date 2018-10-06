@@ -182,7 +182,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 		noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
 		noticeConsumer.setConsumeMessageBatchMaxSize(1);
 		noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-		noticeConsumer.registerMessageListener(new HandlerNoticeListener(topicTags, topicTagHandlers));
+		noticeConsumer.registerMessageListener(new HandlerNoticeListener(getProducer(), topicTags, topicTagHandlers));
 		noticeConsumer.setPullThresholdSizeForTopic(50);
 		try {
 			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
