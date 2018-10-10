@@ -11,6 +11,8 @@ import com.chopsticks.core.handler.InvokeContext;
 import com.chopsticks.core.handler.InvokeParams;
 import com.chopsticks.core.handler.NoticeContext;
 import com.chopsticks.core.handler.NoticeParams;
+import com.chopsticks.core.modern.handler.ModernNoticeContext;
+import com.chopsticks.core.modern.handler.ModernNoticeContextAware;
 import com.chopsticks.core.rockctmq.modern.Const;
 import com.chopsticks.core.rocketmq.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
@@ -24,10 +26,15 @@ public class ModernHandler extends BaseHandler{
 	private static final Logger log = LoggerFactory.getLogger(ModernHandler.class);
 	
 	private Object obj;
-
+	
+	private static final ThreadLocal<ModernNoticeContext> modernCtx = new ThreadLocal<ModernNoticeContext>();
+	
 	public ModernHandler(Object obj, String topic, String tag) {
 		super(topic, tag);
 		this.obj = obj;
+		if(obj instanceof ModernNoticeContextAware) {
+			((ModernNoticeContextAware)obj).setNoticeContext(modernCtx);
+		}
 	}
 
 	@Override
@@ -71,7 +78,7 @@ public class ModernHandler extends BaseHandler{
 		}
 		return new DefaultHandlerResult(respBody);
 	}
-
+	
 	@Override
 	public void notice(NoticeParams params, NoticeContext ctx) {
 		
@@ -89,7 +96,11 @@ public class ModernHandler extends BaseHandler{
 			return;
 		}
 		BaseNoticeContext mqCtx = (BaseNoticeContext) ctx;
+		
 		try {
+			if(obj instanceof ModernNoticeContextAware) {
+				modernCtx.set(new DefaultModerNoticeContext(mqCtx.getId(), mqCtx.getOriginId(), mqCtx.getReconsumeTimes()));
+			}
 			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
 			throw new HandlerExecuteException(String.format("notice execute exception : %s, id : %s, retry count : %s, bean : %s, method : %s"
@@ -99,6 +110,8 @@ public class ModernHandler extends BaseHandler{
 														, obj
 														, params.getMethod())
 					, e);
+		}finally {
+			modernCtx.remove();
 		}
 		
 	}

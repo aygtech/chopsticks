@@ -54,7 +54,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 			}
 			try {
-				handler.notice(new DefaultNoticeParams(topic, ext.getTags(), ext.getBody()), new DefaultNoticeContext(msgId, ext.getReconsumeTimes()));
+				handler.notice(new DefaultNoticeParams(topic, ext.getTags(), ext.getBody()), new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes()));
 			}catch (HandlerExecuteException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;

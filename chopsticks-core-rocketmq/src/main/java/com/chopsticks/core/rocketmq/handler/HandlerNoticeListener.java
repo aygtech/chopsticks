@@ -74,7 +74,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {
 								throw new HandlerExecuteException(ret.getSendStatus().name());
 							}else {
-								log.info("rootId : {}, newId : {}, next delay(ms) : {}, diff(ms) : {}", msgId, ret.getMsgId(), delayLevel.get().getKey(), diff);
+								log.trace("rootId : {}, newId : {}, next delay(ms) : {}, diff(ms) : {}", msgId, ret.getMsgId(), delayLevel.get().getKey(), diff);
 								return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 							}
 						}catch (Throwable e) {
@@ -82,8 +82,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 							throw new HandlerExecuteException(e.getMessage(), e);
 						}
 					}else {
-						log.error("delayLevel must not be null");
-						return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+						log.trace("delayLevel be null, diff : {}", diff);
 					}
 				}
 			}
@@ -98,7 +97,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}
 			try {
-				handler.notice(new DefaultNoticeParams(topic, ext.getTags(), ext.getBody()), new DefaultNoticeContext(msgId, ext.getReconsumeTimes()));
+				handler.notice(new DefaultNoticeParams(topic, ext.getTags(), ext.getBody()), new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes()));
 			}catch (HandlerExecuteException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
