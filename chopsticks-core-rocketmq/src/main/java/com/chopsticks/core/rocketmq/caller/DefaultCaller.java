@@ -4,9 +4,10 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.UUID;
+import java.util.Map.Entry;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -16,9 +17,6 @@ import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
-import org.apache.rocketmq.client.producer.SendCallback;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
@@ -43,7 +41,6 @@ import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
 import com.google.common.base.Throwables;
-import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder; 
 
 public class DefaultCaller implements Caller {
@@ -82,16 +79,14 @@ public class DefaultCaller implements Caller {
 	
 	private void testCaller() {
 		try {
-			InvokeResponse resp = new InvokeResponse(UUID.randomUUID().toString(), new byte[0]);
+			InvokeResponse resp = new InvokeResponse("testCaller", com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow(), com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow(), new byte[0]);
 			producer.send(new Message(buildRespTopic(), com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX, JSON.toJSONBytes(resp)));
 		}catch (Throwable e) {
 			if(e instanceof MQClientException) {
 				String errMsg = e.getMessage();
 				if(errMsg.contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_NO_ROUTE_INFO_OF_THIS_TOPIC)){
-					// namesrv connection error
 					e = new InvokeException("namesrv connection error", e);
 				}else if(errMsg.contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_NO_NAME_SERVER_ADDRESS)) {
-					// no namesrv ip
 					e = new InvokeException("namesrv ip undefined", e);
 				}
 			}
@@ -103,7 +98,7 @@ public class DefaultCaller implements Caller {
 	@Override
 	public synchronized void start() {
 		if(!started) {
-			callerInvokePromiseMap = Maps.newConcurrentMap();
+			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaPromise<BaseInvokeResult>>();
 			buildAndStartProducer();
 			buildAndStartCallerInvokeConsumer();
 			testCaller();
@@ -192,22 +187,11 @@ public class DefaultCaller implements Caller {
 		checkArgument(started, "must be call method start");
 		final GuavaTimeoutPromise<BaseInvokeResult> promise = new GuavaTimeoutPromise<BaseInvokeResult>(timeout, timeoutUnit);
 		try {
-			Message msg = buildInvokeMessage(cmd, timeout, timeoutUnit);
-			producer.send(msg, new SendCallback() {
-				@Override
-				public void onSuccess(SendResult sendResult) {
-					if(sendResult.getSendStatus() == SendStatus.SEND_OK) {
-						callerInvokePromiseMap.put(sendResult.getMsgId(), promise);
-						promise.addListener(new CallerTimoutPromiseListener(callerInvokePromiseMap, sendResult.getMsgId()));
-					}else {
-						promise.setException(new RuntimeException(sendResult.getSendStatus().name()));
-					}
-				}
-				@Override
-				public void onException(Throwable e) {
-					promise.setException(e);
-				}
-			});
+			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
+			callerInvokePromiseMap.put(req.getReqId(), promise);
+			promise.addListener(new CallerTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
+			Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
+			producer.send(msg, new InvokeSendCallback(promise));
 		} catch (Throwable e) {
 			promise.setException(e);
 		}
@@ -254,10 +238,9 @@ public class DefaultCaller implements Caller {
 		return promise;
 	}
 	
-	private Message buildInvokeMessage(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
+	private Message buildInvokeMessage(InvokeRequest req, BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		Message msg = new Message(buildTopic(cmd), cmd.getTag(), cmd.getBody());
-		InvokeRequest ext = buildInvokeRequest(cmd, timeout, timeoutUnit);
-		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(ext));
+		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
 		return msg;
 	}
 	
@@ -269,8 +252,9 @@ public class DefaultCaller implements Caller {
 
 	private InvokeRequest buildInvokeRequest(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		InvokeRequest req = new InvokeRequest();
-		req.setBeginTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
-		req.setDeadline(req.getBeginTime() + timeoutUnit.toMillis(timeout));
+		req.setReqId(UUID.randomUUID().toString());
+		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
+		req.setDeadline(req.getReqTime() + timeoutUnit.toMillis(timeout));
 		req.setRespTopic(buildRespTopic());
 		req.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
 		return req;

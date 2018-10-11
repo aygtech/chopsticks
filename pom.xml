@@ -8,6 +8,9 @@
 	<packaging>pom</packaging>
 
 	<properties>
+		
+		<maven.test.skip>true</maven.test.skip>
+		
 		<!-- guava version 21.0 only support jdk7 or later -->
 		<guava.version>20.0</guava.version>
 		<rocketmq.version>4.3.0</rocketmq.version>
@@ -94,6 +97,18 @@
 					<target>1.6</target>
 					<encoding>UTF-8</encoding>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>

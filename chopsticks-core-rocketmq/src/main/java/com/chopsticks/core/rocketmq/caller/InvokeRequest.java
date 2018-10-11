@@ -1,15 +1,16 @@
 package com.chopsticks.core.rocketmq.caller;
 
 public class InvokeRequest {
-	private long beginTime;
+	private String reqId;
+	private long reqTime;
 	private long deadline;
 	private String respTopic;
 	private String respTag;
-	public long getBeginTime() {
-		return beginTime;
+	public long getReqTime() {
+		return reqTime;
 	}
-	public void setBeginTime(long beginTime) {
-		this.beginTime = beginTime;
+	public void setReqTime(long reqTime) {
+		this.reqTime = reqTime;
 	}
 	public long getDeadline() {
 		return deadline;
@@ -28,5 +29,11 @@ public class InvokeRequest {
 	}
 	public void setRespTag(String respTag) {
 		this.respTag = respTag;
+	}
+	public String getReqId() {
+		return reqId;
+	}
+	public void setReqId(String reqId) {
+		this.reqId = reqId;
 	}
 }

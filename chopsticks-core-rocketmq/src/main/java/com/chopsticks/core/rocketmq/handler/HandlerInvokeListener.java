@@ -9,6 +9,8 @@ import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
@@ -44,8 +46,8 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				InvokeRequest req = JSON.parseObject(invokeCmdExtStr, InvokeRequest.class);
 				long now = Const.CLIENT_TIME.getNow();
 				if(now > req.getDeadline()) {
-					log.warn("timeout, skip invoke process, beginTime : {}, deadline : {}, now : {}, topic : {}, tag : {}"
-														, req.getBeginTime()
+					log.warn("timeout, skip invoke process, reqTime : {}, deadline : {}, now : {}, topic : {}, tag : {}"
+														, req.getReqTime()
 														, req.getDeadline()
 														, now
 														, topic
@@ -60,7 +62,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				try {
 					HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), ext.getBody()), new DefaultInvokeContext());       
 					if(handlerResult != null) {
-						resp = new InvokeResponse(ext.getMsgId(), handlerResult.getBody());
+						resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
 					}
 				}catch (Throwable e) {
 					if(e instanceof HandlerExecuteException) {
@@ -68,13 +70,13 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					}else {
 						log.error(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
 					}
-					resp = new InvokeResponse(ext.getMsgId(), Throwables.getStackTraceAsString(e));
+					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), Throwables.getStackTraceAsString(e));
 				}
 				if(resp != null) {
 					now = Const.CLIENT_TIME.getNow();
 					if(now > req.getDeadline()) {
-						log.warn("timeout, skip invoke process response, beginTime : {}, deadline : {}, now : {}, topic : {}, tag : {}"
-															, req.getBeginTime()
+						log.warn("timeout, skip invoke process response, reqTime : {}, deadline : {}, now : {}, topic : {}, tag : {}"
+															, req.getReqTime()
 															, req.getDeadline()
 															, now
 															, topic
@@ -83,7 +85,12 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					}
 					Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
 					try {
-						producer.send(respMsg);
+						SendResult ret = producer.send(respMsg);
+						if(ret.getSendStatus() == SendStatus.SEND_OK) {
+							log.trace("invoke reqId : {}, req msgId : {}, rec msgId : {}", req.getReqId(), ext.getMsgId(), ret.getMsgId());
+						}else {
+							log.error("rec invoke error : {}", ret.getSendStatus().name());
+						}
 					}catch (Throwable e) {
 						log.error(String.format("unknow exception, invoke end, process send response, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
 					}
