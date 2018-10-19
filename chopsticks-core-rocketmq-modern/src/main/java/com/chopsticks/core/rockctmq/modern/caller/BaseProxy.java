@@ -4,11 +4,15 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.FluentIterable;
 
 public abstract class BaseProxy implements InvocationHandler {
 	
 	protected String getTopic(Class<?> clazz) {
-		Endpoint endPoint = clazz.getDeclaredAnnotation(Endpoint.class);
+		Endpoint endPoint = FluentIterable.from(clazz.getDeclaredAnnotations())
+										  .filter(Endpoint.class)
+										  .first()
+										  .orNull();
 		if(endPoint != null && !Strings.isNullOrEmpty(endPoint.value())) {
 			return endPoint.value();
 		}
@@ -16,7 +20,10 @@ public abstract class BaseProxy implements InvocationHandler {
 	}
 	
 	protected String getMethod(Method method) {
-		Endpoint endPoint = method.getDeclaredAnnotation(Endpoint.class);
+		Endpoint endPoint = FluentIterable.from(method.getDeclaredAnnotations())
+										  .filter(Endpoint.class)
+										  .first()
+										  .orNull();
 		if(endPoint != null && !Strings.isNullOrEmpty(endPoint.value())) {
 			return endPoint.value();
 		}

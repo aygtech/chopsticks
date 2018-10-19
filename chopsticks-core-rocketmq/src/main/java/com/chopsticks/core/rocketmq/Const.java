@@ -2,6 +2,7 @@ package com.chopsticks.core.rocketmq;
 
 import java.util.Map.Entry;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import com.chopsticks.core.utils.SyncSystemMillis;
 import com.google.common.base.Optional;
@@ -11,7 +12,31 @@ public class Const {
 	
 	public static final SyncSystemMillis CLIENT_TIME = new SyncSystemMillis(500L);
 	// <delay, level>
-	private static TreeMap<Long, Integer> DELAY_LEVEL = Maps.newTreeMap();
+	private static final TreeMap<Long, Integer> DELAY_LEVEL = Maps.newTreeMap();
+	
+	static {
+		// defualt 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h
+		TreeMap<Long, Integer> delayLevel = Maps.newTreeMap();
+		delayLevel.put(TimeUnit.SECONDS.toMillis(1), 1);
+		delayLevel.put(TimeUnit.SECONDS.toMillis(5), 2);
+		delayLevel.put(TimeUnit.SECONDS.toMillis(10), 3);
+		delayLevel.put(TimeUnit.SECONDS.toMillis(30), 4);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(1), 5);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(2), 6);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(3), 7);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(4), 8);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(5), 9);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(6), 10);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(7), 11);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(8), 12);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(9), 13);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(10), 14);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(20), 15);
+		delayLevel.put(TimeUnit.MINUTES.toMillis(30), 16);
+		delayLevel.put(TimeUnit.HOURS.toMillis(1), 17);
+		delayLevel.put(TimeUnit.HOURS.toMillis(2), 18);
+		setDelayLevel(delayLevel);
+	}
 	
 	public static final String DEFAULT_TOPIC = "_DEFAILT_TOPIC_";
 	

@@ -1,4 +1,4 @@
-package com.chopsticks.core.rocketmq.exception;
+package com.chopsticks.core.exception;
 
 public class HandlerExecuteException extends RuntimeException{
 	

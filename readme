@@ -9,5 +9,9 @@
 	1.优化实现
 	2.修改同步的回执id为自定义，不使用rocketmq的消息id，同步超时更准确
 1.0.5
+	1.新增NoticeProxy扩展点
+	2.调整modernClient实现继承原生client
+	3.modern缓存bean
+	4.延迟级别提供默认值，去除服务器依赖
 	
 	

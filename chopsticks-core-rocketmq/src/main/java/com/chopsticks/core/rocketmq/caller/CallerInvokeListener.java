@@ -12,8 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.concurrent.impl.GuavaPromise;
+import com.chopsticks.core.exception.InvokeExecuteException;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeResult;
-import com.chopsticks.core.rocketmq.exception.InvokeExecuteException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 
 class CallerInvokeListener implements MessageListenerConcurrently{

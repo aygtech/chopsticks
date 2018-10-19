@@ -26,6 +26,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.rocketmq.common.MQVersion;
 import org.apache.rocketmq.common.MixAll;
@@ -39,6 +40,9 @@ import com.google.common.base.Strings;
 
 public class HttpTinyClient {
 	private static final Logger log = LoggerFactory.getLogger(HttpTinyClient.class);
+	
+	private static final AtomicLong UPDATE_CLIENT_TIME = new AtomicLong(0L);
+	private static final int MAX_UPDATE_COUNT = 10;
 	
 	private static final String MESSAGE_DELAY_LEVEL = "messageDelayLevel";
 
@@ -60,7 +64,9 @@ public class HttpTinyClient {
             long time = watch.elapsed(TimeUnit.MILLISECONDS);
             long date = conn.getHeaderFieldLong("date", 0);
             if(date > 0) {
-            	Const.CLIENT_TIME.setNow(date - time);
+            	if(UPDATE_CLIENT_TIME.getAndIncrement() % MAX_UPDATE_COUNT == 0) {
+            		Const.CLIENT_TIME.setNow(date - time);
+            	}
             }
             
             int respCode = conn.getResponseCode();

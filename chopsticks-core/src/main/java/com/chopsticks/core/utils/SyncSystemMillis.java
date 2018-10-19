@@ -3,6 +3,7 @@ package com.chopsticks.core.utils;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
@@ -15,6 +16,7 @@ public class SyncSystemMillis {
 																									.build());
 	
 	private volatile long now;
+	private AtomicBoolean seted = new AtomicBoolean(false);
 	
 	public SyncSystemMillis(final long updateMillis) {
 		now = System.currentTimeMillis();
@@ -31,6 +33,8 @@ public class SyncSystemMillis {
 	}
 	
 	public void setNow(long now) {
-		this.now = now;
+		if(seted.compareAndSet(false, true)) {
+			this.now = now;
+		}
 	}
 }
