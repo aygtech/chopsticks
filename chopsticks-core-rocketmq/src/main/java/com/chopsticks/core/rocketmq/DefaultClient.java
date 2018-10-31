@@ -52,6 +52,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private DefaultMQPushConsumer noticeConsumer;
 	private DefaultMQPushConsumer orderedNoticeConsumer;
 	
+	private boolean invokeExecutable = true;
+	private boolean noticeExecutable = true;
+	private boolean orderedNoticeExecutable = true;
+	
 	public DefaultClient(String groupName) {
 		super(groupName);
 	}
@@ -95,9 +99,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 			buildTopicTagsAndTopicTagHandlers();
 			if(!topicTags.isEmpty()) {
 				addTest();
-				buildAndStartInvokeCosumer();
-				buildAndStartNoticeCosumer();
-				buildAndStartOrderedNoticeCosumer();
+				invokeConsumer = buildAndStartInvokeCosumer();
+				noticeConsumer = buildAndStartNoticeCosumer();
+				orderedNoticeConsumer = buildAndStartOrderedNoticeCosumer();
 				testClient();
 			}
 			started = true;
@@ -112,7 +116,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 
 	private void testClient() {
 		try {
-			this.invoke(new DefaultInvokeCommand(topicTags.keySet().iterator().next(), Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
+			if(isInvokable()) {
+				this.invoke(new DefaultInvokeCommand(topicTags.keySet().iterator().next(), Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
+			}
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
@@ -136,114 +142,145 @@ public class DefaultClient extends DefaultCaller implements Client{
 	}
 	
 	
-	private void buildAndStartOrderedNoticeCosumer() {
-		String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.ORDERED_NOTICE_CONSUMER_SUFFIX;
-		orderedNoticeConsumer = new DefaultMQPushConsumer(groupName);
-		orderedNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
-		orderedNoticeConsumer.setConsumeThreadMin(5);
-		orderedNoticeConsumer.setConsumeThreadMax(5);
-		orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-		orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
-		orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-		orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(topicTags, topicTagHandlers));
-		orderedNoticeConsumer.setPullThresholdSizeForTopic(20);
-		try {
-			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
-				String topic = entry.getKey();
-				Collection<String> tags = entry.getValue();
-				topic = buildOrderNoticeTopic(topic);
-				if(tags.contains(Const.ALL_TAGS)) {
-					orderedNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
-				}else {
-					orderedNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+	private DefaultMQPushConsumer buildAndStartOrderedNoticeCosumer() {
+		DefaultMQPushConsumer orderedNoticeConsumer = null;
+		if(isOrderedNoticeExecutable()) {
+			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.ORDERED_NOTICE_CONSUMER_SUFFIX;
+			orderedNoticeConsumer = new DefaultMQPushConsumer(groupName);
+			orderedNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
+			orderedNoticeConsumer.setConsumeThreadMin(5);
+			orderedNoticeConsumer.setConsumeThreadMax(5);
+			orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
+			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(topicTags, topicTagHandlers));
+			orderedNoticeConsumer.setPullThresholdSizeForTopic(20);
+			try {
+				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
+					String topic = entry.getKey();
+					Collection<String> tags = entry.getValue();
+					topic = buildOrderNoticeTopic(topic);
+					if(tags.contains(Const.ALL_TAGS)) {
+						orderedNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
+					}else {
+						orderedNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+					}
 				}
+				orderedNoticeConsumer.start();
+				Reflect.on(orderedNoticeConsumer)
+				   .field("defaultMQPushConsumerImpl")
+				   .field("consumeMessageService")
+				   .field("consumeExecutor")
+					.set("threadFactory", new ThreadFactoryBuilder()
+											.setDaemon(true)
+											.setNameFormat(orderedNoticeConsumer.getConsumerGroup() + "_%d")
+											.build());
+			}catch (Throwable e) {
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
 			}
-			orderedNoticeConsumer.start();
-			Reflect.on(orderedNoticeConsumer)
-			   .field("defaultMQPushConsumerImpl")
-			   .field("consumeMessageService")
-			   .field("consumeExecutor")
-				.set("threadFactory", new ThreadFactoryBuilder()
-										.setDaemon(true)
-										.setNameFormat(orderedNoticeConsumer.getConsumerGroup() + "_%d")
-										.build());
-		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
 		}
+		return orderedNoticeConsumer;
 	}
 	
-	private void buildAndStartNoticeCosumer() {
-		String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.NOTICE_CONSUMER_SUFFIX;
-		noticeConsumer = new DefaultMQPushConsumer(groupName);
-		noticeConsumer.setNamesrvAddr(getNamesrvAddr());
-		noticeConsumer.setConsumeThreadMin(10);
-		noticeConsumer.setConsumeThreadMax(10);
-		noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-		noticeConsumer.setConsumeMessageBatchMaxSize(1);
-		noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-		noticeConsumer.registerMessageListener(new HandlerNoticeListener(getProducer(), topicTags, topicTagHandlers));
-		noticeConsumer.setPullThresholdSizeForTopic(50);
-		try {
-			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
-				String topic = entry.getKey();
-				Collection<String> tags = entry.getValue();
-				topic = buildNoticeTopic(topic);
-				if(tags.contains(Const.ALL_TAGS)) {
-					noticeConsumer.subscribe(topic, Const.ALL_TAGS);
-				}else {
-					noticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+	private DefaultMQPushConsumer buildAndStartNoticeCosumer() {
+		DefaultMQPushConsumer noticeConsumer = null;
+		if(isNoticeExecutable()) {
+			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.NOTICE_CONSUMER_SUFFIX;
+			noticeConsumer = new DefaultMQPushConsumer(groupName);
+			noticeConsumer.setNamesrvAddr(getNamesrvAddr());
+			noticeConsumer.setConsumeThreadMin(10);
+			noticeConsumer.setConsumeThreadMax(10);
+			noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			noticeConsumer.setConsumeMessageBatchMaxSize(1);
+			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+			noticeConsumer.registerMessageListener(new HandlerNoticeListener(getProducer(), topicTags, topicTagHandlers));
+			noticeConsumer.setPullThresholdSizeForTopic(50);
+			try {
+				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
+					String topic = entry.getKey();
+					Collection<String> tags = entry.getValue();
+					topic = buildNoticeTopic(topic);
+					if(tags.contains(Const.ALL_TAGS)) {
+						noticeConsumer.subscribe(topic, Const.ALL_TAGS);
+					}else {
+						noticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+					}
 				}
+				noticeConsumer.start();
+				Reflect.on(noticeConsumer)
+				   .field("defaultMQPushConsumerImpl")
+				   .field("consumeMessageService")
+				   .field("consumeExecutor")
+					.set("threadFactory", new ThreadFactoryBuilder()
+											.setDaemon(true)
+											.setNameFormat(noticeConsumer.getConsumerGroup() + "_%d")
+											.build());
+			}catch (Throwable e) {
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
 			}
-			noticeConsumer.start();
-			Reflect.on(noticeConsumer)
-			   .field("defaultMQPushConsumerImpl")
-			   .field("consumeMessageService")
-			   .field("consumeExecutor")
-				.set("threadFactory", new ThreadFactoryBuilder()
-										.setDaemon(true)
-										.setNameFormat(noticeConsumer.getConsumerGroup() + "_%d")
-										.build());
-		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
 		}
+		return noticeConsumer;
 	}
 	
-	private void buildAndStartInvokeCosumer() {
-		String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.INVOKE_CONSUMER_SUFFIX;
-		invokeConsumer = new DefaultMQPushConsumer(groupName);
-		invokeConsumer.setNamesrvAddr(getNamesrvAddr());
-		invokeConsumer.setConsumeThreadMin(15);
-		invokeConsumer.setConsumeThreadMax(15);
-		invokeConsumer.setMessageModel(MessageModel.CLUSTERING);
-		invokeConsumer.setConsumeMessageBatchMaxSize(1);
-		invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-		invokeConsumer.registerMessageListener(new HandlerInvokeListener(getProducer(), topicTagHandlers));
-		invokeConsumer.setPullThresholdSizeForTopic(50);
-		try {
-			for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
-				String topic = entry.getKey();
-				Collection<String> tags = entry.getValue();
-				topic = buildInvokeTopic(topic);
-				if(tags.contains(Const.ALL_TAGS)) {
-					invokeConsumer.subscribe(topic, Const.ALL_TAGS);
-				}else {
-					invokeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+	private DefaultMQPushConsumer buildAndStartInvokeCosumer() {
+		DefaultMQPushConsumer invokeConsumer = null;
+		if(isInvokeExecutable()) {
+			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.INVOKE_CONSUMER_SUFFIX;
+			invokeConsumer = new DefaultMQPushConsumer(groupName);
+			invokeConsumer.setNamesrvAddr(getNamesrvAddr());
+			invokeConsumer.setConsumeThreadMin(15);
+			invokeConsumer.setConsumeThreadMax(15);
+			invokeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			invokeConsumer.setConsumeMessageBatchMaxSize(1);
+			invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+			invokeConsumer.registerMessageListener(new HandlerInvokeListener(getProducer(), topicTagHandlers));
+			invokeConsumer.setPullThresholdSizeForTopic(50);
+			try {
+				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
+					String topic = entry.getKey();
+					Collection<String> tags = entry.getValue();
+					topic = buildInvokeTopic(topic);
+					if(tags.contains(Const.ALL_TAGS)) {
+						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
+					}else {
+						invokeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+					}
 				}
+				invokeConsumer.start();
+				Reflect.on(invokeConsumer)
+				   .field("defaultMQPushConsumerImpl")
+				   .field("consumeMessageService")
+				   .field("consumeExecutor")
+					.set("threadFactory", new ThreadFactoryBuilder()
+											.setDaemon(true)
+											.setNameFormat(invokeConsumer.getConsumerGroup() + "_%d")
+											.build());
+			}catch (Throwable e) {
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
 			}
-			invokeConsumer.start();
-			Reflect.on(invokeConsumer)
-			   .field("defaultMQPushConsumerImpl")
-			   .field("consumeMessageService")
-			   .field("consumeExecutor")
-				.set("threadFactory", new ThreadFactoryBuilder()
-										.setDaemon(true)
-										.setNameFormat(invokeConsumer.getConsumerGroup() + "_%d")
-										.build());
-		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
 		}
+		return invokeConsumer;
+	}
+	
+	public void setInvokeExecutable(boolean invokeExecutable) {
+		this.invokeExecutable = invokeExecutable;
+	}
+	protected boolean isInvokeExecutable() {
+		return invokeExecutable;
+	}
+	public void setNoticeExecutable(boolean noticeExecutable) {
+		this.noticeExecutable = noticeExecutable;
+	}
+	protected boolean isNoticeExecutable() {
+		return noticeExecutable;
+	}
+	public void setOrderedNoticeExecutable(boolean orderedNoticeExecutable) {
+		this.orderedNoticeExecutable = orderedNoticeExecutable;
+	}
+	protected boolean isOrderedNoticeExecutable() {
+		return orderedNoticeExecutable;
 	}
 }

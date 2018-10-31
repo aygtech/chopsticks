@@ -1,6 +1,6 @@
 package com.chopsticks.core.modern.handler;
 
-public interface ModernNoticeContextAware {
+public interface ModernNoticeContextAware<T extends ModernNoticeContextHolder<?>> {
 	
-	public void setNoticeContext(ThreadLocal<ModernNoticeContext> context);
+	public void setNoticeContextHolder(T holder);
 }

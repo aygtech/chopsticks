@@ -9,6 +9,10 @@ public abstract class BaseNoticeContext implements NoticeContext{
 	
 	private int reconsumeTimes;
 	
+	public BaseNoticeContext(BaseNoticeContext ctx) {
+		this(ctx.getId(), ctx.getOriginId(), ctx.getReconsumeTimes());
+	}
+	
 	public BaseNoticeContext(String id, String originId, int reconsumeTimes) {
 		this.id = id;
 		this.originId = originId;

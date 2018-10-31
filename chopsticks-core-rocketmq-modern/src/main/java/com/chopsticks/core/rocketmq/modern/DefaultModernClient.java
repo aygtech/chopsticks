@@ -1,4 +1,4 @@
-package com.chopsticks.core.rockctmq.modern;
+package com.chopsticks.core.rocketmq.modern;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -12,15 +12,15 @@ import java.util.Set;
 import com.chopsticks.core.modern.ModernClient;
 import com.chopsticks.core.modern.caller.ExtBean;
 import com.chopsticks.core.modern.caller.NoticeBean;
-import com.chopsticks.core.rockctmq.modern.caller.BaseExtBean;
-import com.chopsticks.core.rockctmq.modern.caller.BaseNoticeBean;
-import com.chopsticks.core.rockctmq.modern.caller.BaseProxy;
-import com.chopsticks.core.rockctmq.modern.caller.BeanProxy;
-import com.chopsticks.core.rockctmq.modern.caller.ExtBeanProxy;
-import com.chopsticks.core.rockctmq.modern.caller.NoticeBeanProxy;
-import com.chopsticks.core.rockctmq.modern.handler.ModernHandler;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
+import com.chopsticks.core.rocketmq.modern.caller.BaseExtBean;
+import com.chopsticks.core.rocketmq.modern.caller.BaseNoticeBean;
+import com.chopsticks.core.rocketmq.modern.caller.BaseProxy;
+import com.chopsticks.core.rocketmq.modern.caller.BeanProxy;
+import com.chopsticks.core.rocketmq.modern.caller.ExtBeanProxy;
+import com.chopsticks.core.rocketmq.modern.caller.NoticeBeanProxy;
+import com.chopsticks.core.rocketmq.modern.handler.ModernHandler;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -79,38 +79,51 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 
 
 	@Override
-	public NoticeBean getNoticeBean(final Class<?> clazz) {
+	public <T extends NoticeBean> T getNoticeBean(final Class<?> clazz) {
 		checkNotNull(clazz);
 		checkArgument(clazz.isInterface(), "clazz must be interface");
 		try {
 			final DefaultModernClient self = this;
-			return NOTICE_BEAN_CACHE.get(clazz, new Callable<NoticeBean>() {
+			@SuppressWarnings("unchecked")
+			T ret = (T) NOTICE_BEAN_CACHE.get(clazz, new Callable<NoticeBean>() {
 				@Override
 				public NoticeBean call() throws Exception {
-					return BaseNoticeBean.class.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {BaseNoticeBean.class, clazz}, self.getNoticeBeanProxy(clazz, self)));
+					
+					return getNoticeBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {getNoticeBeanClazz(), clazz}, getNoticeBeanProxy(clazz, self)));
 				}
 			});
+			return ret;
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
 	}
 	
+	protected Class<? extends NoticeBean> getNoticeBeanClazz() {
+		return BaseNoticeBean.class;
+	}
+	
 	@Override
-	public ExtBean getExtBean(final String clazzName) {
+	public <T extends ExtBean> T getExtBean(final String clazzName) {
 		checkNotNull(clazzName);
 		try {
 			final DefaultModernClient self = this;
-			return EXT_BEAN_CACHE.get(clazzName, new Callable<ExtBean>() {
+			@SuppressWarnings("unchecked")
+			T ret = (T) EXT_BEAN_CACHE.get(clazzName, new Callable<ExtBean>() {
 				@Override
 				public ExtBean call() throws Exception {
-					return BaseExtBean.class.cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {BaseExtBean.class}, new ExtBeanProxy(clazzName, self)));
+					return getExtBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {getExtBeanClazz()}, new ExtBeanProxy(clazzName, self)));
 				}
 			});
+			return ret;
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
+	}
+	
+	protected Class<? extends ExtBean> getExtBeanClazz(){
+		return BaseExtBean.class;
 	}
 	
 	protected BaseProxy getNoticeBeanProxy(Class<?> clazz, DefaultClient client) {

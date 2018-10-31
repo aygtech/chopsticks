@@ -6,7 +6,7 @@ import com.chopsticks.core.modern.service.OrderService;
 import com.chopsticks.core.modern.service.OrderServiceImpl;
 import com.chopsticks.core.modern.service.UserService;
 import com.chopsticks.core.modern.service.UserServiceImpl;
-import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 import com.google.common.collect.Maps;
 
 public class ByServerTest {

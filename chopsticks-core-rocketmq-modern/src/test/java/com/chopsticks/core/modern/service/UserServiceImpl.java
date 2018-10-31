@@ -1,24 +1,25 @@
 package com.chopsticks.core.modern.service;
 
 import com.chopsticks.core.modern.entity.User;
-import com.chopsticks.core.modern.handler.ModernNoticeContext;
-import com.chopsticks.core.modern.handler.ModernNoticeContextAware;
+import com.chopsticks.core.rocketmq.modern.handler.DefaultModernNoticeContextAware;
+import com.chopsticks.core.rocketmq.modern.handler.DefaultModernNoticeContextHolder;
 
-public class UserServiceImpl implements UserService, ModernNoticeContextAware {
+public class UserServiceImpl implements UserService, DefaultModernNoticeContextAware {
 	
-	private ThreadLocal<ModernNoticeContext> context;
+	private DefaultModernNoticeContextHolder holder;
 	
 	@Override
 	public void saveUser(User user) {
-		if(this.context.get() != null) {
-			System.out.println("notice : " + this.context.get().getId() + ", saveUser : " + user );
+		if(this.holder.get() != null) {
+			System.out.println("notice : " + this.holder.get().getId() + ", saveUser : " + user );
 		}else {
 			System.out.println("saveUser : " + user);
 		}
 	}
 
 	@Override
-	public void setNoticeContext(ThreadLocal<ModernNoticeContext> context) {
-		this.context = context;
+	public void setNoticeContextHolder(DefaultModernNoticeContextHolder holder) {
+		this.holder = holder;
 	}
+
 }

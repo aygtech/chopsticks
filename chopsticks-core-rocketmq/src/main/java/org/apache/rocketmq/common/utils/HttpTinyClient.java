@@ -41,11 +41,11 @@ import com.google.common.base.Strings;
 public class HttpTinyClient {
 	private static final Logger log = LoggerFactory.getLogger(HttpTinyClient.class);
 	
-	private static final AtomicLong UPDATE_CLIENT_TIME = new AtomicLong(0L);
+	private static final AtomicLong UPDATE_COUNT = new AtomicLong(0L);
 	private static final int MAX_UPDATE_COUNT = 10;
 	
 	private static final String MESSAGE_DELAY_LEVEL = "messageDelayLevel";
-
+	
     static public HttpResult httpGet(String url, List<String> headers, List<String> paramValues,
 		String encoding, long readTimeoutMs) throws IOException {
     	String encodedContent = encodingParams(paramValues, encoding);
@@ -64,15 +64,15 @@ public class HttpTinyClient {
             long time = watch.elapsed(TimeUnit.MILLISECONDS);
             long date = conn.getHeaderFieldLong("date", 0);
             if(date > 0) {
-            	if(UPDATE_CLIENT_TIME.getAndIncrement() % MAX_UPDATE_COUNT == 0) {
+            	if(UPDATE_COUNT.getAndIncrement() % MAX_UPDATE_COUNT == 0) {
             		Const.CLIENT_TIME.setNow(date - time);
             	}
             }
             
             int respCode = conn.getResponseCode();
             String delayLevel = conn.getHeaderField(MESSAGE_DELAY_LEVEL);
-            log.trace("delayLevel : {}", delayLevel);
             if(!Strings.isNullOrEmpty(delayLevel)) {
+            	log.trace("delayLevel : {}", delayLevel);
             	String[] delayLevels = delayLevel.split(" ");
                 TreeMap<Long, Integer> curDelayLevel = new TreeMap<Long, Integer>();
                 long mills;

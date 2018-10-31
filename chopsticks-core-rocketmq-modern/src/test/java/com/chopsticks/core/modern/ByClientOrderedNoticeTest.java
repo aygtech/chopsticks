@@ -5,8 +5,8 @@ import java.util.UUID;
 import com.chopsticks.core.modern.caller.NoticeBean;
 import com.chopsticks.core.modern.entity.Order;
 import com.chopsticks.core.modern.service.OrderService;
-import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
-import com.chopsticks.core.rockctmq.modern.caller.impl.DefaultModernNoticeCommand;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
+import com.chopsticks.core.rocketmq.modern.caller.impl.DefaultModernNoticeCommand;
 
 public class ByClientOrderedNoticeTest {
 	

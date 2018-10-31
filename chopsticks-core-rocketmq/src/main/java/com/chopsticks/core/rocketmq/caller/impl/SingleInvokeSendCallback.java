@@ -1,16 +1,17 @@
-package com.chopsticks.core.rocketmq.caller;
+package com.chopsticks.core.rocketmq.caller.impl;
 
 import org.apache.rocketmq.client.producer.SendCallback;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 
-class InvokeSendCallback implements SendCallback {
+class SingleInvokeSendCallback implements SendCallback {
 	
 	private GuavaTimeoutPromise<BaseInvokeResult> promise;
 	
-	InvokeSendCallback(GuavaTimeoutPromise<BaseInvokeResult> promise) {
+	SingleInvokeSendCallback(GuavaTimeoutPromise<BaseInvokeResult> promise) {
 		this.promise = promise;
 	}
 

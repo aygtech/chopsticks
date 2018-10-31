@@ -4,12 +4,11 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Map;
-import java.util.UUID;
 import java.util.Map.Entry;
+import java.util.UUID;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -24,7 +23,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.parser.ParserConfig;
 import com.chopsticks.core.Const;
 import com.chopsticks.core.caller.Caller;
 import com.chopsticks.core.caller.InvokeCommand;
@@ -35,8 +33,10 @@ import com.chopsticks.core.concurrent.Promise;
 import com.chopsticks.core.concurrent.impl.GuavaPromise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.exception.InvokeException;
+import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
+import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
@@ -47,10 +47,6 @@ public class DefaultCaller implements Caller {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultCaller.class);
 	
-	static {
-		ParserConfig.getGlobalInstance().setAutoTypeSupport(true); 
-	}
-	
 	private String namesrvAddr;
 	
 	private String groupName;
@@ -59,13 +55,17 @@ public class DefaultCaller implements Caller {
 	
 	private DefaultMQPushConsumer callerInvokeConsumer;
 	
-	private ExecutorService promiseExecutor;
-	
 	private volatile boolean started;
 	
 	private static final long DEFAULT_TIMEOUT_MILLIS = 1000 * 30L;
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
+	
+	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(200L);
+	
+	private InvokeSender invokeSender;
+	
+	private boolean invokable = true;
 	
 	/**
 	 *  <msgid, timeoutGuavaPromise>
@@ -100,19 +100,33 @@ public class DefaultCaller implements Caller {
 		if(!started) {
 			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaPromise<BaseInvokeResult>>();
 			buildAndStartProducer();
-			buildAndStartCallerInvokeConsumer();
-			testCaller();
+			invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
+			callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
 			started = true;
 		}
 	}
 	
+
+
+	private InvokeSender buildInvokeSender(DefaultMQProducer producer, long batchExecuteIntervalMillis) {
+		InvokeSender invokeSender = null;
+		if(isInvokable()) {
+			if(batchExecuteIntervalMillis > 0L) {
+				invokeSender = new BatchInvokerSender(producer, batchExecuteIntervalMillis);
+			}else {
+				invokeSender = new SingleInvokeSender(producer);
+			}
+		}
+		return invokeSender;
+	}
+
 	@Override
 	public synchronized void shutdown() {
 		if(producer != null) {
-			producer.shutdown();	
-		}
-		if(promiseExecutor != null) {
-			promiseExecutor.shutdown();
+			producer.shutdown();
+			if(invokeSender != null) {
+				invokeSender.shutdown();
+			}
 		}
 		if(callerInvokeConsumer != null) {
 			callerInvokeConsumer.shutdown();
@@ -120,31 +134,36 @@ public class DefaultCaller implements Caller {
 		started = false;
 	}
 
-	private void buildAndStartCallerInvokeConsumer() {
-		callerInvokeConsumer = new DefaultMQPushConsumer(com.chopsticks.core.rocketmq.Const.CONSUMER_PREFIX + getGroupName() + com.chopsticks.core.rocketmq.Const.CALLER_INVOKE_CONSUMER_SUFFIX);
-		callerInvokeConsumer.setNamesrvAddr(namesrvAddr);
-		callerInvokeConsumer.setConsumeThreadMin(Const.AVAILABLE_PROCESSORS);
-		callerInvokeConsumer.setConsumeThreadMax(Const.AVAILABLE_PROCESSORS);
-		callerInvokeConsumer.setMessageModel(MessageModel.BROADCASTING);
-		callerInvokeConsumer.setConsumeMessageBatchMaxSize(10);
-		callerInvokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-		callerInvokeConsumer.registerMessageListener(new CallerInvokeListener(callerInvokePromiseMap));
-		callerInvokeConsumer.setPullThresholdSizeForTopic(50);
-		try {
-			callerInvokeConsumer.subscribe(buildRespTopic(), com.chopsticks.core.rocketmq.Const.ALL_TAGS);
-			callerInvokeConsumer.start();
-			Reflect.on(callerInvokeConsumer)
-				   .field("defaultMQPushConsumerImpl")
-				   .field("consumeMessageService")
-				   .field("consumeExecutor")
-   					.set("threadFactory", new ThreadFactoryBuilder()
-											.setDaemon(true)
-											.setNameFormat(callerInvokeConsumer.getConsumerGroup() + "_%d")
-											.build());
-		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+	private DefaultMQPushConsumer buildAndStartCallerInvokeConsumer() {
+		DefaultMQPushConsumer callerInvokeConsumer = null;
+		if(isInvokable()) {
+			callerInvokeConsumer = new DefaultMQPushConsumer(com.chopsticks.core.rocketmq.Const.CONSUMER_PREFIX + getGroupName() + com.chopsticks.core.rocketmq.Const.CALLER_INVOKE_CONSUMER_SUFFIX);
+			callerInvokeConsumer.setNamesrvAddr(namesrvAddr);
+			callerInvokeConsumer.setConsumeThreadMin(Const.AVAILABLE_PROCESSORS);
+			callerInvokeConsumer.setConsumeThreadMax(Const.AVAILABLE_PROCESSORS);
+			callerInvokeConsumer.setMessageModel(MessageModel.BROADCASTING);
+			callerInvokeConsumer.setConsumeMessageBatchMaxSize(10);
+			callerInvokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+			callerInvokeConsumer.registerMessageListener(new CallerInvokeListener(callerInvokePromiseMap));
+			callerInvokeConsumer.setPullThresholdSizeForTopic(50);
+			try {
+				callerInvokeConsumer.subscribe(buildRespTopic(), com.chopsticks.core.rocketmq.Const.ALL_TAGS);
+				callerInvokeConsumer.start();
+				Reflect.on(callerInvokeConsumer)
+					   .field("defaultMQPushConsumerImpl")
+					   .field("consumeMessageService")
+					   .field("consumeExecutor")
+	   					.set("threadFactory", new ThreadFactoryBuilder()
+												.setDaemon(true)
+												.setNameFormat(callerInvokeConsumer.getConsumerGroup() + "_%d")
+												.build());
+				testCaller();
+			}catch (Throwable e) {
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
+			}
 		}
+		return callerInvokeConsumer;
 	}
 
 	private void buildAndStartProducer() {
@@ -185,13 +204,14 @@ public class DefaultCaller implements Caller {
 
 	public Promise<BaseInvokeResult> asyncInvoke(final BaseInvokeCommand cmd, final long timeout, final TimeUnit timeoutUnit) {
 		checkArgument(started, "must be call method start");
+		checkArgument(invokable, "must be support invokable");
 		final GuavaTimeoutPromise<BaseInvokeResult> promise = new GuavaTimeoutPromise<BaseInvokeResult>(timeout, timeoutUnit);
 		try {
 			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
 			callerInvokePromiseMap.put(req.getReqId(), promise);
 			promise.addListener(new CallerTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
 			Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
-			producer.send(msg, new InvokeSendCallback(promise));
+			invokeSender.send(msg, promise);
 		} catch (Throwable e) {
 			promise.setException(e);
 		}
@@ -446,5 +466,17 @@ public class DefaultCaller implements Caller {
 		}
 	
 		return promise;
+	}
+	
+	public void setBatchExecuteIntervalMillis(long batchExecuteIntervalMillis) {
+		this.batchExecuteIntervalMillis = batchExecuteIntervalMillis;
+	}
+	
+	public void setInvokable(boolean invokable) {
+		this.invokable = invokable;
+	}
+	
+	protected boolean isInvokable() {
+		return invokable;
 	}
 }

@@ -3,8 +3,7 @@ package com.chopsticks.core.modern;
 import java.util.List;
 
 import com.alibaba.fastjson.annotation.JSONType;
-import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
-import com.chopsticks.core.rockctmq.modern.caller.Endpoint;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 
 public class ByClientCustomTest {
 	private static final String groupName = "testClientGroupName";
@@ -18,20 +17,18 @@ public class ByClientCustomTest {
 			CustomOrderService orderService = client.getBean(CustomOrderService.class);
 			CustomOrder order = new CustomOrder();
 			order.setId(1L);
-			orderService.customSaveOrder(order);
+			orderService.saveOrder(order);
 			System.out.println("saveOrder end");
-			System.out.println("getAll : " + orderService.customGetAll());
+			System.out.println("getAll : " + orderService.getAll());
 		} finally {
 			client.shutdown();
 		}
 	}
 	
-	@Endpoint("com.chopsticks.core.modern.service.OrderService")
+	@JSONType(typeName = "com.chopsticks.core.modern.service.OrderService")
 	public static interface CustomOrderService{
-		@Endpoint("saveOrder")
-		public void customSaveOrder(CustomOrder order);
-		@Endpoint("getAll")
-		public List<CustomOrder> customGetAll();
+		public void saveOrder(CustomOrder order);
+		public List<CustomOrder> getAll();
 	}
 	@JSONType(typeName = "com.chopsticks.core.modern.entity.Order")
 	public static class CustomOrder {

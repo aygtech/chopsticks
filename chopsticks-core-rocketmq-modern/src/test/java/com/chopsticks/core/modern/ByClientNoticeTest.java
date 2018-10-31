@@ -5,8 +5,8 @@ import com.chopsticks.core.modern.entity.Order;
 import com.chopsticks.core.modern.entity.User;
 import com.chopsticks.core.modern.service.OrderService;
 import com.chopsticks.core.modern.service.UserService;
-import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
-import com.chopsticks.core.rockctmq.modern.caller.impl.DefaultModernNoticeCommand;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
+import com.chopsticks.core.rocketmq.modern.caller.impl.DefaultModernNoticeCommand;
 
 public class ByClientNoticeTest {
 	

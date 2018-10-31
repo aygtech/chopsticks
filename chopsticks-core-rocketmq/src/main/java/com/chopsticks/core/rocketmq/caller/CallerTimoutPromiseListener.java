@@ -31,7 +31,7 @@ class CallerTimoutPromiseListener implements PromiseListener<BaseInvokeResult> {
 	public void onFailure(Throwable t) {
 		if(t instanceof TimeoutException || t instanceof CancellationException) {
 			GuavaPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(reqId);
-			log.error("timeout remove promise, reqId : {}, promise : {}", reqId, promise);
+			log.trace("timeout remove promise, reqId : {}, promise : {}", reqId, promise);
 		}
 	}
 

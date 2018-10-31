@@ -1,4 +1,4 @@
-package com.chopsticks.core.rockctmq.modern.caller;
+package com.chopsticks.core.rocketmq.modern.caller;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -8,9 +8,9 @@ import java.util.Map;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.chopsticks.core.caller.InvokeResult;
-import com.chopsticks.core.rockctmq.modern.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
+import com.chopsticks.core.rocketmq.modern.Const;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 

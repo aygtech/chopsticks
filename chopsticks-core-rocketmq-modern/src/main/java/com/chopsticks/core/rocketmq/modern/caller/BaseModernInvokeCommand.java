@@ -1,4 +1,4 @@
-package com.chopsticks.core.rockctmq.modern.caller;
+package com.chopsticks.core.rocketmq.modern.caller;
 
 import com.chopsticks.core.modern.caller.InvokeCommand;
 

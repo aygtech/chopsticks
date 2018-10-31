@@ -1,6 +1,6 @@
-package com.chopsticks.core.rockctmq.modern.caller.impl;
+package com.chopsticks.core.rocketmq.modern.caller.impl;
 
-import com.chopsticks.core.rockctmq.modern.caller.BaseModernNoticeCommand;
+import com.chopsticks.core.rocketmq.modern.caller.BaseModernNoticeCommand;
 
 public class DefaultModernNoticeCommand extends BaseModernNoticeCommand {
 	

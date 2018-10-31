@@ -7,16 +7,17 @@ import com.chopsticks.core.modern.entity.Order;
 import com.chopsticks.core.modern.entity.User;
 import com.chopsticks.core.modern.service.OrderService;
 import com.chopsticks.core.modern.service.UserService;
-import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 
 public class ByClientTest {
 	
 	private static final String groupName = "testClientGroupName";
 	
 	public static void main(String[] args) {
+		System.setProperty("rocketmq.namesrv.domain", "ehub.server.com:18080");
 		
 		ModernClient client = new DefaultModernClient(groupName);
-		((DefaultModernClient)client).setNamesrvAddr("localhost:9876");
+//		((DefaultModernClient)client).setNamesrvAddr("localhost:9876");
 		try {
 			client.start();
 			OrderService orderService = client.getBean(OrderService.class);

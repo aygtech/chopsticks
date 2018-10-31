@@ -4,11 +4,16 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
+import com.alibaba.fastjson.parser.ParserConfig;
 import com.chopsticks.core.utils.SyncSystemMillis;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 
 public class Const {
+	
+	static {
+		ParserConfig.getGlobalInstance().setAutoTypeSupport(true); 
+	}
 	
 	public static final SyncSystemMillis CLIENT_TIME = new SyncSystemMillis(500L);
 	// <delay, level>

@@ -11,9 +11,9 @@ public interface ModernClient{
 	
 	public <T> T getBean(Class<T> clazz);
 	
-	public NoticeBean getNoticeBean(Class<?> clazz);
+	public <T extends NoticeBean> T getNoticeBean(Class<?> clazz);
 	
-	public ExtBean getExtBean(String clazzName);
+	public <T extends ExtBean> T getExtBean(String clazzName);
 	
 	public void start();
 	

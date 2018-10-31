@@ -6,8 +6,8 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.modern.caller.ExtBean;
-import com.chopsticks.core.rockctmq.modern.DefaultModernClient;
-import com.chopsticks.core.rockctmq.modern.caller.impl.DefaultModernInvokeCommand;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
+import com.chopsticks.core.rocketmq.modern.caller.impl.DefaultModernInvokeCommand;
 import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 

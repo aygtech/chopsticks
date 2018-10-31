@@ -1,6 +1,6 @@
-package com.chopsticks.core.rockctmq.modern.caller.impl;
+package com.chopsticks.core.rocketmq.modern.caller.impl;
 
-import com.chopsticks.core.rockctmq.modern.caller.BaseModernInvokeCommand;
+import com.chopsticks.core.rocketmq.modern.caller.BaseModernInvokeCommand;
 
 public class DefaultModernInvokeCommand extends BaseModernInvokeCommand {
 	
