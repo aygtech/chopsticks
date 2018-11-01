@@ -61,7 +61,7 @@ public class DefaultCaller implements Caller {
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
 	
-	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(200L);
+	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(-1L);
 	
 	private InvokeSender invokeSender;
 	
@@ -468,7 +468,7 @@ public class DefaultCaller implements Caller {
 		return promise;
 	}
 	
-	public void setBatchExecuteIntervalMillis(long batchExecuteIntervalMillis) {
+	protected void setBatchExecuteIntervalMillis(long batchExecuteIntervalMillis) {
 		this.batchExecuteIntervalMillis = batchExecuteIntervalMillis;
 	}
 	

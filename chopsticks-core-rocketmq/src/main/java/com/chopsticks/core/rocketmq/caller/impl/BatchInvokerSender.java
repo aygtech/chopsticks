@@ -28,7 +28,7 @@ public class BatchInvokerSender extends InvokeSender{
 	
 	private static final Logger log = LoggerFactory.getLogger(BatchInvokerSender.class);
 	
-	private static final long MAX_LENGTH = 1024 * 1024 * 4;
+	private static final long BATCH_MAX_LENGTH = 1024 * 1024 * 1;
 	
 	private LinkedBlockingQueue<BatchMessage> msgQueue = new LinkedBlockingQueue<BatchMessage>();
 	
@@ -58,21 +58,23 @@ public class BatchInvokerSender extends InvokeSender{
 							}
 							if(batchMsg != null) {
 								Long oldLength = MoreObjects.firstNonNull(size.get(batchMsg.msg.getTopic()), 0L);
-								if(oldLength + batchMsg.length < MAX_LENGTH) {
+								if(oldLength + batchMsg.length < BATCH_MAX_LENGTH) {
 									size.put(batchMsg.msg.getTopic(), oldLength + batchMsg.length);
 									batchMsgs.put(batchMsg.msg.getTopic(), batchMsg);
 								}else {
-									batchMsgs.removeAll(batchMsg.msg.getTopic());
+									pollTime = watch.elapsed(TimeUnit.MILLISECONDS);
+									Collection<BatchMessage> value = batchMsgs.removeAll(batchMsg.msg.getTopic());
+									if(value != null && !value.isEmpty()) {
+										batchMsgSend(value);
+										log.debug("poll : {}, send : {}, batch {} num : {}, size : {}"
+												, pollTime
+												, watch.elapsed(TimeUnit.MILLISECONDS) - pollTime
+												, batchMsg.msg.getTopic()
+												, value.size()
+												, oldLength);
+									}
 									batchMsgs.put(batchMsg.msg.getTopic(), batchMsg);
 									size.put(batchMsg.msg.getTopic(), batchMsg.length);
-									pollTime = watch.elapsed(TimeUnit.MILLISECONDS);
-									batchMsgSend(batchMsgs.get(batchMsg.msg.getTopic()));
-									log.debug("poll : {}, send : {}, batch {} num : {}, size : {}"
-											, pollTime
-											, watch.elapsed(TimeUnit.MILLISECONDS) - pollTime
-											, batchMsg.msg.getTopic()
-											, batchMsgs.get(batchMsg.msg.getTopic()).size()
-											, oldLength);
 								}
 							}
 						}
@@ -100,9 +102,11 @@ public class BatchInvokerSender extends InvokeSender{
 				for(BatchMessage batchMsg : collection) {
 					msgs.add(batchMsg.msg);
 				}
-				log.debug("start.....");
-				super.producer.send(msgs);
-				log.debug("end.....");
+				if(msgs.size() == 1) {
+					super.producer.send(msgs.get(0));
+				}else {
+					super.producer.send(msgs);
+				}
 			}catch (Throwable e) {
 				for(BatchMessage batchMsg : collection) {
 					batchMsg.promise.setException(e);

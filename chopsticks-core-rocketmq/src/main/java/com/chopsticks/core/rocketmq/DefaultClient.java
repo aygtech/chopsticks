@@ -242,6 +242,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildInvokeTopic(topic);
+					//cannot reset offset to now
+					Const.resetNow(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
+//					MQHelper.resetOffsetByTimestamp(MessageModel.CLUSTERING, groupName, topic, Const.CLIENT_TIME.getNow() + TimeUnit.DAYS.toMillis(7L));
 					if(tags.contains(Const.ALL_TAGS)) {
 						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
