@@ -1,14 +1,8 @@
 package com.chopsticks.core.rocketmq;
 
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
-import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.chopsticks.core.utils.SyncSystemMillis;
@@ -70,9 +64,13 @@ public class Const {
 
 	public static final String CALLER_INVOKE_CONSUMER_SUFFIX = "_CALLER_INVOKE_CONSUMER";
 	public static final String CLIENT_TEST_TAG = "_CLIENT_TEST_TAG";
+	
+	public static final int DEFAULT_TOPIC_QUEUE_SIZE = 64;
 
 	public static final String ERROR_MSG_NO_ROUTE_INFO_OF_THIS_TOPIC = "No route info of this topic";
 	public static final String ERROR_MSG_NO_NAME_SERVER_ADDRESS = "No name server address";
+	public static final String ERROR_MSG_CAN_NOT_FIND_MESSAGE_QUEUE = "Can not find Message Queue";
+	public static final String ERROR_TOPIC_NOT_EXIST = "The topic[%s] not exist";
 
 	static void setDelayLevel(TreeMap<Long, Integer> delayLevel) {
 		synchronized (DELAY_LEVEL) {
@@ -90,33 +88,5 @@ public class Const {
 		}
 		Entry<Long, Integer> lower = DELAY_LEVEL.lowerEntry(delay);
 		return Optional.fromNullable(lower);
-	}
-
-	public static void resetNow(final MessageModel messageModel, final String instanceName, final String consumerGroup,
-			final String topic) throws Throwable {
-
-		DefaultMQPullConsumer consumer = new DefaultMQPullConsumer(consumerGroup);
-		consumer.setInstanceName(instanceName);
-		consumer.setMessageModel(messageModel);
-		consumer.start();
-
-		Set<MessageQueue> mqs = null;
-		try {
-			mqs = consumer.fetchSubscribeMessageQueues(topic);
-			if (mqs != null && !mqs.isEmpty()) {
-				TreeSet<MessageQueue> mqsNew = new TreeSet<MessageQueue>(mqs);
-				for (MessageQueue mq : mqsNew) {
-					long offset = consumer.maxOffset(mq);
-					if (offset >= 0) {
-						consumer.updateConsumeOffset(mq, offset);
-					}
-				}
-			}
-		} finally {
-			if (mqs != null) {
-				consumer.getDefaultMQPullConsumerImpl().getOffsetStore().persistAll(mqs);
-			}
-			consumer.shutdown();
-		}
 	}
 }

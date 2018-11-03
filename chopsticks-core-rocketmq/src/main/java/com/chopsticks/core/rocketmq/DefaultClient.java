@@ -4,17 +4,22 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
+import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.Client;
 import com.chopsticks.core.handler.Handler;
+import com.chopsticks.core.rocketmq.caller.BaseInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.DefaultCaller;
+import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
+import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.handler.HandlerInvokeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerNoticeListener;
@@ -32,7 +37,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class DefaultClient extends DefaultCaller implements Client{
 	
-	private static final Logger log = LoggerFactory.getLogger(DefaultClient.class); 
+	private static final Logger log = LoggerFactory.getLogger(DefaultClient.class);
 	
 	private volatile boolean started;
 	
@@ -102,22 +107,57 @@ public class DefaultClient extends DefaultCaller implements Client{
 				invokeConsumer = buildAndStartInvokeCosumer();
 				noticeConsumer = buildAndStartNoticeCosumer();
 				orderedNoticeConsumer = buildAndStartOrderedNoticeCosumer();
-				testClient();
 			}
 			started = true;
 		}
 	}
 	
 	private void addTest() {
-		EmptyHandler handler = new EmptyHandler(topicTags.keySet().iterator().next(), Const.CLIENT_TEST_TAG);
-		topicTags.put(handler.getTopic(), handler.getTag());
-		topicTagHandlers.put(handler.getTopic() + handler.getTag(), handler);
+		for(String topic : topicTags.keySet()) {
+			EmptyHandler handler = new EmptyHandler(topic, Const.CLIENT_TEST_TAG);
+			topicTags.put(handler.getTopic(), handler.getTag());
+			topicTagHandlers.put(handler.getTopic() + handler.getTag(), handler);
+		}
 	}
 
-	private void testClient() {
+	private void testInvokeClient(DefaultMQPushConsumer invokeConsumer) {
 		try {
 			if(isInvokable()) {
-				this.invoke(new DefaultInvokeCommand(topicTags.keySet().iterator().next(), Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
+				for(String topic : topicTags.keySet()) {
+					BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes());
+					InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+					Message msg = buildInvokeMessage(req, cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+					getProducer().send(msg);
+					invokeConsumer.fetchSubscribeMessageQueues(buildInvokeTopic(topic));
+				}
+			}
+		}catch (Throwable e) {
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void testNoticeClient(DefaultMQPushConsumer noticeConsumer) {
+		try {
+			if(isInvokable()) {
+				for(String topic : topicTags.keySet()) {
+					this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
+					noticeConsumer.fetchSubscribeMessageQueues(buildNoticeTopic(topic));
+				}
+			}
+		}catch (Throwable e) {
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void testOrderedNoticeClient(DefaultMQPushConsumer orderedNoticeConsumer) {
+		try {
+			if(isInvokable()) {
+				for(String topic : topicTags.keySet()) {
+					this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()), Const.CLIENT_TEST_TAG);
+					orderedNoticeConsumer.fetchSubscribeMessageQueues(buildOrderedNoticeTopic(topic));
+				}
 			}
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
@@ -159,7 +199,8 @@ public class DefaultClient extends DefaultCaller implements Client{
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
-					topic = buildOrderNoticeTopic(topic);
+					topic = buildOrderedNoticeTopic(topic);
+					realConsumeFromLastOffset(orderedNoticeConsumer.getMessageModel(), orderedNoticeConsumer.getInstanceName(), orderedNoticeConsumer.getConsumerGroup(), topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						orderedNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -175,6 +216,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 											.setDaemon(true)
 											.setNameFormat(orderedNoticeConsumer.getConsumerGroup() + "_%d")
 											.build());
+				testOrderedNoticeClient(orderedNoticeConsumer);
 			}catch (Throwable e) {
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
@@ -201,6 +243,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildNoticeTopic(topic);
+					realConsumeFromLastOffset(noticeConsumer.getMessageModel(), noticeConsumer.getInstanceName(), noticeConsumer.getConsumerGroup(), topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						noticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -216,6 +259,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 											.setDaemon(true)
 											.setNameFormat(noticeConsumer.getConsumerGroup() + "_%d")
 											.build());
+				testNoticeClient(noticeConsumer);
 			}catch (Throwable e) {
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
@@ -242,9 +286,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildInvokeTopic(topic);
-					//cannot reset offset to now
-					Const.resetNow(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
-//					MQHelper.resetOffsetByTimestamp(MessageModel.CLUSTERING, groupName, topic, Const.CLIENT_TIME.getNow() + TimeUnit.DAYS.toMillis(7L));
+					resetNow(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -260,6 +302,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 											.setDaemon(true)
 											.setNameFormat(invokeConsumer.getConsumerGroup() + "_%d")
 											.build());
+				testInvokeClient(invokeConsumer);
 			}catch (Throwable e) {
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
