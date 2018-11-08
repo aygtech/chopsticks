@@ -20,6 +20,8 @@ import org.apache.rocketmq.client.consumer.store.ReadOffsetType;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -43,10 +45,8 @@ import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
-import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
-import com.google.common.util.concurrent.ThreadFactoryBuilder; 
+import com.google.common.base.Throwables; 
 
 public class DefaultCaller implements Caller {
 	
@@ -86,7 +86,10 @@ public class DefaultCaller implements Caller {
 		try {
 			String topic = buildRespTopic();
 			InvokeResponse resp = new InvokeResponse("testCaller", com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow(), com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow(), new byte[0]);
-			producer.send(new Message(topic, com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX, JSON.toJSONBytes(resp)));
+			SendResult ret = producer.send(new Message(topic, com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX, JSON.toJSONBytes(resp)));
+			if(ret.getSendStatus() != SendStatus.SEND_OK) {
+				throw new RuntimeException(ret.getSendStatus().name());
+			}
 		}catch (Throwable e) {
 			if(e instanceof MQClientException) {
 				String errMsg = e.getMessage();
@@ -105,7 +108,7 @@ public class DefaultCaller implements Caller {
 	public synchronized void start() {
 		if(!started) {
 			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaPromise<BaseInvokeResult>>();
-			buildAndStartProducer();
+			producer = buildAndStartProducer();
 			invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
 			callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
 			started = true;
@@ -156,18 +159,13 @@ public class DefaultCaller implements Caller {
 				String topic = buildRespTopic();
 				callerInvokeConsumer.subscribe(topic, com.chopsticks.core.rocketmq.Const.ALL_TAGS);
 				callerInvokeConsumer.start();
-				Reflect.on(callerInvokeConsumer)
-					   .field("defaultMQPushConsumerImpl")
-					   .field("consumeMessageService")
-					   .field("consumeExecutor")
-	   					.set("threadFactory", new ThreadFactoryBuilder()
-												.setDaemon(true)
-												.setNameFormat(callerInvokeConsumer.getConsumerGroup() + "_%d")
-				
-												.build());
+				callerInvokeConsumer = com.chopsticks.core.rocketmq.Const.buildConsumer(callerInvokeConsumer);
 				testCaller();
 				callerInvokeConsumer.fetchSubscribeMessageQueues(buildRespTopic());	
 			}catch (Throwable e) {
+				if(callerInvokeConsumer != null) {
+					callerInvokeConsumer.shutdown();
+				}
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
 			}
@@ -175,13 +173,15 @@ public class DefaultCaller implements Caller {
 		return callerInvokeConsumer;
 	}
 
-	private void buildAndStartProducer() {
+	private DefaultMQProducer buildAndStartProducer() {
+		DefaultMQProducer producer = null;
 		producer = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName());
 		producer.setNamesrvAddr(namesrvAddr);
 		producer.setRetryAnotherBrokerWhenNotStoreOK(true);
 		producer.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
 		try {
 			producer.start();
+			return producer;
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
@@ -481,7 +481,7 @@ public class DefaultCaller implements Caller {
 		this.batchExecuteIntervalMillis = batchExecuteIntervalMillis;
 	}
 	
-	public void setInvokable(boolean invokable) {
+	protected void setInvokable(boolean invokable) {
 		this.invokable = invokable;
 	}
 	

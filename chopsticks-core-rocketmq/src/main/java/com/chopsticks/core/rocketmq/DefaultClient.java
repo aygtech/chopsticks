@@ -7,6 +7,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
@@ -25,15 +27,13 @@ import com.chopsticks.core.rocketmq.handler.HandlerInvokeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerNoticeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerOrderedNoticeListener;
 import com.chopsticks.core.rocketmq.handler.impl.BaseHandlerWapper;
-import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
-import com.google.common.collect.Sets;
-import com.google.common.util.concurrent.ThreadFactoryBuilder; 
+import com.google.common.collect.Sets; 
 
 public class DefaultClient extends DefaultCaller implements Client{
 	
@@ -122,14 +122,15 @@ public class DefaultClient extends DefaultCaller implements Client{
 
 	private void testInvokeClient(DefaultMQPushConsumer invokeConsumer) {
 		try {
-			if(isInvokable()) {
-				for(String topic : topicTags.keySet()) {
-					BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes());
-					InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-					Message msg = buildInvokeMessage(req, cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-					getProducer().send(msg);
-					invokeConsumer.fetchSubscribeMessageQueues(buildInvokeTopic(topic));
+			for(String topic : topicTags.keySet()) {
+				BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes());
+				InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				Message msg = buildInvokeMessage(req, cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				SendResult ret = getProducer().send(msg);
+				if(ret.getSendStatus() != SendStatus.SEND_OK) {
+					throw new RuntimeException(ret.getSendStatus().name());
 				}
+				invokeConsumer.fetchSubscribeMessageQueues(buildInvokeTopic(topic));
 			}
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
@@ -139,11 +140,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	private void testNoticeClient(DefaultMQPushConsumer noticeConsumer) {
 		try {
-			if(isInvokable()) {
-				for(String topic : topicTags.keySet()) {
-					this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
-					noticeConsumer.fetchSubscribeMessageQueues(buildNoticeTopic(topic));
-				}
+			for(String topic : topicTags.keySet()) {
+				this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
+				noticeConsumer.fetchSubscribeMessageQueues(buildNoticeTopic(topic));
 			}
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
@@ -153,11 +152,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	private void testOrderedNoticeClient(DefaultMQPushConsumer orderedNoticeConsumer) {
 		try {
-			if(isInvokable()) {
-				for(String topic : topicTags.keySet()) {
-					this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()), Const.CLIENT_TEST_TAG);
-					orderedNoticeConsumer.fetchSubscribeMessageQueues(buildOrderedNoticeTopic(topic));
-				}
+			for(String topic : topicTags.keySet()) {
+				this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()), Const.CLIENT_TEST_TAG);
+				orderedNoticeConsumer.fetchSubscribeMessageQueues(buildOrderedNoticeTopic(topic));
 			}
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
@@ -208,16 +205,12 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				orderedNoticeConsumer.start();
-				Reflect.on(orderedNoticeConsumer)
-				   .field("defaultMQPushConsumerImpl")
-				   .field("consumeMessageService")
-				   .field("consumeExecutor")
-					.set("threadFactory", new ThreadFactoryBuilder()
-											.setDaemon(true)
-											.setNameFormat(orderedNoticeConsumer.getConsumerGroup() + "_%d")
-											.build());
+				orderedNoticeConsumer = Const.buildConsumer(orderedNoticeConsumer);
 				testOrderedNoticeClient(orderedNoticeConsumer);
 			}catch (Throwable e) {
+				if(orderedNoticeConsumer != null) {
+					orderedNoticeConsumer.shutdown();
+				}
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
 			}
@@ -251,16 +244,12 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				noticeConsumer.start();
-				Reflect.on(noticeConsumer)
-				   .field("defaultMQPushConsumerImpl")
-				   .field("consumeMessageService")
-				   .field("consumeExecutor")
-					.set("threadFactory", new ThreadFactoryBuilder()
-											.setDaemon(true)
-											.setNameFormat(noticeConsumer.getConsumerGroup() + "_%d")
-											.build());
+				noticeConsumer = Const.buildConsumer(noticeConsumer);
 				testNoticeClient(noticeConsumer);
 			}catch (Throwable e) {
+				if(noticeConsumer != null) {
+					noticeConsumer.shutdown();
+				}
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
 			}
@@ -294,16 +283,12 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				invokeConsumer.start();
-				Reflect.on(invokeConsumer)
-				   .field("defaultMQPushConsumerImpl")
-				   .field("consumeMessageService")
-				   .field("consumeExecutor")
-					.set("threadFactory", new ThreadFactoryBuilder()
-											.setDaemon(true)
-											.setNameFormat(invokeConsumer.getConsumerGroup() + "_%d")
-											.build());
+				invokeConsumer = Const.buildConsumer(invokeConsumer);
 				testInvokeClient(invokeConsumer);
 			}catch (Throwable e) {
+				if(invokeConsumer != null) {
+					invokeConsumer.shutdown();
+				}
 				Throwables.throwIfUnchecked(e);
 				throw new RuntimeException(e);
 			}
@@ -311,19 +296,19 @@ public class DefaultClient extends DefaultCaller implements Client{
 		return invokeConsumer;
 	}
 	
-	public void setInvokeExecutable(boolean invokeExecutable) {
+	protected void setInvokeExecutable(boolean invokeExecutable) {
 		this.invokeExecutable = invokeExecutable;
 	}
 	protected boolean isInvokeExecutable() {
 		return invokeExecutable;
 	}
-	public void setNoticeExecutable(boolean noticeExecutable) {
+	protected void setNoticeExecutable(boolean noticeExecutable) {
 		this.noticeExecutable = noticeExecutable;
 	}
 	protected boolean isNoticeExecutable() {
 		return noticeExecutable;
 	}
-	public void setOrderedNoticeExecutable(boolean orderedNoticeExecutable) {
+	protected void setOrderedNoticeExecutable(boolean orderedNoticeExecutable) {
 		this.orderedNoticeExecutable = orderedNoticeExecutable;
 	}
 	protected boolean isOrderedNoticeExecutable() {

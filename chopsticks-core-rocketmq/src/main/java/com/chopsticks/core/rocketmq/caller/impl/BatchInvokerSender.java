@@ -66,7 +66,7 @@ public class BatchInvokerSender extends InvokeSender{
 									Collection<BatchMessage> value = batchMsgs.removeAll(batchMsg.msg.getTopic());
 									if(value != null && !value.isEmpty()) {
 										batchMsgSend(value);
-										log.debug("poll : {}, send : {}, batch {} num : {}, size : {}"
+										log.trace("poll : {}, send : {}, batch {} num : {}, size : {}"
 												, pollTime
 												, watch.elapsed(TimeUnit.MILLISECONDS) - pollTime
 												, batchMsg.msg.getTopic()
@@ -81,7 +81,7 @@ public class BatchInvokerSender extends InvokeSender{
 						for(Entry<String, Collection<BatchMessage>> entry : batchMsgs.asMap().entrySet()) {
 							pollTime = watch.elapsed(TimeUnit.MILLISECONDS);
 							batchMsgSend(entry.getValue());
-							log.debug("poll : {}, send : {}, batch {} num : {}, size : {}"
+							log.trace("poll : {}, send : {}, batch {} num : {}, size : {}"
 									, pollTime
 									, watch.elapsed(TimeUnit.MILLISECONDS) - pollTime
 									, entry.getKey()

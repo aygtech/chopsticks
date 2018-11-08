@@ -4,10 +4,14 @@ import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+
 import com.alibaba.fastjson.parser.ParserConfig;
+import com.chopsticks.core.utils.Reflect;
 import com.chopsticks.core.utils.SyncSystemMillis;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class Const {
 
@@ -88,5 +92,18 @@ public class Const {
 		}
 		Entry<Long, Integer> lower = DELAY_LEVEL.lowerEntry(delay);
 		return Optional.fromNullable(lower);
+	}
+	
+	public static DefaultMQPushConsumer buildConsumer(DefaultMQPushConsumer consumer) {
+		Reflect.on(consumer)
+			   .field("defaultMQPushConsumerImpl")
+			   .field("consumeMessageService")
+			   .field("consumeExecutor")
+			   .set("threadFactory", new ThreadFactoryBuilder()
+									.setDaemon(true)
+									.setNameFormat(consumer.getConsumerGroup() + "_%d")
+	
+									.build());
+		return consumer;
 	}
 }
