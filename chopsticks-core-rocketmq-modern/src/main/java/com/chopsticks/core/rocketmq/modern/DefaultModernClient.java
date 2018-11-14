@@ -4,6 +4,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import java.lang.reflect.Proxy;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
@@ -21,6 +22,7 @@ import com.chopsticks.core.rocketmq.modern.caller.BeanProxy;
 import com.chopsticks.core.rocketmq.modern.caller.ExtBeanProxy;
 import com.chopsticks.core.rocketmq.modern.caller.NoticeBeanProxy;
 import com.chopsticks.core.rocketmq.modern.handler.ModernHandler;
+import com.chopsticks.core.rocketmq.modern.handler.Picker;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -40,6 +42,11 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	
 	@Override
 	public void register(Map<Class<?>, Object> handlers) {
+		for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
+			if(!entry.getKey().isInterface()) {
+				throw new RuntimeException("key must be interface");
+			}
+		}
 		this.handlers = handlers;
 	}
 	
@@ -48,10 +55,21 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		if(handlers != null) {
 			Set<BaseHandler> clientHandlers = Sets.newHashSet();
 			for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
-				clientHandlers.add(new ModernHandler(entry.getValue()
-													, entry.getKey().getName()
-													, com.chopsticks.core.rocketmq.Const.ALL_TAGS));
-				
+				List<String> methods = null;
+				if(entry.getValue() instanceof Picker) {
+					methods = ((Picker)entry.getValue()).pick();
+				}
+				if(methods != null && !methods.isEmpty()) {
+					for(String method : methods) {
+						clientHandlers.add(new ModernHandler(entry.getValue()
+								, entry.getKey().getName()
+								, method));
+					}
+				}else {
+					clientHandlers.add(new ModernHandler(entry.getValue()
+							, entry.getKey().getName()
+							, com.chopsticks.core.rocketmq.Const.ALL_TAGS));
+				}
 			}
 			super.register(clientHandlers);
 		}

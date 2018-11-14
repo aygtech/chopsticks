@@ -69,6 +69,8 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 						Message msg = new Message(ext.getTopic(), ext.getTags(), ext.getBody());
 						msg.setDelayTimeLevel(delayLevel.get().getValue());
 						msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+						// 手工设置了 msgid 为原有的可行， 但监控新消息还未消费成功也显示为成功，这个对监控不利，同时此方法未来官方也可能调整
+						// Reflect.on(msg).call("putProperty", MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX, ext.getMsgId());
 						try {
 							SendResult ret = producer.send(msg);
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {

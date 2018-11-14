@@ -61,6 +61,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private boolean noticeExecutable = true;
 	private boolean orderedNoticeExecutable = true;
 	
+	private int invokeExecutableNum = 15;
+	private int noticeExecutableNum = 10;
+	private int orderedNoticeExecutableNum = 5;
+	
 	public DefaultClient(String groupName) {
 		super(groupName);
 	}
@@ -185,8 +189,8 @@ public class DefaultClient extends DefaultCaller implements Client{
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.ORDERED_NOTICE_CONSUMER_SUFFIX;
 			orderedNoticeConsumer = new DefaultMQPushConsumer(groupName);
 			orderedNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
-			orderedNoticeConsumer.setConsumeThreadMin(5);
-			orderedNoticeConsumer.setConsumeThreadMax(5);
+			orderedNoticeConsumer.setConsumeThreadMin(getOrderedNoticeExecutableNum());
+			orderedNoticeConsumer.setConsumeThreadMax(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
 			orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
 			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
@@ -224,8 +228,8 @@ public class DefaultClient extends DefaultCaller implements Client{
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.NOTICE_CONSUMER_SUFFIX;
 			noticeConsumer = new DefaultMQPushConsumer(groupName);
 			noticeConsumer.setNamesrvAddr(getNamesrvAddr());
-			noticeConsumer.setConsumeThreadMin(10);
-			noticeConsumer.setConsumeThreadMax(10);
+			noticeConsumer.setConsumeThreadMin(getNoticeExecutableNum());
+			noticeConsumer.setConsumeThreadMax(getNoticeExecutableNum());
 			noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
 			noticeConsumer.setConsumeMessageBatchMaxSize(1);
 			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
@@ -263,8 +267,8 @@ public class DefaultClient extends DefaultCaller implements Client{
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.INVOKE_CONSUMER_SUFFIX;
 			invokeConsumer = new DefaultMQPushConsumer(groupName);
 			invokeConsumer.setNamesrvAddr(getNamesrvAddr());
-			invokeConsumer.setConsumeThreadMin(15);
-			invokeConsumer.setConsumeThreadMax(15);
+			invokeConsumer.setConsumeThreadMin(getInvokeExecutableNum());
+			invokeConsumer.setConsumeThreadMax(getInvokeExecutableNum());
 			invokeConsumer.setMessageModel(MessageModel.CLUSTERING);
 			invokeConsumer.setConsumeMessageBatchMaxSize(1);
 			invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
@@ -313,5 +317,25 @@ public class DefaultClient extends DefaultCaller implements Client{
 	}
 	protected boolean isOrderedNoticeExecutable() {
 		return orderedNoticeExecutable;
+	}
+	protected int getInvokeExecutableNum() {
+		return invokeExecutableNum;
+	}
+
+	protected void setInvokeExecutableNum(int invokeExecutableNum) {
+		this.invokeExecutableNum = invokeExecutableNum;
+	}
+
+	protected int getNoticeExecutableNum() {
+		return noticeExecutableNum;
+	}
+	protected void setNoticeExecutableNum(int noticeExecutableNum) {
+		this.noticeExecutableNum = noticeExecutableNum;
+	}
+	protected int getOrderedNoticeExecutableNum() {
+		return orderedNoticeExecutableNum;
+	}
+	protected void setOrderedNoticeExecutableNum(int orderedNoticeExecutableNum) {
+		this.orderedNoticeExecutableNum = orderedNoticeExecutableNum;
 	}
 }

@@ -8,6 +8,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.store.ReadOffsetType;
+import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
@@ -25,7 +27,9 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,13 +44,16 @@ import com.chopsticks.core.concurrent.Promise;
 import com.chopsticks.core.concurrent.impl.GuavaPromise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.exception.InvokeException;
+import com.chopsticks.core.exception.InvokeExecuteException;
 import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables; 
+import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder; 
 
 public class DefaultCaller implements Caller {
 	
@@ -71,6 +78,10 @@ public class DefaultCaller implements Caller {
 	private InvokeSender invokeSender;
 	
 	private boolean invokable = true;
+	
+	private DefaultMQAdminExt mqAdminExt;
+	
+	private Cache</*topic*/String, /*consumer exist*/Boolean> invokeMonitor = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	
 	/**
 	 *  <msgid, timeoutGuavaPromise>
@@ -110,12 +121,30 @@ public class DefaultCaller implements Caller {
 			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaPromise<BaseInvokeResult>>();
 			producer = buildAndStartProducer();
 			invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
+			mqAdminExt = buildAdminExt();
 			callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
 			started = true;
 		}
 	}
 	
 
+
+	private DefaultMQAdminExt buildAdminExt() {
+		if(isInvokable()) {
+			DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt();
+			try {
+				mqAdminExt.setNamesrvAddr(namesrvAddr);
+				mqAdminExt.start();
+			}catch (Throwable e) {
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
+			}
+			return mqAdminExt;
+		}else {
+			return null;
+		}
+		
+	}
 
 	private InvokeSender buildInvokeSender(DefaultMQProducer producer, long batchExecuteIntervalMillis) {
 		InvokeSender invokeSender = null;
@@ -135,6 +164,9 @@ public class DefaultCaller implements Caller {
 			producer.shutdown();
 			if(invokeSender != null) {
 				invokeSender.shutdown();
+			}
+			if(mqAdminExt != null) {
+				mqAdminExt.shutdown();
 			}
 		}
 		if(callerInvokeConsumer != null) {
@@ -210,7 +242,7 @@ public class DefaultCaller implements Caller {
 	public Promise<BaseInvokeResult> asyncInvoke(BaseInvokeCommand cmd) {
 		return this.asyncInvoke(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
-
+	
 	public Promise<BaseInvokeResult> asyncInvoke(final BaseInvokeCommand cmd, final long timeout, final TimeUnit timeoutUnit) {
 		checkArgument(started, "must be call method start");
 		checkArgument(invokable, "must be support invokable");
@@ -219,7 +251,30 @@ public class DefaultCaller implements Caller {
 			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
 			callerInvokePromiseMap.put(req.getReqId(), promise);
 			promise.addListener(new CallerTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
-			Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
+			final Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
+			if(!invokeMonitor.get(msg.getTopic(), new Callable<Boolean>() {
+				@Override
+				public Boolean call() throws Exception {
+					GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
+					boolean examineConsumerConnectionInfo = false;
+					for(String groupName : groupList.getGroupList()) {
+						try {
+							mqAdminExt.examineConsumerConnectionInfo(groupName);
+							examineConsumerConnectionInfo = true;
+							break;
+						}catch (Throwable e) {
+							if(e instanceof MQBrokerException) {
+								if(((MQBrokerException)e).getResponseCode() != 206) {
+									log.error(e.getMessage(), e);
+								}
+							}
+						}
+					}
+					return examineConsumerConnectionInfo;
+				}
+			})) {
+				throw new InvokeExecuteException(cmd.getTopic() + " cannot found executor");
+			}
 			invokeSender.send(msg, promise);
 		} catch (Throwable e) {
 			promise.setException(e);
