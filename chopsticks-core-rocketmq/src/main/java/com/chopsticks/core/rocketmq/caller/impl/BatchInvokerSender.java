@@ -9,13 +9,17 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
+import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.caller.InvokeSender;
+import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
@@ -28,13 +32,11 @@ public class BatchInvokerSender extends InvokeSender{
 	
 	private static final Logger log = LoggerFactory.getLogger(BatchInvokerSender.class);
 	
-	private static final long BATCH_MAX_LENGTH = 1024 * 1024 * 1;
-	
 	private LinkedBlockingQueue<BatchMessage> msgQueue = new LinkedBlockingQueue<BatchMessage>();
 	
 	private ScheduledThreadPoolExecutor executor;
 	
-	public BatchInvokerSender(DefaultMQProducer producer, final long executeIntervalMillis){
+	public BatchInvokerSender(final DefaultMQProducer producer, final long executeIntervalMillis){
 		super(producer);
 		executor = new ScheduledThreadPoolExecutor(1
 						, new ThreadFactoryBuilder()
@@ -58,7 +60,7 @@ public class BatchInvokerSender extends InvokeSender{
 							}
 							if(batchMsg != null) {
 								Long oldLength = MoreObjects.firstNonNull(size.get(batchMsg.msg.getTopic()), 0L);
-								if(oldLength + batchMsg.length < BATCH_MAX_LENGTH) {
+								if(oldLength + batchMsg.length < producer.getMaxMessageSize()) {
 									size.put(batchMsg.msg.getTopic(), oldLength + batchMsg.length);
 									batchMsgs.put(batchMsg.msg.getTopic(), batchMsg);
 								}else {
@@ -102,11 +104,7 @@ public class BatchInvokerSender extends InvokeSender{
 				for(BatchMessage batchMsg : collection) {
 					msgs.add(batchMsg.msg);
 				}
-				if(msgs.size() == 1) {
-					super.producer.send(msgs.get(0));
-				}else {
-					super.producer.send(msgs);
-				}
+				super.producer.send(msgs);
 			}catch (Throwable e) {
 				for(BatchMessage batchMsg : collection) {
 					batchMsg.promise.setException(e);
@@ -120,7 +118,21 @@ public class BatchInvokerSender extends InvokeSender{
 			executor.shutdown();
 		}
 	}
+	private Message compress(Message msg) {
+		try {
+			InvokeRequest req = JSON.parseObject(msg.getUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
+			req.setCompress(true);
+			int level = Reflect.on(producer).field("defaultMQProducerImpl").field("zipCompressLevel").get();
+			byte[] body = UtilAll.compress(msg.getBody(), level);
+			msg.setBody(body);
+			msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
+		}catch (Throwable e) {
+			log.error(e.getMessage(), e);
+		}
+		return msg;
+	}
 	public void send(Message message, GuavaTimeoutPromise<BaseInvokeResult> promise) {
+		message = compress(message);
 		BatchMessage batchMsg = new BatchMessage();
 		batchMsg.msg = message;
 		batchMsg.length = size(message);

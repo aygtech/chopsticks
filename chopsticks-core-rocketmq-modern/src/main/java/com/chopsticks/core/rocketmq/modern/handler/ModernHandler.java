@@ -1,6 +1,7 @@
 package com.chopsticks.core.rocketmq.modern.handler;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
@@ -21,6 +22,7 @@ import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.utils.Reflect;
+import com.chopsticks.core.utils.Reflect.ReflectException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
 
@@ -129,6 +131,9 @@ public class ModernHandler extends BaseHandler{
 			}
 			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
+			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
+				e = e.getCause();
+			}
 			throw new HandlerExecuteException(String.format("notice execute exception : %s, id : %s, retry count : %s, bean : %s, method : %s"
 														, e.getMessage()
 														, mqCtx.getId()

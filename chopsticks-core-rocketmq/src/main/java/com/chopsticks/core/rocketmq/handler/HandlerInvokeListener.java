@@ -11,6 +11,7 @@ import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
@@ -60,7 +61,11 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					continue;
 				}
 				try {
-					HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), ext.getBody()), new DefaultInvokeContext());       
+					byte[] body = ext.getBody();
+					if(req.isCompress()) {
+						body = UtilAll.uncompress(body);
+					}
+					HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), new DefaultInvokeContext());       
 					if(handlerResult != null) {
 						resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
 					}

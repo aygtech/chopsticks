@@ -6,6 +6,7 @@ public class InvokeRequest {
 	private long deadline;
 	private String respTopic;
 	private String respTag;
+	private boolean compress;
 	public long getReqTime() {
 		return reqTime;
 	}
@@ -35,5 +36,11 @@ public class InvokeRequest {
 	}
 	public void setReqId(String reqId) {
 		this.reqId = reqId;
+	}
+	public boolean isCompress() {
+		return compress;
+	}
+	public void setCompress(boolean compress) {
+		this.compress = compress;
 	}
 }

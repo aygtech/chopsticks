@@ -13,7 +13,7 @@
 
 		<!-- guava version 21.0 only support jdk7 or later -->
 		<guava.version>20.0</guava.version>
-		<rocketmq.version>4.3.0</rocketmq.version>
+		<rocketmq.version>4.3.2</rocketmq.version>
 
 		<junit.version>4.11</junit.version>
 		<slf4j.version>1.7.25</slf4j.version>
@@ -103,7 +103,7 @@
 					<encoding>UTF-8</encoding>
 				</configuration>
 			</plugin>
-			<plugin>
+			<!-- <plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
 				<executions>
@@ -114,7 +114,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin> -->
 		</plugins>
 	</build>
 	<modules>

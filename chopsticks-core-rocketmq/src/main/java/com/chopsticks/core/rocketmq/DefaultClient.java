@@ -192,6 +192,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			orderedNoticeConsumer.setConsumeThreadMin(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setConsumeThreadMax(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			orderedNoticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
 			orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
 			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(topicTags, topicTagHandlers));
@@ -231,6 +232,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			noticeConsumer.setConsumeThreadMin(getNoticeExecutableNum());
 			noticeConsumer.setConsumeThreadMax(getNoticeExecutableNum());
 			noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			noticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
 			noticeConsumer.setConsumeMessageBatchMaxSize(1);
 			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 			noticeConsumer.registerMessageListener(new HandlerNoticeListener(getProducer(), topicTags, topicTagHandlers));
@@ -270,6 +272,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			invokeConsumer.setConsumeThreadMin(getInvokeExecutableNum());
 			invokeConsumer.setConsumeThreadMax(getInvokeExecutableNum());
 			invokeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			invokeConsumer.setMaxReconsumeTimes(0);
 			invokeConsumer.setConsumeMessageBatchMaxSize(1);
 			invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 			invokeConsumer.registerMessageListener(new HandlerInvokeListener(getProducer(), topicTagHandlers));
