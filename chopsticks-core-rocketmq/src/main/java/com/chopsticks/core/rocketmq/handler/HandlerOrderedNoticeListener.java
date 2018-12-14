@@ -33,7 +33,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 	public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
 		for(MessageExt ext : msgs) {
 			String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
-			String msgId = ext.getMsgId();
+			String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
 			if(Strings.isNullOrEmpty(topic)) {
 				topic = ext.getTopic();
 			}else {
@@ -54,7 +54,9 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 			}
 			try {
-				handler.notice(new DefaultNoticeParams(topic, ext.getTags(), ext.getBody()), new DefaultNoticeContext(msgId, ext.getMsgId(), -1));
+				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
+				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), true);
+				handler.notice(params, ctx);
 			}catch (HandlerExecuteException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;

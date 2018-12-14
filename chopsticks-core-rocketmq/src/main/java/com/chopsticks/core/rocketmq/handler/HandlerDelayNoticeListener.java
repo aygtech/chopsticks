@@ -23,20 +23,21 @@ import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.DelayNoticeRequest;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
+import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 
-public class HandlerNoticeListener extends BaseHandlerListener implements MessageListenerConcurrently {
+public class HandlerDelayNoticeListener extends BaseHandlerListener implements MessageListenerConcurrently {
 	
-	private static final Logger log = LoggerFactory.getLogger(HandlerNoticeListener.class);
+	private static final Logger log = LoggerFactory.getLogger(HandlerDelayNoticeListener.class);
 	
 	private Multimap<String, String> topicTags;
 	
 	private DefaultMQProducer producer;
 	private DefaultMQPushConsumer consumer;
 
-	public HandlerNoticeListener(DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
+	public HandlerDelayNoticeListener(DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
 		super(topicTagHandlers);
 		this.consumer = consumer;
 		this.producer = producer;
@@ -51,7 +52,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			if(Strings.isNullOrEmpty(topic)) {
 				topic = ext.getTopic();
 			}
-			topic = topic.replace(Const.NOTICE_TOPIC_SUFFIX, "");
+			topic = topic.replace(Const.DELAY_NOTICE_TOPIC_SUFFIX, "");
 			if(!topicTags.keySet().contains(topic)) {
 				log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
@@ -86,7 +87,13 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {
 								throw new HandlerExecuteException(ret.getSendStatus().name());
 							}else {
-								log.trace("rootId : {}, newId : {}, next delay(ms) : {}, diff(ms) : {}", msgId, ret.getMsgId(), delayLevel.get().getKey(), diff);
+								log.trace("rootId : {}, newId : {}, invokeTime : {}, executeTime : {}, next delay(ms) : {}, diff(ms) : {}"
+										, msgId
+										, ret.getMsgId()
+										, TimeUtils.yyyyMMddHHmmssSSS(req.getInvokeTime())
+										, TimeUtils.yyyyMMddHHmmssSSS(req.getExecuteTime())
+										, String.format("%s-%s", delayLevel.get().getKey(), delayLevel.get().getValue())
+										, diff);
 								return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 							}
 						}catch (Throwable e) {

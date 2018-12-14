@@ -8,16 +8,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.concurrent.PromiseListener;
-import com.chopsticks.core.concurrent.impl.GuavaPromise;
+import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 
-class CallerTimoutPromiseListener implements PromiseListener<BaseInvokeResult> {
+class CallerInvokeTimoutPromiseListener implements PromiseListener<BaseInvokeResult> {
 	
-	private static final Logger log = LoggerFactory.getLogger(CallerTimoutPromiseListener.class);
+	private static final Logger log = LoggerFactory.getLogger(CallerInvokeTimoutPromiseListener.class);
 	
-	private Map<String, GuavaPromise<BaseInvokeResult>> callerInvokePromiseMap;
+	private Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap;
 	private String reqId;
 	
-	public CallerTimoutPromiseListener(Map<String, GuavaPromise<BaseInvokeResult>> callerInvokePromiseMap
+	public CallerInvokeTimoutPromiseListener(Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap
 									, String reqId) {
 		this.callerInvokePromiseMap = callerInvokePromiseMap;
 		this.reqId = reqId;
@@ -30,7 +30,7 @@ class CallerTimoutPromiseListener implements PromiseListener<BaseInvokeResult> {
 	@Override
 	public void onFailure(Throwable t) {
 		if(t instanceof TimeoutException || t instanceof CancellationException) {
-			GuavaPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(reqId);
+			GuavaTimeoutPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(reqId);
 			log.trace("timeout remove promise, reqId : {}, promise : {}", reqId, promise);
 		}
 	}

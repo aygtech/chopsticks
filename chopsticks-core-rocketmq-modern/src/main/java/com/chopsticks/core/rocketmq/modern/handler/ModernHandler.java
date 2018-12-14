@@ -39,8 +39,9 @@ public class ModernHandler extends BaseHandler{
 	public ModernHandler(Object obj, String topic, String tag) {
 		super(topic, tag);
 		this.obj = obj;
+		
 		if(obj instanceof ModernNoticeContextAware) {
-			for(Type type : obj.getClass().getGenericInterfaces()) {
+			for(Type type : com.chopsticks.core.Const.getOriginObject(obj).getClass().getGenericInterfaces()) {
 				if(ModernNoticeContextAware.class.isAssignableFrom((Class<?>)type)) {
 					if(((Class<?>)type).getGenericInterfaces() != null) {
 						type = ((Class<?>)type).getGenericInterfaces()[0];
@@ -134,7 +135,8 @@ public class ModernHandler extends BaseHandler{
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
 				e = e.getCause();
 			}
-			throw new HandlerExecuteException(String.format("notice execute exception : %s, id : %s, retry count : %s, bean : %s, method : %s"
+			throw new HandlerExecuteException(String.format("%s execute exception : %s, id : %s, retry count : %s, bean : %s, method : %s"
+														, mqCtx.isOrderedNotice() ? "ordered notice" : "notice"
 														, e.getMessage()
 														, mqCtx.getId()
 														, mqCtx.getReconsumeTimes()

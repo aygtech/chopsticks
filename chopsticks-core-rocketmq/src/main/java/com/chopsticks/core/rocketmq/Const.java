@@ -52,6 +52,7 @@ public class Const {
 	public static final String ALL_TAGS = "*";
 	public static final String INVOKE_TOPIC_SUFFIX = "_INVOKE_TOPIC";
 	public static final String NOTICE_TOPIC_SUFFIX = "_NOTICE_TOPIC";
+	public static final String DELAY_NOTICE_TOPIC_SUFFIX = "_DELAY_NOTICE_TOPIC";
 	public static final String ORDERED_NOTICE_TOPIC_SUFFIX = "_ORDERED_NOTICE_TOPIC";
 
 	public static final String INVOKE_REQUEST_KEY = "_INVOKE_REQUEST_";
@@ -64,6 +65,7 @@ public class Const {
 
 	public static final String INVOKE_CONSUMER_SUFFIX = "_INVOKE_CONSUMER";
 	public static final String NOTICE_CONSUMER_SUFFIX = "_NOTICE_CONSUMER";
+	public static final String DELAY_NOTICE_CONSUMER_SUFFIX = "_DELAY_NOTICE_CONSUMER";
 	public static final String ORDERED_NOTICE_CONSUMER_SUFFIX = "_ORDERED_NOTICE_CONSUMER";
 
 	public static final String CALLER_INVOKE_CONSUMER_SUFFIX = "_CALLER_INVOKE_CONSUMER";
@@ -71,8 +73,6 @@ public class Const {
 	
 	public static final int DEFAULT_TOPIC_QUEUE_SIZE = 64;
 
-	public static final String ERROR_MSG_NO_ROUTE_INFO_OF_THIS_TOPIC = "No route info of this topic";
-	public static final String ERROR_MSG_NO_NAME_SERVER_ADDRESS = "No name server address";
 	public static final String ERROR_MSG_CAN_NOT_FIND_MESSAGE_QUEUE = "Can not find Message Queue";
 	public static final String ERROR_TOPIC_NOT_EXIST = "The topic[%s] not exist";
 
@@ -87,11 +87,7 @@ public class Const {
 		if (DELAY_LEVEL.isEmpty() || delay == null || delay <= 0) {
 			return Optional.fromNullable(null);
 		}
-		if (DELAY_LEVEL.containsKey(delay)) {
-			return Optional.of(DELAY_LEVEL.floorEntry(delay));
-		}
-		Entry<Long, Integer> lower = DELAY_LEVEL.lowerEntry(delay);
-		return Optional.fromNullable(lower);
+		return Optional.fromNullable(DELAY_LEVEL.floorEntry(delay));
 	}
 	
 	public static DefaultMQPushConsumer buildConsumer(DefaultMQPushConsumer consumer) {

@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import org.apache.rocketmq.client.common.ClientErrorCode;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.store.ReadOffsetType;
@@ -27,6 +28,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
@@ -41,7 +43,6 @@ import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.caller.NoticeCommand;
 import com.chopsticks.core.caller.NoticeResult;
 import com.chopsticks.core.concurrent.Promise;
-import com.chopsticks.core.concurrent.impl.GuavaPromise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.exception.InvokeException;
 import com.chopsticks.core.exception.InvokeExecuteException;
@@ -69,7 +70,9 @@ public class DefaultCaller implements Caller {
 	
 	private volatile boolean started;
 	
-	protected static final long DEFAULT_TIMEOUT_MILLIS = 1000 * 30L;
+	protected static final long DEFAULT_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
+	
+	protected static final long DEFAULT_ASYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
 	
@@ -86,7 +89,7 @@ public class DefaultCaller implements Caller {
 	/**
 	 *  <msgid, timeoutGuavaPromise>
 	 */
-	private Map<String, GuavaPromise<BaseInvokeResult>> callerInvokePromiseMap;
+	private Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap;
 	
 	public DefaultCaller(String groupName) {
 		checkArgument(!isNullOrEmpty(groupName), "groupName cannot be null or empty");
@@ -103,10 +106,11 @@ public class DefaultCaller implements Caller {
 			}
 		}catch (Throwable e) {
 			if(e instanceof MQClientException) {
-				String errMsg = e.getMessage();
-				if(errMsg.contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_NO_ROUTE_INFO_OF_THIS_TOPIC)){
+				;
+				MQClientException se = (MQClientException)e;
+				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
 					e = new InvokeException("namesrv connection error", e);
-				}else if(errMsg.contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_NO_NAME_SERVER_ADDRESS)) {
+				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
 					e = new InvokeException("namesrv ip undefined", e);
 				}
 			}
@@ -117,8 +121,9 @@ public class DefaultCaller implements Caller {
 	
 	@Override
 	public synchronized void start() {
+		log.info("Invokable : {}", isInvokable());
 		if(!started) {
-			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaPromise<BaseInvokeResult>>();
+			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaTimeoutPromise<BaseInvokeResult>>();
 			producer = buildAndStartProducer();
 			invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
 			mqAdminExt = buildAdminExt();
@@ -250,23 +255,28 @@ public class DefaultCaller implements Caller {
 		try {
 			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
 			callerInvokePromiseMap.put(req.getReqId(), promise);
-			promise.addListener(new CallerTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
 			final Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
 			if(!invokeMonitor.get(msg.getTopic(), new Callable<Boolean>() {
 				@Override
 				public Boolean call() throws Exception {
-					GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
 					boolean examineConsumerConnectionInfo = false;
-					for(String groupName : groupList.getGroupList()) {
-						try {
-							mqAdminExt.examineConsumerConnectionInfo(groupName);
-							examineConsumerConnectionInfo = true;
-							break;
-						}catch (Throwable e) {
-							if(e instanceof MQBrokerException) {
-								if(((MQBrokerException)e).getResponseCode() != 206) {
-									log.error(e.getMessage(), e);
-								}
+					try {
+						GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
+						for(String groupName : groupList.getGroupList()) {
+								mqAdminExt.examineConsumerConnectionInfo(groupName);
+								examineConsumerConnectionInfo = true;
+								break;
+						}
+					}catch (Throwable e) {
+						if(e instanceof MQBrokerException) {
+							MQBrokerException se = (MQBrokerException)e;
+							if(se.getResponseCode() != ResponseCode.CONSUMER_NOT_ONLINE) {
+								log.error(e.getMessage(), e);
+							}
+						}else if(e instanceof MQClientException) {
+							MQClientException se = (MQClientException)e;
+							if(se.getResponseCode() != ResponseCode.TOPIC_NOT_EXIST) {
+								log.error(e.getMessage(), e);
 							}
 						}
 					}
@@ -276,6 +286,7 @@ public class DefaultCaller implements Caller {
 				throw new InvokeExecuteException(cmd.getTopic() + " cannot found executor");
 			}
 			invokeSender.send(msg, promise);
+			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
 		} catch (Throwable e) {
 			promise.setException(e);
 		}
@@ -285,9 +296,17 @@ public class DefaultCaller implements Caller {
 	
 	
 	public BaseNoticeResult notice(BaseNoticeCommand cmd) {
-		return this.notice(cmd, (String)null);
+		try {
+			return this.asyncNotice(cmd).get();
+		}catch (Throwable e) {
+			if(e instanceof ExecutionException) {
+				e = e.getCause();
+			}
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
+		}
 	}
-
+	
 	public BaseNoticeResult notice(BaseNoticeCommand cmd, Object orderKey) {
 		try {
 			return this.asyncNotice(cmd, orderKey).get();
@@ -301,20 +320,33 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(BaseNoticeCommand cmd) {
-		return this.asyncNotice(cmd, null);
+		checkArgument(started, "must be call method start");
+		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		try {
+			Message msg = buildNoticeMessage(cmd);
+			NoticeSendCallback callback = new NoticeSendCallback(promise);
+			producer.send(msg, callback);
+			promise.addListener(new CallerNoticeTimeoutPromiseListener(callback));
+		}catch (Throwable e) {
+			promise.setException(e);
+		}
+		return promise;
 	}
 	
+	private Message buildNoticeMessage(BaseNoticeCommand cmd) {
+		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
+		return msg;
+	}
+
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Object orderKey) {
 		checkArgument(started, "must be call method start");
-		final GuavaPromise<BaseNoticeResult> promise = new GuavaPromise<BaseNoticeResult>();
+		checkArgument(orderKey != null, "orderKey cannot be null");
+		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
-			Message msg = buildNoticeMessage(cmd, orderKey);
+			Message msg = buildOrderedNoticeMessage(cmd, orderKey);
 			NoticeSendCallback callback = new NoticeSendCallback(promise);
-			if(orderKey == null) {
-				producer.send(msg, callback);
-			}else {
-				producer.send(msg, DEFAULT_MESSAGE_QUEUE_SELECTOR , orderKey, callback);
-			}
+			producer.send(msg, DEFAULT_MESSAGE_QUEUE_SELECTOR , orderKey, callback);
+			promise.addListener(new CallerNoticeTimeoutPromiseListener(callback));
 		}catch (Throwable e) {
 			promise.setException(e);
 		}
@@ -323,14 +355,15 @@ public class DefaultCaller implements Caller {
 	}
 	
 	protected Message buildInvokeMessage(InvokeRequest req, BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
-		Message msg = new Message(buildTopic(cmd), cmd.getTag(), cmd.getBody());
+		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
 		return msg;
 	}
 	
 	private DelayNoticeRequest buildDelayNoticeRequest(BaseNoticeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		DelayNoticeRequest req = new DelayNoticeRequest();
-		req.setExecuteTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow() + timeoutUnit.toMillis(timeout));
+		req.setInvokeTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
+		req.setExecuteTime(req.getInvokeTime() + timeoutUnit.toMillis(timeout));
 		return req;
 	}
 
@@ -349,7 +382,7 @@ public class DefaultCaller implements Caller {
 	}
 	
 	private Message buildDelayNoticeMessage(BaseNoticeCommand cmd, Long delay, TimeUnit delayTimeUnit) {
-		Message msg = buildNoticeMessage(cmd, null);
+		Message msg = new Message(buildDelayNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		if(delay != null 
 		&& delayTimeUnit != null
 		&& delay > 0) {
@@ -367,27 +400,9 @@ public class DefaultCaller implements Caller {
 		return msg;
 	}
 	
-	private Message buildNoticeMessage(BaseNoticeCommand cmd, Object orderKey) {
-		Message msg = new Message(buildTopic(cmd, orderKey), cmd.getTag(), cmd.getBody());
+	private Message buildOrderedNoticeMessage(BaseNoticeCommand cmd, Object orderKey) {
+		Message msg = new Message(buildOrderedNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		return msg;
-	}
-	
-	private String buildTopic(BaseCommand cmd) {
-		return buildTopic(cmd, null);
-	}
-	
-	private String buildTopic(BaseCommand cmd, Object orderKey) {
-		String topic = cmd.getTopic();
-		if(cmd instanceof BaseInvokeCommand) {
-			topic = buildInvokeTopic(topic);
-		}else if(cmd instanceof BaseNoticeCommand) {
-			if(orderKey == null) {
-				topic = buildNoticeTopic(topic);
-			}else {
-				topic = buildOrderedNoticeTopic(topic);
-			}
-		}
-		return buildSuccessTopic(topic);
 	}
 	
 	protected String buildSuccessTopic(String topic) {
@@ -395,15 +410,19 @@ public class DefaultCaller implements Caller {
 	}
 	
 	protected String buildOrderedNoticeTopic(String topic) {
-		return topic + com.chopsticks.core.rocketmq.Const.ORDERED_NOTICE_TOPIC_SUFFIX;
+		return buildSuccessTopic(topic + com.chopsticks.core.rocketmq.Const.ORDERED_NOTICE_TOPIC_SUFFIX);
 	}
 	
 	protected String buildNoticeTopic(String topic) {
-		return topic + com.chopsticks.core.rocketmq.Const.NOTICE_TOPIC_SUFFIX;
+		return buildSuccessTopic(topic + com.chopsticks.core.rocketmq.Const.NOTICE_TOPIC_SUFFIX);
+	}
+	
+	protected String buildDelayNoticeTopic(String topic) {
+		return buildSuccessTopic(topic + com.chopsticks.core.rocketmq.Const.DELAY_NOTICE_TOPIC_SUFFIX);
 	}
 	
 	protected String buildInvokeTopic(String topic) {
-		return topic + com.chopsticks.core.rocketmq.Const.INVOKE_TOPIC_SUFFIX;
+		return buildSuccessTopic(topic + com.chopsticks.core.rocketmq.Const.INVOKE_TOPIC_SUFFIX);
 	}
 
 	protected DefaultMQProducer getProducer() {
@@ -520,11 +539,12 @@ public class DefaultCaller implements Caller {
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Long delay, final TimeUnit delayTimeUnit) {
 		checkArgument(started, "must be call method start");
-		final GuavaPromise<BaseNoticeResult> promise = new GuavaPromise<BaseNoticeResult>();
+		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildDelayNoticeMessage(cmd, delay, delayTimeUnit);
 			NoticeSendCallback callback = new NoticeSendCallback(promise);
 			producer.send(msg, callback);
+			promise.addListener(new CallerNoticeTimeoutPromiseListener(callback));
 		}catch (Throwable e) {
 			promise.setException(e);
 		}

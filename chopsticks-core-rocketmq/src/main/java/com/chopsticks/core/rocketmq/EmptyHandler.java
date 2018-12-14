@@ -9,6 +9,7 @@ import com.chopsticks.core.rocketmq.handler.BaseHandlerResult;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 
 public class EmptyHandler extends BaseHandler{
+	
 
 	public EmptyHandler(String topic, String tag) {
 		super(topic, tag);
@@ -21,6 +22,5 @@ public class EmptyHandler extends BaseHandler{
 
 	@Override
 	public void notice(NoticeParams params, NoticeContext ctx) {
-		
 	}
 }

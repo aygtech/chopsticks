@@ -8,6 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.Callable;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Set;
 
 import com.chopsticks.core.modern.ModernClient;
@@ -29,6 +33,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 
 public class DefaultModernClient extends DefaultClient implements ModernClient {
+	
+	private static final Logger log = LoggerFactory.getLogger(DefaultModernClient.class);
 	
 	private static final Cache<Class<?>, Object> BEAN_CACHE = CacheBuilder.newBuilder().build();
 	private static final Cache<Class<?>, NoticeBean> NOTICE_BEAN_CACHE = CacheBuilder.newBuilder().build();
@@ -52,6 +58,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	
 	@Override
 	public synchronized void start() {
+		log.info("Client {} begin start", getGroupName());
 		if(handlers != null) {
 			Set<BaseHandler> clientHandlers = Sets.newHashSet();
 			for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
@@ -74,6 +81,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			super.register(clientHandlers);
 		}
 		super.start();
+		log.info("Client {} end start", getGroupName());
 	}
 	
 	@Override

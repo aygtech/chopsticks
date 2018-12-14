@@ -8,4 +8,8 @@ public class DefaultNoticeContext extends BaseNoticeContext {
 		super(id, originId, reconsumeTimes);
 	}
 
+	public DefaultNoticeContext(String id, String originId, int reconsumeTimes, boolean orderedNotice) {
+		super(id, originId, reconsumeTimes, orderedNotice);
+	}
+	
 }

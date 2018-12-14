@@ -92,7 +92,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					try {
 						SendResult ret = producer.send(respMsg);
 						if(ret.getSendStatus() == SendStatus.SEND_OK) {
-							log.trace("invoke reqId : {}, req msgId : {}, rec msgId : {}", req.getReqId(), ext.getMsgId(), ret.getMsgId());
+							log.trace("invoke tag : {}, reqId : {}, msgId : {}, rec msgId : {}", ext.getTags(), req.getReqId(), ext.getMsgId(), ret.getMsgId());
 						}else {
 							log.error("rec invoke error : {}", ret.getSendStatus().name());
 						}

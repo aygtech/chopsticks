@@ -32,6 +32,8 @@ public class BatchInvokerSender extends InvokeSender{
 	
 	private static final Logger log = LoggerFactory.getLogger(BatchInvokerSender.class);
 	
+	private static final long MAX_BATCH_SIZE = 1000 * 1000;
+	
 	private LinkedBlockingQueue<BatchMessage> msgQueue = new LinkedBlockingQueue<BatchMessage>();
 	
 	private ScheduledThreadPoolExecutor executor;
@@ -60,7 +62,7 @@ public class BatchInvokerSender extends InvokeSender{
 							}
 							if(batchMsg != null) {
 								Long oldLength = MoreObjects.firstNonNull(size.get(batchMsg.msg.getTopic()), 0L);
-								if(oldLength + batchMsg.length < producer.getMaxMessageSize()) {
+								if(oldLength + batchMsg.length < MAX_BATCH_SIZE) {
 									size.put(batchMsg.msg.getTopic(), oldLength + batchMsg.length);
 									batchMsgs.put(batchMsg.msg.getTopic(), batchMsg);
 								}else {

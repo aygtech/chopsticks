@@ -11,7 +11,7 @@ public class UserServiceImpl implements UserService, DefaultModernNoticeContextA
 	@Override
 	public void saveUser(User user) {
 		if(this.holder.get() != null) {
-			System.out.println("notice : " + this.holder.get().getId() + ", saveUser : " + user );
+			System.out.println("notice : " + this.holder.get().getId() + ", saveUser : " + user.getId());
 		}else {
 			System.out.println("saveUser : " + user);
 		}

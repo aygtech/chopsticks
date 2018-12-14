@@ -23,6 +23,7 @@ import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
+import com.chopsticks.core.rocketmq.handler.HandlerDelayNoticeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerInvokeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerNoticeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerOrderedNoticeListener;
@@ -55,14 +56,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	private DefaultMQPushConsumer invokeConsumer;
 	private DefaultMQPushConsumer noticeConsumer;
+	private DefaultMQPushConsumer delayNoticeConsumer;
 	private DefaultMQPushConsumer orderedNoticeConsumer;
 	
 	private boolean invokeExecutable = true;
 	private boolean noticeExecutable = true;
+	private boolean delayNoticeExecutable = true;
 	private boolean orderedNoticeExecutable = true;
 	
 	private int invokeExecutableNum = 15;
 	private int noticeExecutableNum = 10;
+	private int delayNoticeExecutableNum = 10;
 	private int orderedNoticeExecutableNum = 5;
 	
 	public DefaultClient(String groupName) {
@@ -92,6 +96,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 		if(invokeConsumer != null) {
 			invokeConsumer.shutdown();
 		}
+		if(delayNoticeConsumer != null) {
+			delayNoticeConsumer.shutdown();
+		}
 		if(noticeConsumer != null){
 			noticeConsumer.shutdown();
 		}
@@ -103,12 +110,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	@Override
 	public synchronized void start() {
+		log.info("InvokeExecutable : {}", isInvokeExecutable());
+		log.info("NoticeExecutable : {}", isNoticeExecutable());
+		log.info("DelayNoticeExecutable : {}", isDelayNoticeExecutable());
+		log.info("OrderedNoticeExecutable : {}", isOrderedNoticeExecutable());
 		if(!started) {
 			super.start();
 			buildTopicTagsAndTopicTagHandlers();
 			if(!topicTags.isEmpty()) {
 				addTest();
 				invokeConsumer = buildAndStartInvokeCosumer();
+				delayNoticeConsumer = buildAndStartDelayNoticeCosumer();
 				noticeConsumer = buildAndStartNoticeCosumer();
 				orderedNoticeConsumer = buildAndStartOrderedNoticeCosumer();
 			}
@@ -135,6 +147,18 @@ public class DefaultClient extends DefaultCaller implements Client{
 					throw new RuntimeException(ret.getSendStatus().name());
 				}
 				invokeConsumer.fetchSubscribeMessageQueues(buildInvokeTopic(topic));
+			}
+		}catch (Throwable e) {
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
+		}
+	}
+	
+	private void testDelayNoticeClient(DefaultMQPushConsumer delayNoticeConsumer) {
+		try {
+			for(String topic : topicTags.keySet()) {
+				this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()), DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				delayNoticeConsumer.fetchSubscribeMessageQueues(buildDelayNoticeTopic(topic));
 			}
 		}catch (Throwable e) {
 			Throwables.throwIfUnchecked(e);
@@ -194,6 +218,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
 			orderedNoticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
 			orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
+			orderedNoticeConsumer.setSuspendCurrentQueueTimeMillis(TimeUnit.SECONDS.toMillis(5L));
 			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(topicTags, topicTagHandlers));
 			orderedNoticeConsumer.setPullThresholdSizeForTopic(20);
@@ -235,7 +260,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			noticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
 			noticeConsumer.setConsumeMessageBatchMaxSize(1);
 			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			noticeConsumer.registerMessageListener(new HandlerNoticeListener(getProducer(), topicTags, topicTagHandlers));
+			noticeConsumer.registerMessageListener(new HandlerNoticeListener(noticeConsumer, getProducer(), topicTags, topicTagHandlers));
 			noticeConsumer.setPullThresholdSizeForTopic(50);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -261,6 +286,46 @@ public class DefaultClient extends DefaultCaller implements Client{
 			}
 		}
 		return noticeConsumer;
+	}
+	
+	private DefaultMQPushConsumer buildAndStartDelayNoticeCosumer() {
+		DefaultMQPushConsumer delayNoticeConsumer = null;
+		if(isDelayNoticeExecutable()) {
+			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.DELAY_NOTICE_CONSUMER_SUFFIX;
+			delayNoticeConsumer = new DefaultMQPushConsumer(groupName);
+			delayNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
+			delayNoticeConsumer.setConsumeThreadMin(getDelayNoticeExecutableNum());
+			delayNoticeConsumer.setConsumeThreadMax(getDelayNoticeExecutableNum());
+			delayNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
+			delayNoticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
+			delayNoticeConsumer.setConsumeMessageBatchMaxSize(1);
+			delayNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+			delayNoticeConsumer.registerMessageListener(new HandlerDelayNoticeListener(delayNoticeConsumer, getProducer(), topicTags, topicTagHandlers));
+			delayNoticeConsumer.setPullThresholdSizeForTopic(50);
+			try {
+				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
+					String topic = entry.getKey();
+					Collection<String> tags = entry.getValue();
+					topic = buildDelayNoticeTopic(topic);
+					realConsumeFromLastOffset(delayNoticeConsumer.getMessageModel(), delayNoticeConsumer.getInstanceName(), delayNoticeConsumer.getConsumerGroup(), topic);
+					if(tags.contains(Const.ALL_TAGS)) {
+						delayNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
+					}else {
+						delayNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+					}
+				}
+				delayNoticeConsumer.start();
+				delayNoticeConsumer = Const.buildConsumer(delayNoticeConsumer);
+				testDelayNoticeClient(delayNoticeConsumer);
+			}catch (Throwable e) {
+				if(delayNoticeConsumer != null) {
+					delayNoticeConsumer.shutdown();
+				}
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
+			}
+		}
+		return delayNoticeConsumer;
 	}
 	
 	private DefaultMQPushConsumer buildAndStartInvokeCosumer() {
@@ -324,11 +389,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 	protected int getInvokeExecutableNum() {
 		return invokeExecutableNum;
 	}
-
 	protected void setInvokeExecutableNum(int invokeExecutableNum) {
 		this.invokeExecutableNum = invokeExecutableNum;
 	}
-
 	protected int getNoticeExecutableNum() {
 		return noticeExecutableNum;
 	}
@@ -340,5 +403,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 	}
 	protected void setOrderedNoticeExecutableNum(int orderedNoticeExecutableNum) {
 		this.orderedNoticeExecutableNum = orderedNoticeExecutableNum;
+	}
+	protected boolean isDelayNoticeExecutable() {
+		return delayNoticeExecutable;
+	}
+	protected void setDelayNoticeExecutable(boolean delayNoticeExecutable) {
+		this.delayNoticeExecutable = delayNoticeExecutable;
+	}
+	protected int getDelayNoticeExecutableNum() {
+		return delayNoticeExecutableNum;
+	}
+	protected void setDelayNoticeExecutableNum(int delayNoticeExecutableNum) {
+		this.delayNoticeExecutableNum = delayNoticeExecutableNum;
 	}
 }

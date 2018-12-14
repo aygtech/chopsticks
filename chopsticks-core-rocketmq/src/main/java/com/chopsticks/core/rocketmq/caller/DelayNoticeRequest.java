@@ -2,7 +2,9 @@ package com.chopsticks.core.rocketmq.caller;
 
 public class DelayNoticeRequest {
 	private String rootId;
+	private long invokeTime;
 	private long executeTime;
+	private String executeGroupName;
 
 	public long getExecuteTime() {
 		return executeTime;
@@ -15,5 +17,17 @@ public class DelayNoticeRequest {
 	}
 	public void setRootId(String rootId) {
 		this.rootId = rootId;
+	}
+	public long getInvokeTime() {
+		return invokeTime;
+	}
+	public void setInvokeTime(long invokeTime) {
+		this.invokeTime = invokeTime;
+	}
+	public String getExecuteGroupName() {
+		return executeGroupName;
+	}
+	public void setExecuteGroupName(String executeGroupName) {
+		this.executeGroupName = executeGroupName;
 	}
 }
