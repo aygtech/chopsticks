@@ -24,6 +24,7 @@ import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
+import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
 
 public class HandlerInvokeListener extends BaseHandlerListener implements MessageListenerConcurrently{
@@ -32,8 +33,8 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 	
 	private DefaultMQProducer producer;
 	
-	public HandlerInvokeListener(DefaultMQProducer producer, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers);
+	public HandlerInvokeListener(String groupName, DefaultMQProducer producer, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, groupName);
 		this.producer = producer;
 	}
 
@@ -77,7 +78,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					}
 					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), Throwables.getStackTraceAsString(e));
 				}
-				if(resp != null) {
+				if(!Strings.isNullOrEmpty(req.getRespTopic()) && resp != null) {
 					now = Const.CLIENT_TIME.getNow();
 					if(now > req.getDeadline()) {
 						log.warn("timeout, skip invoke process response, reqTime : {}, deadline : {}, now : {}, topic : {}, tag : {}"

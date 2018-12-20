@@ -102,4 +102,16 @@ public class Const {
 									.build());
 		return consumer;
 	}
+	
+	public static String buildCustomTag(String groupName, String tag) {
+		return groupName + "-" + tag;
+	}
+	
+	public static String getOriginTag(String groupName, String customTag) {
+		return customTag.replaceFirst(groupName + "-", "");
+	}
+	
+	public static String buildTestTag(String groupName) {
+		return groupName + CLIENT_TEST_TAG;
+	}
 }

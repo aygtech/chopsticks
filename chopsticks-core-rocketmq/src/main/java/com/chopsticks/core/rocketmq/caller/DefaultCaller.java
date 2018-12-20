@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -51,11 +52,18 @@ import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
+import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder; 
 
+/**
+ * 默认发送者实现
+ * @author zilong.li
+ *
+ */
 public class DefaultCaller implements Caller {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultCaller.class);
@@ -72,7 +80,7 @@ public class DefaultCaller implements Caller {
 	
 	protected static final long DEFAULT_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 	
-	protected static final long DEFAULT_ASYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
+	protected static final long DEFAULT_ASYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
 	
@@ -106,12 +114,11 @@ public class DefaultCaller implements Caller {
 			}
 		}catch (Throwable e) {
 			if(e instanceof MQClientException) {
-				;
 				MQClientException se = (MQClientException)e;
 				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new InvokeException("namesrv connection error", e);
+					e = new InvokeException("namesrv connection error");
 				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new InvokeException("namesrv ip undefined", e);
+					e = new InvokeException("namesrv ip undefined");
 				}
 			}
 			Throwables.throwIfUnchecked(e);
@@ -121,7 +128,6 @@ public class DefaultCaller implements Caller {
 	
 	@Override
 	public synchronized void start() {
-		log.info("Invokable : {}", isInvokable());
 		if(!started) {
 			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaTimeoutPromise<BaseInvokeResult>>();
 			producer = buildAndStartProducer();
@@ -167,15 +173,19 @@ public class DefaultCaller implements Caller {
 	public synchronized void shutdown() {
 		if(producer != null) {
 			producer.shutdown();
+			producer = null;
 			if(invokeSender != null) {
 				invokeSender.shutdown();
+				invokeSender = null;
 			}
 			if(mqAdminExt != null) {
 				mqAdminExt.shutdown();
+				mqAdminExt = null;
 			}
 		}
 		if(callerInvokeConsumer != null) {
 			callerInvokeConsumer.shutdown();
+			callerInvokeConsumer = null;
 		}
 		started = false;
 	}
@@ -191,14 +201,30 @@ public class DefaultCaller implements Caller {
 			callerInvokeConsumer.setConsumeMessageBatchMaxSize(10);
 			callerInvokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 			callerInvokeConsumer.registerMessageListener(new CallerInvokeListener(callerInvokePromiseMap));
-			callerInvokeConsumer.setPullThresholdSizeForTopic(50);
+			callerInvokeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				String topic = buildRespTopic();
 				callerInvokeConsumer.subscribe(topic, com.chopsticks.core.rocketmq.Const.ALL_TAGS);
 				callerInvokeConsumer.start();
 				callerInvokeConsumer = com.chopsticks.core.rocketmq.Const.buildConsumer(callerInvokeConsumer);
-				testCaller();
-				callerInvokeConsumer.fetchSubscribeMessageQueues(buildRespTopic());	
+				ThreadPoolExecutor consumeExecutor = Reflect.on(callerInvokeConsumer)
+														    .field("defaultMQPushConsumerImpl")
+														    .field("consumeMessageService")
+														    .field("consumeExecutor")
+														    .get();
+				Stopwatch watch = Stopwatch.createStarted();
+				do {
+					if(watch.elapsed(TimeUnit.MILLISECONDS) > DEFAULT_TIMEOUT_MILLIS) {
+						throw new RuntimeException("caller connection server timeout, pls try again.");
+					}
+					if(consumeExecutor.getTaskCount() > 0) {
+						break;
+					}else {
+						testCaller();
+						callerInvokeConsumer.fetchSubscribeMessageQueues(buildRespTopic());
+						TimeUnit.SECONDS.sleep(1L);
+					}
+				}while(true);
 			}catch (Throwable e) {
 				if(callerInvokeConsumer != null) {
 					callerInvokeConsumer.shutdown();

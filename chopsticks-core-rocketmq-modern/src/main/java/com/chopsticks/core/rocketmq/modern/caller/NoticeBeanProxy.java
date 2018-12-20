@@ -54,5 +54,9 @@ public class NoticeBeanProxy extends BaseProxy{
 		DefaultNoticeResult ret = new DefaultNoticeResult(baseResult.getId());
 		return ret;
 	}
-
+	
+	protected Class<?> getClazz() {
+		return clazz;
+	}
+	
 }

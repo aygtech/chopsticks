@@ -3,16 +3,15 @@ package com.chopsticks.core.rocketmq.modern;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Set;
 
 import com.chopsticks.core.modern.ModernClient;
 import com.chopsticks.core.modern.caller.ExtBean;
@@ -32,6 +31,11 @@ import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
 
+/**
+ * 默认封装客户端实现
+ * @author zilong.li
+ *
+ */
 public class DefaultModernClient extends DefaultClient implements ModernClient {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultModernClient.class);
@@ -59,31 +63,71 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	@Override
 	public synchronized void start() {
 		log.info("Client {} begin start", getGroupName());
-		if(handlers != null) {
-			Set<BaseHandler> clientHandlers = Sets.newHashSet();
-			for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
-				List<String> methods = null;
-				if(entry.getValue() instanceof Picker) {
-					methods = ((Picker)entry.getValue()).pick();
-				}
-				if(methods != null && !methods.isEmpty()) {
+		log.info("Invokable : {}, InvokeExecutable : {}, NoticeExecutable : {}, DelayNoticeExecutable : {}, OrderedNoticeExecutable : {}"
+				, isInvokable()
+				, isInvokeExecutable()
+				, isNoticeExecutable()
+				, isDelayNoticeExecutable()
+				, isOrderedNoticeExecutable());
+		try {
+			if(handlers != null) {
+				Set<BaseHandler> clientHandlers = Sets.newHashSet();
+				for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
+					Set<String> methods = getMethods(entry);
+					log.info("interface : {}, impl : {}, method : {}", entry.getKey(), entry.getValue(), methods);
 					for(String method : methods) {
 						clientHandlers.add(new ModernHandler(entry.getValue()
 								, entry.getKey().getName()
 								, method));
 					}
-				}else {
-					clientHandlers.add(new ModernHandler(entry.getValue()
-							, entry.getKey().getName()
-							, com.chopsticks.core.rocketmq.Const.ALL_TAGS));
 				}
+				super.register(clientHandlers);
 			}
-			super.register(clientHandlers);
+			super.start();
+		}catch (Throwable e) {
+			this.shutdown();
+			Throwables.throwIfUnchecked(e);
+			throw new RuntimeException(e);
+			
 		}
-		super.start();
 		log.info("Client {} end start", getGroupName());
 	}
 	
+	private Set<String> getMethods(Entry<Class<?>, Object> entry) {
+		Set<String> methods = null;
+		Set<String> interfaceMethods = getInterfaceMehtods(entry.getKey());
+		if(entry.getValue() instanceof Picker) {
+			methods = ((Picker)entry.getValue()).pick();
+			if(methods == null || methods.isEmpty()) {
+				throw new RuntimeException(entry.getValue().getClass().getName() + " pick method must return data");
+			}else {
+				Set<String> tmp = Sets.newHashSet();
+				for(String method : methods) {
+					tmp.add(method.trim());
+				}
+				methods = tmp;
+				if(methods.isEmpty()) {
+					throw new RuntimeException(entry.getValue().getClass().getName() + " pick method must return data"); 
+				}
+			}
+			methods.retainAll(interfaceMethods);
+			if(methods.isEmpty()) {
+				throw new RuntimeException(entry.getValue().getClass().getName() + " pick method must return data");
+			}
+		}else {
+			methods = interfaceMethods;
+		}
+		return methods;
+	}
+
+	private Set<String> getInterfaceMehtods(Class<?> clazz) {
+		Set<String> interfaceMethods = Sets.newHashSet();
+		for(Method method : clazz.getMethods()) {
+			interfaceMethods.add(method.getName());
+		}
+		return interfaceMethods;
+	}
+
 	@Override
 	public <T> T getBean(final Class<T> clazz) {
 		checkNotNull(clazz);

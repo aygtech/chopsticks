@@ -3,6 +3,7 @@ package com.chopsticks.core.rocketmq.handler;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
@@ -36,9 +37,9 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 	
 	private DefaultMQProducer producer;
 	private DefaultMQPushConsumer consumer;
-
-	public HandlerDelayNoticeListener(DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers);
+	
+	public HandlerDelayNoticeListener(String groupName, DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, groupName);
 		this.consumer = consumer;
 		this.producer = producer;
 		this.topicTags = topicTags;
@@ -47,6 +48,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 	@Override
 	public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 		for(MessageExt ext : msgs) {
+			ext.setTags(Const.getOriginTag(getGroupName(), ext.getTags()));
 			String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
 			String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
 			if(Strings.isNullOrEmpty(topic)) {
@@ -61,6 +63,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 			String noticeDealyReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
 			if(!Strings.isNullOrEmpty(noticeDealyReqStr)) {
 				DelayNoticeRequest req = JSON.parseObject(noticeDealyReqStr, DelayNoticeRequest.class);
+				// TODO 等待原有延迟消费完毕 1.0.9
 				if(req.getExecuteGroupName() != null) {
 					if(!consumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
 						log.trace("cur group is {}, msg group is {}, cancel consumer", consumer.getConsumerGroup(), req.getExecuteGroupName());
@@ -77,11 +80,10 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 				if(diff > 0) {
 					Optional<Entry<Long, Integer>> delayLevel = Const.getDelayLevel(diff);
 					if(delayLevel.isPresent()) {
-						Message msg = new Message(ext.getTopic(), ext.getTags(), ext.getBody());
+						Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getGroupName(), ext.getTags()), ext.getBody());
 						msg.setDelayTimeLevel(delayLevel.get().getValue());
 						msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-						// 手工设置了 msgid 为原有的可行， 但监控新消息还未消费成功也显示为成功，这个对监控不利，同时此方法未来官方也可能调整
-						// Reflect.on(msg).call("putProperty", MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX, ext.getMsgId());
+						msg.setKeys(req.getRootId());
 						try {
 							SendResult ret = producer.send(msg);
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {
@@ -102,6 +104,13 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 						}
 					}else {
 						log.trace("delayLevel be null, diff : {}", diff);
+						if(diff < TimeUnit.SECONDS.toMillis(1)) {
+							try {
+								TimeUnit.MILLISECONDS.sleep(diff);	
+							}catch (Throwable e) {
+								log.error(e.getMessage(), e);
+							}
+						}
 					}
 				}
 			}

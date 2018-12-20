@@ -37,6 +37,7 @@ import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
+import com.google.common.base.Throwables;
 
 public class HttpTinyClient {
 	private static final Logger log = LoggerFactory.getLogger(HttpTinyClient.class);
@@ -100,9 +101,14 @@ public class HttpTinyClient {
                 resp = IOTinyUtils.toString(conn.getInputStream(), encoding);
             } else {
                 resp = IOTinyUtils.toString(conn.getErrorStream(), encoding);
+                log.warn("connection server error : {}, code : {}", resp, respCode);
             }
             return new HttpResult(respCode, resp);
-        } finally {
+        }catch (Throwable e) {
+        	log.warn("connection server error, msg : {}", e.getMessage());
+        	Throwables.throwIfUnchecked(e);
+        	throw new RuntimeException(e);
+        }finally {
             if (conn != null) {
                 conn.disconnect();
             }

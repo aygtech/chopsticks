@@ -11,9 +11,11 @@ abstract class BaseHandlerListener{
 	 *  <topic + tag, baseHandler>
 	 */
 	private Map<String, BaseHandler> topicTagHandlers;
+	private String groupName;
 	
-	BaseHandlerListener(Map<String, BaseHandler> topicTagHandlers) {
+	BaseHandlerListener(Map<String, BaseHandler> topicTagHandlers, String groupName) {
 		this.topicTagHandlers = topicTagHandlers;
+		this.groupName = groupName;
 	}
 	
 	protected BaseHandler getHandler(String topic, String tag) {
@@ -22,5 +24,9 @@ abstract class BaseHandlerListener{
 			handler = topicTagHandlers.get(topic + Const.ALL_TAGS);
 		}
 		return handler;
+	}
+	
+	protected String getGroupName() {
+		return groupName;
 	}
 }

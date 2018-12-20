@@ -6,7 +6,9 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.rocketmq.client.common.ClientErrorCode;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
@@ -16,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.Client;
+import com.chopsticks.core.exception.InvokeException;
 import com.chopsticks.core.handler.Handler;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.DefaultCaller;
@@ -36,6 +39,11 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
 import com.google.common.collect.Sets; 
 
+/**
+ * 默认客户端实现
+ * @author zilong.li
+ *
+ */
 public class DefaultClient extends DefaultCaller implements Client{
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultClient.class);
@@ -69,6 +77,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private int delayNoticeExecutableNum = 10;
 	private int orderedNoticeExecutableNum = 5;
 	
+	private int noticeExcecutableRetryNum = Integer.MAX_VALUE;
+	private int delayNoticeExecutableRetryNum = Integer.MAX_VALUE;
+	private int orderedNoticeExecutableRetryNum = Integer.MAX_VALUE;
+	
 	public DefaultClient(String groupName) {
 		super(groupName);
 	}
@@ -83,8 +95,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 		for(Handler handler : handlers) {
 			if(handler instanceof BaseHandler) {
 				baseHandlers.add((BaseHandler)handler);
+				baseHandlers.add(new BaseHandlerWapper(handler, ((BaseHandler) handler).getTopic() , Const.buildCustomTag(getGroupName(), ((BaseHandler) handler).getTag())));
 			}else {
 				baseHandlers.add(new BaseHandlerWapper(handler, Const.DEFAULT_TOPIC, handler.getMethod()));
+				baseHandlers.add(new BaseHandlerWapper(handler, Const.DEFAULT_TOPIC, Const.buildCustomTag(getGroupName(), handler.getMethod())));
 			}
 		}
 		return baseHandlers;
@@ -95,25 +109,25 @@ public class DefaultClient extends DefaultCaller implements Client{
 		super.shutdown();
 		if(invokeConsumer != null) {
 			invokeConsumer.shutdown();
+			invokeConsumer = null;
 		}
 		if(delayNoticeConsumer != null) {
 			delayNoticeConsumer.shutdown();
+			delayNoticeConsumer = null;
 		}
 		if(noticeConsumer != null){
 			noticeConsumer.shutdown();
+			noticeConsumer = null;
 		}
 		if(orderedNoticeConsumer != null) {
 			orderedNoticeConsumer.shutdown();
+			orderedNoticeConsumer = null;
 		}
 		started = false;
 	}
 	
 	@Override
 	public synchronized void start() {
-		log.info("InvokeExecutable : {}", isInvokeExecutable());
-		log.info("NoticeExecutable : {}", isNoticeExecutable());
-		log.info("DelayNoticeExecutable : {}", isDelayNoticeExecutable());
-		log.info("OrderedNoticeExecutable : {}", isOrderedNoticeExecutable());
 		if(!started) {
 			super.start();
 			buildTopicTagsAndTopicTagHandlers();
@@ -130,7 +144,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	private void addTest() {
 		for(String topic : topicTags.keySet()) {
-			EmptyHandler handler = new EmptyHandler(topic, Const.CLIENT_TEST_TAG);
+			EmptyHandler handler = new EmptyHandler(topic, Const.buildTestTag(getGroupName()));
 			topicTags.put(handler.getTopic(), handler.getTag());
 			topicTagHandlers.put(handler.getTopic() + handler.getTag(), handler);
 		}
@@ -139,8 +153,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private void testInvokeClient(DefaultMQPushConsumer invokeConsumer) {
 		try {
 			for(String topic : topicTags.keySet()) {
-				BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes());
+				BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes());
 				InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				req.setRespTopic(null);
 				Message msg = buildInvokeMessage(req, cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 				SendResult ret = getProducer().send(msg);
 				if(ret.getSendStatus() != SendStatus.SEND_OK) {
@@ -149,6 +164,14 @@ public class DefaultClient extends DefaultCaller implements Client{
 				invokeConsumer.fetchSubscribeMessageQueues(buildInvokeTopic(topic));
 			}
 		}catch (Throwable e) {
+			if(e instanceof MQClientException) {
+				MQClientException se = (MQClientException)e;
+				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
+					e = new InvokeException("namesrv connection error");
+				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
+					e = new InvokeException("namesrv ip undefined");
+				}
+			}
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
@@ -157,10 +180,18 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private void testDelayNoticeClient(DefaultMQPushConsumer delayNoticeConsumer) {
 		try {
 			for(String topic : topicTags.keySet()) {
-				this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()), DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				this.notice(new DefaultNoticeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes()), TimeUnit.SECONDS.toMillis(1L), TimeUnit.MILLISECONDS);
 				delayNoticeConsumer.fetchSubscribeMessageQueues(buildDelayNoticeTopic(topic));
 			}
 		}catch (Throwable e) {
+			if(e instanceof MQClientException) {
+				MQClientException se = (MQClientException)e;
+				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
+					e = new InvokeException("namesrv connection error");
+				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
+					e = new InvokeException("namesrv ip undefined");
+				}
+			}
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
@@ -169,10 +200,18 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private void testNoticeClient(DefaultMQPushConsumer noticeConsumer) {
 		try {
 			for(String topic : topicTags.keySet()) {
-				this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()));
+				this.notice(new DefaultNoticeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes()));
 				noticeConsumer.fetchSubscribeMessageQueues(buildNoticeTopic(topic));
 			}
 		}catch (Throwable e) {
+			if(e instanceof MQClientException) {
+				MQClientException se = (MQClientException)e;
+				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
+					e = new InvokeException("namesrv connection error");
+				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
+					e = new InvokeException("namesrv ip undefined");
+				}
+			}
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
@@ -181,10 +220,18 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private void testOrderedNoticeClient(DefaultMQPushConsumer orderedNoticeConsumer) {
 		try {
 			for(String topic : topicTags.keySet()) {
-				this.notice(new DefaultNoticeCommand(topic, Const.CLIENT_TEST_TAG, Const.CLIENT_TEST_TAG.getBytes()), Const.CLIENT_TEST_TAG);
+				this.notice(new DefaultNoticeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes()), Const.CLIENT_TEST_TAG);
 				orderedNoticeConsumer.fetchSubscribeMessageQueues(buildOrderedNoticeTopic(topic));
 			}
 		}catch (Throwable e) {
+			if(e instanceof MQClientException) {
+				MQClientException se = (MQClientException)e;
+				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
+					e = new InvokeException("namesrv connection error");
+				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
+					e = new InvokeException("namesrv ip undefined");
+				}
+			}
 			Throwables.throwIfUnchecked(e);
 			throw new RuntimeException(e);
 		}
@@ -216,12 +263,12 @@ public class DefaultClient extends DefaultCaller implements Client{
 			orderedNoticeConsumer.setConsumeThreadMin(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setConsumeThreadMax(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-			orderedNoticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
+			orderedNoticeConsumer.setMaxReconsumeTimes(getOrderedNoticeExecutableRetryNum());
 			orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
 			orderedNoticeConsumer.setSuspendCurrentQueueTimeMillis(TimeUnit.SECONDS.toMillis(5L));
 			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(topicTags, topicTagHandlers));
-			orderedNoticeConsumer.setPullThresholdSizeForTopic(20);
+			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(getGroupName(), topicTags, topicTagHandlers));
+			orderedNoticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
@@ -257,11 +304,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 			noticeConsumer.setConsumeThreadMin(getNoticeExecutableNum());
 			noticeConsumer.setConsumeThreadMax(getNoticeExecutableNum());
 			noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-			noticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
+			noticeConsumer.setMaxReconsumeTimes(getNoticeExcecutableRetryNum());
 			noticeConsumer.setConsumeMessageBatchMaxSize(1);
 			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			noticeConsumer.registerMessageListener(new HandlerNoticeListener(noticeConsumer, getProducer(), topicTags, topicTagHandlers));
-			noticeConsumer.setPullThresholdSizeForTopic(50);
+			noticeConsumer.registerMessageListener(new HandlerNoticeListener(getGroupName(), noticeConsumer, getProducer(), topicTags, topicTagHandlers));
+			noticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
@@ -297,11 +344,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 			delayNoticeConsumer.setConsumeThreadMin(getDelayNoticeExecutableNum());
 			delayNoticeConsumer.setConsumeThreadMax(getDelayNoticeExecutableNum());
 			delayNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-			delayNoticeConsumer.setMaxReconsumeTimes(Integer.MAX_VALUE);
+			delayNoticeConsumer.setMaxReconsumeTimes(getDelayNoticeExecutableRetryNum());
 			delayNoticeConsumer.setConsumeMessageBatchMaxSize(1);
 			delayNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			delayNoticeConsumer.registerMessageListener(new HandlerDelayNoticeListener(delayNoticeConsumer, getProducer(), topicTags, topicTagHandlers));
-			delayNoticeConsumer.setPullThresholdSizeForTopic(50);
+			delayNoticeConsumer.registerMessageListener(new HandlerDelayNoticeListener(getGroupName(), delayNoticeConsumer, getProducer(), topicTags, topicTagHandlers));
+			delayNoticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
@@ -340,8 +387,8 @@ public class DefaultClient extends DefaultCaller implements Client{
 			invokeConsumer.setMaxReconsumeTimes(0);
 			invokeConsumer.setConsumeMessageBatchMaxSize(1);
 			invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			invokeConsumer.registerMessageListener(new HandlerInvokeListener(getProducer(), topicTagHandlers));
-			invokeConsumer.setPullThresholdSizeForTopic(50);
+			invokeConsumer.registerMessageListener(new HandlerInvokeListener(getGroupName(), getProducer(), topicTagHandlers));
+			invokeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
@@ -416,4 +463,28 @@ public class DefaultClient extends DefaultCaller implements Client{
 	protected void setDelayNoticeExecutableNum(int delayNoticeExecutableNum) {
 		this.delayNoticeExecutableNum = delayNoticeExecutableNum;
 	}
+	protected int getNoticeExcecutableRetryNum() {
+		return noticeExcecutableRetryNum;
+	}
+	public void setNoticeExcecutableRetryNum(int noticeExcecutableRetryNum) {
+		this.noticeExcecutableRetryNum = noticeExcecutableRetryNum;
+	}
+	protected int getDelayNoticeExecutableRetryNum() {
+		return delayNoticeExecutableRetryNum;
+	}
+	public void setDelayNoticeExecutableRetryNum(int delayNoticeExecutableRetryNum) {
+		this.delayNoticeExecutableRetryNum = delayNoticeExecutableRetryNum;
+	}
+	protected int getOrderedNoticeExecutableRetryNum() {
+		return orderedNoticeExecutableRetryNum;
+	}
+	public void setOrderedNoticeExecutableRetryNum(int orderedNoticeExecutableRetryNum) {
+		this.orderedNoticeExecutableRetryNum = orderedNoticeExecutableRetryNum;
+	}
+	public void setRetryNum(int retryNum) {
+		setNoticeExcecutableRetryNum(retryNum);
+		setDelayNoticeExecutableRetryNum(retryNum);
+		setOrderedNoticeExecutableRetryNum(retryNum);
+	}
+	
 }

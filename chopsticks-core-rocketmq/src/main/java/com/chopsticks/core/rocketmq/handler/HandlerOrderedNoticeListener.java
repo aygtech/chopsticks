@@ -24,8 +24,8 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 
 	private Multimap<String, String> topicTags;
 	
-	public HandlerOrderedNoticeListener(Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers);
+	public HandlerOrderedNoticeListener(String groupName, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, groupName);
 		this.topicTags = topicTags;
 	}
 

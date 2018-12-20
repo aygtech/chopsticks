@@ -36,8 +36,8 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 	private DefaultMQProducer producer;
 	private DefaultMQPushConsumer consumer;
 
-	public HandlerNoticeListener(DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers);
+	public HandlerNoticeListener(String groupName, DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, groupName);
 		this.consumer = consumer;
 		this.producer = producer;
 		this.topicTags = topicTags;

@@ -4,6 +4,7 @@ package com.chopsticks.core.rocketmq.modern.handler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +26,8 @@ import com.chopsticks.core.utils.Reflect;
 import com.chopsticks.core.utils.Reflect.ReflectException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 
 public class ModernHandler extends BaseHandler{
 	
@@ -36,19 +39,29 @@ public class ModernHandler extends BaseHandler{
 	
 	private Class<?> holderCtxClazz;
 	
+	private static final Cache<Object, ModernNoticeContextHolder<?>> objHolder = CacheBuilder.newBuilder().build();
+	
 	public ModernHandler(Object obj, String topic, String tag) {
 		super(topic, tag);
 		this.obj = obj;
 		
 		if(obj instanceof ModernNoticeContextAware) {
-			for(Type type : com.chopsticks.core.Const.getOriginObject(obj).getClass().getGenericInterfaces()) {
+			Class<?> typeClazz = getTypeClazz(obj);
+			Object typeObj = typeClazz == obj.getClass() ? obj : typeClazz;
+			for(Type type : typeClazz.getGenericInterfaces()) {
 				if(ModernNoticeContextAware.class.isAssignableFrom((Class<?>)type)) {
 					if(((Class<?>)type).getGenericInterfaces() != null) {
 						type = ((Class<?>)type).getGenericInterfaces()[0];
 					}
-					Type holderType = ((ParameterizedType)type).getActualTypeArguments()[0];
+					final Type holderType = ((ParameterizedType)type).getActualTypeArguments()[0];
 					try {
-						holder = (ModernNoticeContextHolder<?>)((Class<?>)holderType).newInstance();
+						// 一个 实现 中的 hodler 必须唯一才能保持 引用的 ThreadLocal 变量唯一
+						holder = objHolder.get(typeObj, new Callable<ModernNoticeContextHolder<?>>() {
+							@Override
+							public ModernNoticeContextHolder<?> call() throws Exception {
+								return (ModernNoticeContextHolder<?>)((Class<?>)holderType).newInstance();
+							}
+						});
 						Reflect.on(obj).call("setNoticeContextHolder", holder);
 						holderCtxClazz = (Class<?>)((ParameterizedType)((Class<?>)holderType).getGenericSuperclass()).getActualTypeArguments()[0];
 						if(holderCtxClazz.isInterface()) {
@@ -61,9 +74,21 @@ public class ModernHandler extends BaseHandler{
 					}
 				}
 			}
-			
-			
 		}
+	}
+
+	private Class<?> getTypeClazz(Object obj) {
+		obj = com.chopsticks.core.Const.getOriginObject(obj);
+		Class<?> typeClazz = obj.getClass();
+		do {
+			for(Type type : typeClazz.getGenericInterfaces()) {
+				if(ModernNoticeContextAware.class.isAssignableFrom((Class<?>)type)) {
+					return typeClazz;
+				}
+			}
+			typeClazz = typeClazz.getSuperclass();
+		}while(typeClazz != Object.class);
+		throw new RuntimeException("unkown typeClazz");
 	}
 
 	@Override

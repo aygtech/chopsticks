@@ -1,8 +1,8 @@
 package com.chopsticks.core.rocketmq.modern.handler;
 
-import java.util.List;
+import java.util.Set;
 
 public interface Picker {
 	
-	public List<String> pick();
+	public Set</*methodName*/String> pick();
 }
