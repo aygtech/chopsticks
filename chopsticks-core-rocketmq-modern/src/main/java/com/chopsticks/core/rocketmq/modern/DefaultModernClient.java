@@ -63,12 +63,23 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	@Override
 	public synchronized void start() {
 		log.info("Client {} begin start", getGroupName());
-		log.info("Invokable : {}, InvokeExecutable : {}, NoticeExecutable : {}, DelayNoticeExecutable : {}, OrderedNoticeExecutable : {}"
+		log.info("Invokable : {}, InvokeExecutable : {}, InvokeExecutableNum : {}, InvokeMaxExecutableTime : {}, NoticeExecutable : {}, NoticeExecutableNum : {}, NoticeExcecutableRetryCount : {}, NoticeMaxExecutableTime : {}, DelayNoticeExecutable : {}, DelayNoticeExecutableNum : {}, DelayNoticeExecutableRetryCount : {}, DelayNoticeMaxExecutableTime : {}, OrderedNoticeExecutable : {}, OrderedNoticeExecutableNum : {}, OrderedNoticeExecutableRetryCount : {}, OrderedNoticeMaxExecutableTime : {}"
 				, isInvokable()
 				, isInvokeExecutable()
+				, getInvokeExecutableNum()
+				, getInvokeMaxExecutableTime()
 				, isNoticeExecutable()
+				, getNoticeExecutableNum()
+				, getNoticeExcecutableRetryCount()
+				, getNoticeMaxExecutableTime()
 				, isDelayNoticeExecutable()
-				, isOrderedNoticeExecutable());
+				, getDelayNoticeExecutableNum()
+				, getDelayNoticeExecutableRetryCount()
+				, getDelayNoticeMaxExecutableTime()
+				, isOrderedNoticeExecutable()
+				, getOrderedNoticeExecutableNum()
+				, getOrderedNoticeExecutableRetryCount()
+				, getOrderedNoticeMaxExecutableTime());
 		try {
 			if(handlers != null) {
 				Set<BaseHandler> clientHandlers = Sets.newHashSet();

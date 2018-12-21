@@ -77,9 +77,14 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private int delayNoticeExecutableNum = 10;
 	private int orderedNoticeExecutableNum = 5;
 	
-	private int noticeExcecutableRetryNum = Integer.MAX_VALUE;
-	private int delayNoticeExecutableRetryNum = Integer.MAX_VALUE;
-	private int orderedNoticeExecutableRetryNum = Integer.MAX_VALUE;
+	private int noticeExcecutableRetryCount = Integer.MAX_VALUE;
+	private int delayNoticeExecutableRetryCount = Integer.MAX_VALUE;
+	private int orderedNoticeExecutableRetryCount = Integer.MAX_VALUE;
+	
+	private long invokeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
+	private long noticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
+	private long delayNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
+	private long orderedNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
 	
 	public DefaultClient(String groupName) {
 		super(groupName);
@@ -263,11 +268,12 @@ public class DefaultClient extends DefaultCaller implements Client{
 			orderedNoticeConsumer.setConsumeThreadMin(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setConsumeThreadMax(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-			orderedNoticeConsumer.setMaxReconsumeTimes(getOrderedNoticeExecutableRetryNum());
+			orderedNoticeConsumer.setMaxReconsumeTimes(getOrderedNoticeExecutableRetryCount());
 			orderedNoticeConsumer.setConsumeMessageBatchMaxSize(1);
+			orderedNoticeConsumer.setConsumeTimeout(getOrderedNoticeMaxExecutableTime());
 			orderedNoticeConsumer.setSuspendCurrentQueueTimeMillis(TimeUnit.SECONDS.toMillis(5L));
 			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(getGroupName(), topicTags, topicTagHandlers));
+			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(this, orderedNoticeConsumer, topicTags, topicTagHandlers));
 			orderedNoticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -304,10 +310,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 			noticeConsumer.setConsumeThreadMin(getNoticeExecutableNum());
 			noticeConsumer.setConsumeThreadMax(getNoticeExecutableNum());
 			noticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-			noticeConsumer.setMaxReconsumeTimes(getNoticeExcecutableRetryNum());
+			noticeConsumer.setMaxReconsumeTimes(getNoticeExcecutableRetryCount());
 			noticeConsumer.setConsumeMessageBatchMaxSize(1);
+			noticeConsumer.setConsumeTimeout(getNoticeMaxExecutableTime());
 			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			noticeConsumer.registerMessageListener(new HandlerNoticeListener(getGroupName(), noticeConsumer, getProducer(), topicTags, topicTagHandlers));
+			noticeConsumer.registerMessageListener(new HandlerNoticeListener(this, noticeConsumer, topicTags, topicTagHandlers));
 			noticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -344,10 +351,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 			delayNoticeConsumer.setConsumeThreadMin(getDelayNoticeExecutableNum());
 			delayNoticeConsumer.setConsumeThreadMax(getDelayNoticeExecutableNum());
 			delayNoticeConsumer.setMessageModel(MessageModel.CLUSTERING);
-			delayNoticeConsumer.setMaxReconsumeTimes(getDelayNoticeExecutableRetryNum());
+			delayNoticeConsumer.setMaxReconsumeTimes(getDelayNoticeExecutableRetryCount());
 			delayNoticeConsumer.setConsumeMessageBatchMaxSize(1);
+			delayNoticeConsumer.setConsumeTimeout(getDelayNoticeMaxExecutableTime());
 			delayNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			delayNoticeConsumer.registerMessageListener(new HandlerDelayNoticeListener(getGroupName(), delayNoticeConsumer, getProducer(), topicTags, topicTagHandlers));
+			delayNoticeConsumer.registerMessageListener(new HandlerDelayNoticeListener(this, delayNoticeConsumer, topicTags, topicTagHandlers));
 			delayNoticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -385,9 +393,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 			invokeConsumer.setConsumeThreadMax(getInvokeExecutableNum());
 			invokeConsumer.setMessageModel(MessageModel.CLUSTERING);
 			invokeConsumer.setMaxReconsumeTimes(0);
+			invokeConsumer.setConsumeTimeout(getInvokeMaxExecutableTime());
 			invokeConsumer.setConsumeMessageBatchMaxSize(1);
 			invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			invokeConsumer.registerMessageListener(new HandlerInvokeListener(getGroupName(), getProducer(), topicTagHandlers));
+			invokeConsumer.registerMessageListener(new HandlerInvokeListener(this, topicTagHandlers));
 			invokeConsumer.setPullThresholdSizeForTopic(10);
 			try {
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -463,28 +472,57 @@ public class DefaultClient extends DefaultCaller implements Client{
 	protected void setDelayNoticeExecutableNum(int delayNoticeExecutableNum) {
 		this.delayNoticeExecutableNum = delayNoticeExecutableNum;
 	}
-	protected int getNoticeExcecutableRetryNum() {
-		return noticeExcecutableRetryNum;
+	protected int getNoticeExcecutableRetryCount() {
+		return noticeExcecutableRetryCount;
 	}
-	public void setNoticeExcecutableRetryNum(int noticeExcecutableRetryNum) {
-		this.noticeExcecutableRetryNum = noticeExcecutableRetryNum;
+	public void setNoticeExcecutableRetryCount(int noticeExcecutableRetryCount) {
+		this.noticeExcecutableRetryCount = noticeExcecutableRetryCount;
 	}
-	protected int getDelayNoticeExecutableRetryNum() {
-		return delayNoticeExecutableRetryNum;
+	protected int getDelayNoticeExecutableRetryCount() {
+		return delayNoticeExecutableRetryCount;
 	}
-	public void setDelayNoticeExecutableRetryNum(int delayNoticeExecutableRetryNum) {
-		this.delayNoticeExecutableRetryNum = delayNoticeExecutableRetryNum;
+	public void setDelayNoticeExecutableRetryCount(int delayNoticeExecutableRetryCount) {
+		this.delayNoticeExecutableRetryCount = delayNoticeExecutableRetryCount;
 	}
-	protected int getOrderedNoticeExecutableRetryNum() {
-		return orderedNoticeExecutableRetryNum;
+	protected int getOrderedNoticeExecutableRetryCount() {
+		return orderedNoticeExecutableRetryCount;
 	}
-	public void setOrderedNoticeExecutableRetryNum(int orderedNoticeExecutableRetryNum) {
-		this.orderedNoticeExecutableRetryNum = orderedNoticeExecutableRetryNum;
+	public void setOrderedNoticeExecutableRetryCount(int orderedNoticeExecutableRetryCount) {
+		this.orderedNoticeExecutableRetryCount = orderedNoticeExecutableRetryCount;
 	}
-	public void setRetryNum(int retryNum) {
-		setNoticeExcecutableRetryNum(retryNum);
-		setDelayNoticeExecutableRetryNum(retryNum);
-		setOrderedNoticeExecutableRetryNum(retryNum);
+	public void setRetryCount(int retryCount) {
+		setNoticeExcecutableRetryCount(retryCount);
+		setDelayNoticeExecutableRetryCount(retryCount);
+		setOrderedNoticeExecutableRetryCount(retryCount);
 	}
-	
+	protected long getNoticeMaxExecutableTime() {
+		return noticeMaxExecutableTime;
+	}
+	public void setNoticeMaxExecutableTime(long noticeMaxExecutableTime) {
+		this.noticeMaxExecutableTime = noticeMaxExecutableTime;
+	}
+	protected long getDelayNoticeMaxExecutableTime() {
+		return delayNoticeMaxExecutableTime;
+	}
+	public void setDelayNoticeMaxExecutableTime(long delayNoticeMaxExecutableTime) {
+		this.delayNoticeMaxExecutableTime = delayNoticeMaxExecutableTime;
+	}
+	protected long getOrderedNoticeMaxExecutableTime() {
+		return orderedNoticeMaxExecutableTime;
+	}
+	public void setOrderedNoticeMaxExecutableTime(long orderedNoticeMaxExecutableTime) {
+		this.orderedNoticeMaxExecutableTime = orderedNoticeMaxExecutableTime;
+	}
+	protected long getInvokeMaxExecutableTime() {
+		return invokeMaxExecutableTime;
+	}
+	public void setInvokeMaxExecutableTime(long invokeMaxExecutableTime) {
+		this.invokeMaxExecutableTime = invokeMaxExecutableTime;
+	}
+	public void setMaxExecutableTime(long maxExecutableTime) {
+		setInvokeMaxExecutableTime(maxExecutableTime);
+		setNoticeMaxExecutableTime(maxExecutableTime);
+		setDelayNoticeMaxExecutableTime(maxExecutableTime);
+		setOrderedNoticeMaxExecutableTime(maxExecutableTime);
+	}
 }

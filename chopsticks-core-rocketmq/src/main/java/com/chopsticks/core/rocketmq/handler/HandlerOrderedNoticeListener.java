@@ -3,6 +3,7 @@ package com.chopsticks.core.rocketmq.handler;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
@@ -13,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.Const;
+import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
 import com.google.common.base.Strings;
@@ -23,9 +25,11 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 	private static final Logger log = LoggerFactory.getLogger(HandlerOrderedNoticeListener.class);
 
 	private Multimap<String, String> topicTags;
+	private DefaultMQPushConsumer orderedNoticeConsumer;
 	
-	public HandlerOrderedNoticeListener(String groupName, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers, groupName);
+	public HandlerOrderedNoticeListener(DefaultClient client, DefaultMQPushConsumer orderedNoticeConsumer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, client);
+		this.orderedNoticeConsumer = orderedNoticeConsumer;
 		this.topicTags = topicTags;
 	}
 
@@ -55,7 +59,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 			}
 			try {
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
-				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), true);
+				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), true, false);
 				handler.notice(params, ctx);
 			}catch (HandlerExecuteException e) {
 				log.error(e.getMessage(), e);

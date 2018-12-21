@@ -8,7 +8,6 @@ import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.message.Message;
@@ -20,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.Const;
+import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.DelayNoticeRequest;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
@@ -33,19 +33,18 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 	
 	private Multimap<String, String> topicTags;
 	
-	private DefaultMQProducer producer;
-	private DefaultMQPushConsumer consumer;
+	private DefaultMQPushConsumer noticeConsumer;
 
-	public HandlerNoticeListener(String groupName, DefaultMQPushConsumer consumer, DefaultMQProducer producer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers, groupName);
-		this.consumer = consumer;
-		this.producer = producer;
+	public HandlerNoticeListener(DefaultClient client, DefaultMQPushConsumer noticeConsumer, Multimap<String, String> topicTags, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, client);
+		this.noticeConsumer = noticeConsumer;
 		this.topicTags = topicTags;
 	}
 
 	@Override
 	public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 		for(MessageExt ext : msgs) {
+			ext.setTags(Const.getOriginTag(getClient().getGroupName(), ext.getTags()));
 			String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
 			String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
 			if(Strings.isNullOrEmpty(topic)) {
@@ -60,13 +59,14 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			String noticeDealyReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
 			if(!Strings.isNullOrEmpty(noticeDealyReqStr)) {
 				DelayNoticeRequest req = JSON.parseObject(noticeDealyReqStr, DelayNoticeRequest.class);
+				// TODO 等待原有延迟消费完毕 1.0.9
 				if(req.getExecuteGroupName() != null) {
-					if(!consumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
-						log.trace("cur group is {}, msg group is {}, cancel consumer", consumer.getConsumerGroup(), req.getExecuteGroupName());
+					if(!noticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
+						log.trace("cur group is {}, msg group is {}, cancel consumer", noticeConsumer.getConsumerGroup(), req.getExecuteGroupName());
 						return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 					}
 				}else {
-					req.setExecuteGroupName(consumer.getConsumerGroup());
+					req.setExecuteGroupName(noticeConsumer.getConsumerGroup());
 				}
 				if(!Strings.isNullOrEmpty(req.getRootId())) {
 					msgId = req.getRootId();
@@ -76,13 +76,12 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 				if(diff > 0) {
 					Optional<Entry<Long, Integer>> delayLevel = Const.getDelayLevel(diff);
 					if(delayLevel.isPresent()) {
-						Message msg = new Message(ext.getTopic(), ext.getTags(), ext.getBody());
+						Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getClient().getGroupName(), ext.getTags()), ext.getBody());
 						msg.setDelayTimeLevel(delayLevel.get().getValue());
 						msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-						// 手工设置了 msgid 为原有的可行， 但监控新消息还未消费成功也显示为成功，这个对监控不利，同时此方法未来官方也可能调整
-						// Reflect.on(msg).call("putProperty", MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX, ext.getMsgId());
+						msg.setKeys(req.getRootId());
 						try {
-							SendResult ret = producer.send(msg);
+							SendResult ret = getClient().getProducer().send(msg);
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {
 								throw new HandlerExecuteException(ret.getSendStatus().name());
 							}else {
@@ -110,7 +109,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			}
 			try {
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
-				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes());
+				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), noticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, false);
 				handler.notice(params, ctx);
 			}catch (HandlerExecuteException e) {
 				log.error(e.getMessage(), e);

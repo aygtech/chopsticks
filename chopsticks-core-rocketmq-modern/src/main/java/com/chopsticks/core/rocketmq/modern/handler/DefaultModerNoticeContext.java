@@ -8,9 +8,4 @@ public class DefaultModerNoticeContext extends BaseNoticeContext implements Mode
 	public DefaultModerNoticeContext(BaseNoticeContext ctx) {
 		super(ctx);
 	}
-	
-	public DefaultModerNoticeContext(String id, String originId, int reconsumeTimes) {
-		super(id, originId, reconsumeTimes);
-	}
-
 }

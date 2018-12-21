@@ -4,12 +4,10 @@ import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 
 public class DefaultNoticeContext extends BaseNoticeContext {
 
-	public DefaultNoticeContext(String id, String originId, int reconsumeTimes) {
-		super(id, originId, reconsumeTimes);
+	public DefaultNoticeContext(String id, String originId, int retryCount, boolean maxRetryCount,
+			boolean orderedNotice, boolean delayNotice) {
+		super(id, originId, retryCount, maxRetryCount, orderedNotice, delayNotice);
 	}
 
-	public DefaultNoticeContext(String id, String originId, int reconsumeTimes, boolean orderedNotice) {
-		super(id, originId, reconsumeTimes, orderedNotice);
-	}
 	
 }

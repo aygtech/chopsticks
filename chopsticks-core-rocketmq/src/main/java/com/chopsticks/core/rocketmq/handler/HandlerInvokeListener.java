@@ -8,7 +8,6 @@ import java.util.Map;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.UtilAll;
@@ -21,6 +20,7 @@ import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.rocketmq.Const;
+import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
@@ -31,11 +31,9 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 	
 	private static final Logger log = LoggerFactory.getLogger(HandlerInvokeListener.class);
 	
-	private DefaultMQProducer producer;
 	
-	public HandlerInvokeListener(String groupName, DefaultMQProducer producer, Map<String, BaseHandler> topicTagHandlers) {
-		super(topicTagHandlers, groupName);
-		this.producer = producer;
+	public HandlerInvokeListener(DefaultClient client, Map<String, BaseHandler> topicTagHandlers) {
+		super(topicTagHandlers, client);
 	}
 
 	@Override
@@ -91,7 +89,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					}
 					Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
 					try {
-						SendResult ret = producer.send(respMsg);
+						SendResult ret = getClient().getProducer().send(respMsg);
 						if(ret.getSendStatus() == SendStatus.SEND_OK) {
 							log.trace("invoke tag : {}, reqId : {}, msgId : {}, rec msgId : {}", ext.getTags(), req.getReqId(), ext.getMsgId(), ret.getMsgId());
 						}else {

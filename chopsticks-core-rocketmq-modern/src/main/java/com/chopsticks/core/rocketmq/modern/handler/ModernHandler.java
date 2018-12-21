@@ -151,7 +151,7 @@ public class ModernHandler extends BaseHandler{
 		
 		try {
 			if(obj instanceof ModernNoticeContextAware) {
-				BaseNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx.getId(), mqCtx.getOriginId(), mqCtx.getReconsumeTimes());
+				BaseNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
 				Object holderCtx = holderCtxClazz.getDeclaredConstructor(BaseNoticeContext.class).newInstance(baseCtx);
 				Reflect.on(holder).call("set", holderCtx);
 			}
@@ -164,7 +164,7 @@ public class ModernHandler extends BaseHandler{
 														, mqCtx.isOrderedNotice() ? "ordered notice" : "notice"
 														, e.getMessage()
 														, mqCtx.getId()
-														, mqCtx.getReconsumeTimes()
+														, mqCtx.getRetryCount()
 														, obj
 														, params.getMethod())
 					, e);

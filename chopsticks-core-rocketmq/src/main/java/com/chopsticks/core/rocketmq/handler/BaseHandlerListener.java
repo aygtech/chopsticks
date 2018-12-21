@@ -3,6 +3,7 @@ package com.chopsticks.core.rocketmq.handler;
 import java.util.Map;
 
 import com.chopsticks.core.rocketmq.Const;
+import com.chopsticks.core.rocketmq.DefaultClient;
 
 abstract class BaseHandlerListener{
 	
@@ -11,11 +12,11 @@ abstract class BaseHandlerListener{
 	 *  <topic + tag, baseHandler>
 	 */
 	private Map<String, BaseHandler> topicTagHandlers;
-	private String groupName;
+	private DefaultClient client;
 	
-	BaseHandlerListener(Map<String, BaseHandler> topicTagHandlers, String groupName) {
+	BaseHandlerListener(Map<String, BaseHandler> topicTagHandlers, DefaultClient client) {
 		this.topicTagHandlers = topicTagHandlers;
-		this.groupName = groupName;
+		this.client = client;
 	}
 	
 	protected BaseHandler getHandler(String topic, String tag) {
@@ -26,7 +27,7 @@ abstract class BaseHandlerListener{
 		return handler;
 	}
 	
-	protected String getGroupName() {
-		return groupName;
+	protected DefaultClient getClient() {
+		return client;
 	}
 }

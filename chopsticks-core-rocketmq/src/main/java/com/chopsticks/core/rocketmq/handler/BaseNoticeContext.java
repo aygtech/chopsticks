@@ -6,32 +6,26 @@ public abstract class BaseNoticeContext implements NoticeContext{
 	
 	private String id;
 	private String originId;
-	private int reconsumeTimes;
+	private int retryCount;
+	private boolean maxRetryCount;
 	private boolean orderedNotice;
 	private boolean delayNotice;
 	
 	public BaseNoticeContext(BaseNoticeContext ctx) {
-		this(ctx.getId(), ctx.getOriginId(), ctx.getReconsumeTimes(), ctx.isOrderedNotice(), ctx.isDelayNotice());
+		this(ctx.getId(), ctx.getOriginId(), ctx.getRetryCount(), ctx.isMaxRetryCount(), ctx.isOrderedNotice(), ctx.isDelayNotice());
 	}
 	
-	public BaseNoticeContext(String id, String originId, int reconsumeTimes) {
-		this(id, originId, reconsumeTimes, false, false);
-	}
-	public BaseNoticeContext(String id, String originId, int reconsumeTimes, boolean orderedNotice) {
-		this(id, originId, reconsumeTimes, orderedNotice, false);
-	}
-	public BaseNoticeContext(String id, String originId, int reconsumeTimes, boolean orderedNotice,
-			boolean delayNotice) {
+	public BaseNoticeContext(String id, String originId, int retryCount, boolean maxRetryCount, boolean orderedNotice, boolean delayNotice) {
 		super();
 		this.id = id;
 		this.originId = originId;
-		this.reconsumeTimes = reconsumeTimes;
+		this.retryCount = retryCount;
 		this.orderedNotice = orderedNotice;
 		this.delayNotice = delayNotice;
 	}
 
-	public int getReconsumeTimes() {
-		return reconsumeTimes;
+	public int getRetryCount() {
+		return retryCount;
 	}
 	@Override
 	public String getId() {
@@ -45,5 +39,8 @@ public abstract class BaseNoticeContext implements NoticeContext{
 	}
 	public boolean isDelayNotice() {
 		return delayNotice;
+	}
+	public boolean isMaxRetryCount() {
+		return maxRetryCount;
 	}
 }

@@ -451,7 +451,7 @@ public class DefaultCaller implements Caller {
 		return buildSuccessTopic(topic + com.chopsticks.core.rocketmq.Const.INVOKE_TOPIC_SUFFIX);
 	}
 
-	protected DefaultMQProducer getProducer() {
+	public DefaultMQProducer getProducer() {
 		return producer;
 	}
 	
@@ -461,7 +461,7 @@ public class DefaultCaller implements Caller {
 	public void setNamesrvAddr(String namesrvAddr) {
 		this.namesrvAddr = namesrvAddr;
 	}
-	protected String getGroupName() {
+	public String getGroupName() {
 		return groupName;
 	}
 
