@@ -19,7 +19,7 @@ public class Const {
 		ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
 	}
 
-	public static final SyncSystemMillis CLIENT_TIME = new SyncSystemMillis(500L);
+	public static final SyncSystemMillis CLIENT_TIME = new SyncSystemMillis(TimeUnit.MILLISECONDS.toMillis(500L));
 	// <delay, level>
 	private static final TreeMap<Long, Integer> DELAY_LEVEL = Maps.newTreeMap();
 
@@ -76,7 +76,7 @@ public class Const {
 	public static final String ERROR_MSG_CAN_NOT_FIND_MESSAGE_QUEUE = "Can not find Message Queue";
 	public static final String ERROR_TOPIC_NOT_EXIST = "The topic[%s] not exist";
 
-	static void setDelayLevel(TreeMap<Long, Integer> delayLevel) {
+	public static void setDelayLevel(TreeMap<Long, Integer> delayLevel) {
 		synchronized (DELAY_LEVEL) {
 			DELAY_LEVEL.clear();
 			DELAY_LEVEL.putAll(delayLevel);

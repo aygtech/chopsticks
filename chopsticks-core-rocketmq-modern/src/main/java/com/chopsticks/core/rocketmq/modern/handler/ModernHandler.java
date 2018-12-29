@@ -103,11 +103,7 @@ public class ModernHandler extends BaseHandler{
 		try {
 			Reflect.getMethod(obj, params.getMethod(), args);
 		}catch (Throwable e) {
-			if(obj instanceof Observer) {
-					return null;
-			}else {
-				throw new HandlerExecuteException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e);
-			}
+			throw new HandlerExecuteException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e);
 		}
 		Object ret;
 		try {
@@ -160,11 +156,12 @@ public class ModernHandler extends BaseHandler{
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
 				e = e.getCause();
 			}
-			throw new HandlerExecuteException(String.format("%s execute exception : %s, id : %s, retry count : %s, bean : %s, method : %s"
-														, mqCtx.isOrderedNotice() ? "ordered notice" : "notice"
+			throw new HandlerExecuteException(String.format("%s execute exception : %s, id : %s, retryCount : %s, maxRetryCount : %s, bean : %s, method : %s"
+														, mqCtx.isOrderedNotice() ? "ordered notice" : (mqCtx.isDelayNotice() ? "delay notice" : "notice")
 														, e.getMessage()
 														, mqCtx.getId()
 														, mqCtx.getRetryCount()
+														, mqCtx.isMaxRetryCount()
 														, obj
 														, params.getMethod())
 					, e);

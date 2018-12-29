@@ -78,7 +78,7 @@ public class DefaultCaller implements Caller {
 	
 	private volatile boolean started;
 	
-	protected static final long DEFAULT_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
+	protected static final long DEFAULT_SYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 	
 	protected static final long DEFAULT_ASYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
 	
@@ -92,7 +92,7 @@ public class DefaultCaller implements Caller {
 	
 	private DefaultMQAdminExt mqAdminExt;
 	
-	private Cache</*topic*/String, /*consumer exist*/Boolean> invokeMonitor = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
+	private Cache</*topic*/String, /*consumer exist*/Boolean> invokeMonitor = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	
 	/**
 	 *  <msgid, timeoutGuavaPromise>
@@ -214,7 +214,7 @@ public class DefaultCaller implements Caller {
 														    .get();
 				Stopwatch watch = Stopwatch.createStarted();
 				do {
-					if(watch.elapsed(TimeUnit.MILLISECONDS) > DEFAULT_TIMEOUT_MILLIS) {
+					if(watch.elapsed(TimeUnit.MILLISECONDS) > DEFAULT_SYNC_TIMEOUT_MILLIS) {
 						throw new RuntimeException("caller connection server timeout, pls try again.");
 					}
 					if(consumeExecutor.getTaskCount() > 0) {
@@ -252,7 +252,7 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public BaseInvokeResult invoke(BaseInvokeCommand cmd) {
-		return this.invoke(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		return this.invoke(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	public BaseInvokeResult invoke(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
@@ -271,7 +271,7 @@ public class DefaultCaller implements Caller {
 	}
 
 	public Promise<BaseInvokeResult> asyncInvoke(BaseInvokeCommand cmd) {
-		return this.asyncInvoke(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		return this.asyncInvoke(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 	
 	public Promise<BaseInvokeResult> asyncInvoke(final BaseInvokeCommand cmd, final long timeout, final TimeUnit timeoutUnit) {
@@ -467,7 +467,7 @@ public class DefaultCaller implements Caller {
 
 	@Override
 	public InvokeResult invoke(InvokeCommand cmd) {
-		return this.invoke(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		return this.invoke(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@Override
@@ -488,7 +488,7 @@ public class DefaultCaller implements Caller {
 
 	@Override
 	public Promise<? extends InvokeResult> asyncInvoke(InvokeCommand cmd) {
-		return this.asyncInvoke(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		return this.asyncInvoke(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 	}
 
 	@Override
@@ -565,6 +565,7 @@ public class DefaultCaller implements Caller {
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Long delay, final TimeUnit delayTimeUnit) {
 		checkArgument(started, "must be call method start");
+		checkArgument(delay > 0, "delay must > 0");
 		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildDelayNoticeMessage(cmd, delay, delayTimeUnit);

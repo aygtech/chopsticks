@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.rocketmq.Const;
-import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -92,7 +91,7 @@ public class HttpTinyClient {
                 	curDelayLevel.put(mills, i + 1);
                 }
                 log.trace("delayLevel : {}", curDelayLevel);
-                Reflect.on(Const.class).call("setDelayLevel", curDelayLevel);
+                Const.setDelayLevel(curDelayLevel);
             }
             
             String resp = null;

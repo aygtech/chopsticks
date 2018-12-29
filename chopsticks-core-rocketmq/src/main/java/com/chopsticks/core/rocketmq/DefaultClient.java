@@ -159,9 +159,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 		try {
 			for(String topic : topicTags.keySet()) {
 				BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes());
-				InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 				req.setRespTopic(null);
-				Message msg = buildInvokeMessage(req, cmd, DEFAULT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+				Message msg = buildInvokeMessage(req, cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 				SendResult ret = getProducer().send(msg);
 				if(ret.getSendStatus() != SendStatus.SEND_OK) {
 					throw new RuntimeException(ret.getSendStatus().name());
