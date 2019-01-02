@@ -12,9 +12,9 @@ import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
 import com.google.common.base.Strings;
@@ -61,7 +61,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), true, false);
 				handler.notice(params, ctx);
-			}catch (HandlerExecuteException e) {
+			}catch (DefaultCoreException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 			}catch (Throwable e) {

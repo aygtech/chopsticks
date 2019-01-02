@@ -2,32 +2,24 @@ package com.chopsticks.core.rocketmq.modern.handler;
 
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.concurrent.Callable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.handler.InvokeContext;
 import com.chopsticks.core.handler.InvokeParams;
 import com.chopsticks.core.handler.NoticeContext;
 import com.chopsticks.core.handler.NoticeParams;
-import com.chopsticks.core.modern.handler.ModernNoticeContextAware;
-import com.chopsticks.core.modern.handler.ModernNoticeContextHolder;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 import com.chopsticks.core.rocketmq.modern.Const;
+import com.chopsticks.core.rocketmq.modern.exception.ModernCoreException;
 import com.chopsticks.core.utils.Reflect;
 import com.chopsticks.core.utils.Reflect.ReflectException;
 import com.google.common.base.Charsets;
-import com.google.common.base.Throwables;
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 
 public class ModernHandler extends BaseHandler{
 	
@@ -35,60 +27,9 @@ public class ModernHandler extends BaseHandler{
 	
 	private Object obj;
 	
-	private ModernNoticeContextHolder<?> holder;
-	
-	private Class<?> holderCtxClazz;
-	
-	private static final Cache<Object, ModernNoticeContextHolder<?>> objHolder = CacheBuilder.newBuilder().build();
-	
 	public ModernHandler(Object obj, String topic, String tag) {
 		super(topic, tag);
 		this.obj = obj;
-		
-		if(obj instanceof ModernNoticeContextAware) {
-			Class<?> typeClazz = getTypeClazz(obj);
-			Object typeObj = typeClazz == obj.getClass() ? obj : typeClazz;
-			for(Type type : typeClazz.getGenericInterfaces()) {
-				if(ModernNoticeContextAware.class.isAssignableFrom((Class<?>)type)) {
-					if(((Class<?>)type).getGenericInterfaces() != null) {
-						type = ((Class<?>)type).getGenericInterfaces()[0];
-					}
-					final Type holderType = ((ParameterizedType)type).getActualTypeArguments()[0];
-					try {
-						// 一个 实现 中的 hodler 必须唯一才能保持 引用的 ThreadLocal 变量唯一
-						holder = objHolder.get(typeObj, new Callable<ModernNoticeContextHolder<?>>() {
-							@Override
-							public ModernNoticeContextHolder<?> call() throws Exception {
-								return (ModernNoticeContextHolder<?>)((Class<?>)holderType).newInstance();
-							}
-						});
-						Reflect.on(obj).call("setNoticeContextHolder", holder);
-						holderCtxClazz = (Class<?>)((ParameterizedType)((Class<?>)holderType).getGenericSuperclass()).getActualTypeArguments()[0];
-						if(holderCtxClazz.isInterface()) {
-							holderCtxClazz = DefaultModerNoticeContext.class;
-						}
-						break;
-					}catch (Throwable e) {
-						Throwables.throwIfUnchecked(e);
-						throw new RuntimeException(e);
-					}
-				}
-			}
-		}
-	}
-
-	private Class<?> getTypeClazz(Object obj) {
-		obj = com.chopsticks.core.Const.getOriginObject(obj);
-		Class<?> typeClazz = obj.getClass();
-		do {
-			for(Type type : typeClazz.getGenericInterfaces()) {
-				if(ModernNoticeContextAware.class.isAssignableFrom((Class<?>)type)) {
-					return typeClazz;
-				}
-			}
-			typeClazz = typeClazz.getSuperclass();
-		}while(typeClazz != Object.class);
-		throw new RuntimeException("unkown typeClazz");
 	}
 
 	@Override
@@ -103,18 +44,18 @@ public class ModernHandler extends BaseHandler{
 		try {
 			Reflect.getMethod(obj, params.getMethod(), args);
 		}catch (Throwable e) {
-			throw new HandlerExecuteException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e);
+			throw new ModernCoreException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e).setCode(ModernCoreException.MODERN_INVOKE_METHOD_NOT_FOUND);
 		}
 		Object ret;
 		try {
 			ret = Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
-			throw new HandlerExecuteException(String.format("invoke execute exception : %s, bean : %s, method : %s, params : %s"
+			throw new ModernCoreException(String.format("invoke execute exception : %s, bean : %s, method : %s, params : %s"
 															, e.getMessage()
 															, obj
 															, params.getMethod()
 															, args)
-					, e);
+					, e).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
 		}
 		
 		if(obj instanceof Observer) {
@@ -146,17 +87,14 @@ public class ModernHandler extends BaseHandler{
 		BaseNoticeContext mqCtx = (BaseNoticeContext) ctx;
 		
 		try {
-			if(obj instanceof ModernNoticeContextAware) {
-				BaseNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
-				Object holderCtx = holderCtxClazz.getDeclaredConstructor(BaseNoticeContext.class).newInstance(baseCtx);
-				Reflect.on(holder).call("set", holderCtx);
-			}
+			DefaultModerNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
+			ModernContextHolder.setNoticeContext(baseCtx);
 			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
 				e = e.getCause();
 			}
-			throw new HandlerExecuteException(String.format("%s execute exception : %s, id : %s, retryCount : %s, maxRetryCount : %s, bean : %s, method : %s"
+			throw new ModernCoreException(String.format("%s execute exception : %s, id : %s, retryCount : %s, maxRetryCount : %s, bean : %s, method : %s"
 														, mqCtx.isOrderedNotice() ? "ordered notice" : (mqCtx.isDelayNotice() ? "delay notice" : "notice")
 														, e.getMessage()
 														, mqCtx.getId()
@@ -164,11 +102,9 @@ public class ModernHandler extends BaseHandler{
 														, mqCtx.isMaxRetryCount()
 														, obj
 														, params.getMethod())
-					, e);
+					, e).setCode(ModernCoreException.MODERN_NOTICE_EXECUTE_ERROR);
 		}finally {
-			if(holder != null) {
-				holder.remove();
-			}
+			ModernContextHolder.remove();
 		}
 		
 	}

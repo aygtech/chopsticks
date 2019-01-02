@@ -18,10 +18,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.DelayNoticeRequest;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
 import com.chopsticks.core.utils.TimeUtils;
@@ -85,7 +85,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 						try {
 							SendResult ret = getClient().getProducer().send(msg);
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {
-								throw new HandlerExecuteException(ret.getSendStatus().name());
+								throw new DefaultCoreException(ret.getSendStatus().name()).setCode(DefaultCoreException.DELAY_NOTICE_EXECUTE_FORWORD_SEND_NOT_OK);
 							}else {
 								log.trace("rootId : {}, newId : {}, invokeTime : {}, executeTime : {}, next delay(ms) : {}, diff(ms) : {}"
 										, msgId
@@ -126,7 +126,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, true);
 				handler.notice(params, ctx);
-			}catch (HandlerExecuteException e) {
+			}catch (DefaultCoreException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}catch (Throwable e) {

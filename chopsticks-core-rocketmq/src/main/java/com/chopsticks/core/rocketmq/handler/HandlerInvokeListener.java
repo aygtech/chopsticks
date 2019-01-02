@@ -17,11 +17,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.chopsticks.core.exception.HandlerExecuteException;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
 import com.google.common.base.Strings;
@@ -68,12 +68,11 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					if(handlerResult != null) {
 						resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
 					}
+				}catch (DefaultCoreException e) {
+					log.error(e.getMessage(), e);
+					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), Throwables.getStackTraceAsString(e));
 				}catch (Throwable e) {
-					if(e instanceof HandlerExecuteException) {
-						log.error(e.getMessage(), e);
-					}else {
-						log.error(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
-					}
+					log.error(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
 					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), Throwables.getStackTraceAsString(e));
 				}
 				if(!Strings.isNullOrEmpty(req.getRespTopic()) && resp != null) {

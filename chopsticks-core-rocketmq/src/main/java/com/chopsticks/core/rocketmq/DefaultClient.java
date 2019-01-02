@@ -25,6 +25,7 @@ import com.chopsticks.core.rocketmq.caller.DefaultCaller;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.handler.HandlerDelayNoticeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerInvokeListener;
@@ -192,13 +193,16 @@ public class DefaultClient extends DefaultCaller implements Client{
 			if(e instanceof MQClientException) {
 				MQClientException se = (MQClientException)e;
 				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new InvokeException("namesrv connection error");
+					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_BROKER_CONNECTION_ERROR);
 				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new InvokeException("namesrv ip undefined");
+					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
+				}else {
+					e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_ERROR);
 				}
+			}else {
+				e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_ERROR);
 			}
 			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
 		}
 	}
 	
@@ -212,13 +216,16 @@ public class DefaultClient extends DefaultCaller implements Client{
 			if(e instanceof MQClientException) {
 				MQClientException se = (MQClientException)e;
 				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new InvokeException("namesrv connection error");
+					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_NOTICE_CLIENT_BROKER_CONNECTION_ERROR);
 				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new InvokeException("namesrv ip undefined");
+					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_NOTICE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
+				}else {
+					e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_NOTICE_CLIENT_ERROR);
 				}
+			}else {
+				e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_NOTICE_CLIENT_ERROR);
 			}
 			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
 		}
 	}
 	
@@ -232,13 +239,16 @@ public class DefaultClient extends DefaultCaller implements Client{
 			if(e instanceof MQClientException) {
 				MQClientException se = (MQClientException)e;
 				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new InvokeException("namesrv connection error");
+					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_BROKER_CONNECTION_ERROR);
 				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new InvokeException("namesrv ip undefined");
+					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
+				}else {
+					e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_ERROR);
 				}
+			}else {
+				e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_ERROR);
 			}
 			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
 		}
 	}
 
