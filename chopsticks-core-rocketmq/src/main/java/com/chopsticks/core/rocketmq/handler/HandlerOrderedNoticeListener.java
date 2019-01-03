@@ -12,8 +12,10 @@ import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
+import com.chopsticks.core.rocketmq.caller.OrderedNoticeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
@@ -44,6 +46,11 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 				msgId = ext.getProperty(MessageConst.PROPERTY_ORIGIN_MESSAGE_ID);
 			}
 			topic = topic.replace(Const.ORDERED_NOTICE_TOPIC_SUFFIX, "");
+			String orderedNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
+			OrderedNoticeRequest req = null;
+			if(!Strings.isNullOrEmpty(orderedNoticeReqStr)) {
+				req = JSON.parseObject(orderedNoticeReqStr, OrderedNoticeRequest.class);
+			}
 			if(!topicTags.keySet().contains(topic)) {
 				log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
 				return ConsumeOrderlyStatus.SUCCESS;
@@ -60,6 +67,9 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 			try {
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), true, false);
+				if(req != null) {
+					ctx.setExtParams(req.getExtParams());
+				}
 				handler.notice(params, ctx);
 			}catch (DefaultCoreException e) {
 				log.error(e.getMessage(), e);

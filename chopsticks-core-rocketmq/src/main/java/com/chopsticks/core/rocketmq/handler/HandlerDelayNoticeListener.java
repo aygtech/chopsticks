@@ -58,9 +58,10 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
 			
-			String noticeDealyReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
-			if(!Strings.isNullOrEmpty(noticeDealyReqStr)) {
-				DelayNoticeRequest req = JSON.parseObject(noticeDealyReqStr, DelayNoticeRequest.class);
+			String dealyNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
+			DelayNoticeRequest req = null;
+			if(!Strings.isNullOrEmpty(dealyNoticeReqStr)) {
+				req = JSON.parseObject(dealyNoticeReqStr, DelayNoticeRequest.class);
 				// TODO 等待原有延迟消费完毕 1.0.9
 				if(req.getExecuteGroupName() != null) {
 					if(!delayNoticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
@@ -81,7 +82,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 						Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getClient().getGroupName(), ext.getTags()), ext.getBody());
 						msg.setDelayTimeLevel(delayLevel.get().getValue());
 						msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-						msg.setKeys(req.getRootId());
+						msg.setKeys(req.getRootId() + Const.DELAY_NOTICE_CONSUMER_SUFFIX);
 						try {
 							SendResult ret = getClient().getProducer().send(msg);
 							if(ret.getSendStatus() != SendStatus.SEND_OK) {
@@ -125,6 +126,9 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 			try {
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, true);
+				if(req != null) {
+					ctx.setExtParams(req.getExtParams());
+				}
 				handler.notice(params, ctx);
 			}catch (DefaultCoreException e) {
 				log.error(e.getMessage(), e);

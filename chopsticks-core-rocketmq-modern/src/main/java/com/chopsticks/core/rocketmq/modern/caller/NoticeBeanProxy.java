@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import com.chopsticks.core.modern.caller.NoticeCommand;
+import com.chopsticks.core.modern.caller.ModernNoticeCommand;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
@@ -29,7 +29,8 @@ public class NoticeBeanProxy extends BaseProxy{
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Preconditions.checkNotNull(args);
 		byte[] body;
-		NoticeCommand cmd = ((NoticeCommand)args[0]);
+		ModernNoticeCommand cmd = ((ModernNoticeCommand)args[0]);
+		updateCmd(cmd);
 		if (cmd.getParams() == null) {
 			body = Const.EMPTY_PARAMS.getBytes(Charsets.UTF_8);
 		} else {
@@ -38,15 +39,20 @@ public class NoticeBeanProxy extends BaseProxy{
 		// check method exist
 		Reflect.getMethod(proxy, cmd.getMethod(), cmd.getParams());
 		BaseNoticeResult baseResult;
+		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body);
+		if(cmd instanceof BaseModernCommand) {
+			noticeCmd.setTraceNos(((BaseModernCommand)cmd).getTraceNos());
+			noticeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
+		}
 		if(args.length == 1) {
-			baseResult = client.notice(new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body));
+			baseResult = client.notice(noticeCmd);
 		}else if(args.length == 2) {
 			Object orderKey = (String)args[1];
-			baseResult = client.notice(new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body), orderKey);
+			baseResult = client.notice(noticeCmd, orderKey);
 		}else if(args.length == 3){
 			Long delay = (Long)args[1];
 			TimeUnit delayTimeUnit = (TimeUnit)args[2];
-			baseResult = client.notice(new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body), delay, delayTimeUnit);
+			baseResult = client.notice(noticeCmd, delay, delayTimeUnit);
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
@@ -55,6 +61,10 @@ public class NoticeBeanProxy extends BaseProxy{
 		return ret;
 	}
 	
+	protected void updateCmd(ModernNoticeCommand cmd) {
+		
+	}
+
 	protected Class<?> getClazz() {
 		return clazz;
 	}

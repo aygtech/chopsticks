@@ -47,3 +47,6 @@
 	1.完善异常体系
 	2.破坏性升级，移除了ContextHolder接口，改为使用ModernContextHolder类的静态方法实现功能
 	3.修改日志新增一个logs包
+1.1.4
+	1.新增traceNo功能
+	2.新增extParams功能

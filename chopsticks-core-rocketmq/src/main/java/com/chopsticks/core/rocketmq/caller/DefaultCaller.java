@@ -53,6 +53,7 @@ import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.chopsticks.core.utils.Reflect;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -361,6 +362,9 @@ public class DefaultCaller implements Caller {
 	
 	private Message buildNoticeMessage(BaseNoticeCommand cmd) {
 		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
+		if(!cmd.getTraceNos().isEmpty()) {
+			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+		}
 		return msg;
 	}
 
@@ -383,6 +387,9 @@ public class DefaultCaller implements Caller {
 	protected Message buildInvokeMessage(InvokeRequest req, BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
+		if(!cmd.getTraceNos().isEmpty()) {
+			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+		}
 		return msg;
 	}
 	
@@ -390,6 +397,13 @@ public class DefaultCaller implements Caller {
 		DelayNoticeRequest req = new DelayNoticeRequest();
 		req.setInvokeTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setExecuteTime(req.getInvokeTime() + timeoutUnit.toMillis(timeout));
+		req.setExtParams(cmd.getExtParams());
+		return req;
+	}
+	
+	private OrderedNoticeRequest buildOrderedNoticeRequest(BaseNoticeCommand cmd, Object orderKey) {
+		OrderedNoticeRequest req = new OrderedNoticeRequest();
+		req.setExtParams(cmd.getExtParams());
 		return req;
 	}
 
@@ -400,6 +414,8 @@ public class DefaultCaller implements Caller {
 		req.setDeadline(req.getReqTime() + timeoutUnit.toMillis(timeout));
 		req.setRespTopic(buildRespTopic());
 		req.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
+		req.setExtParams(cmd.getExtParams());
+		req.setExtParams(cmd.getExtParams());
 		return req;
 	}
 
@@ -423,11 +439,19 @@ public class DefaultCaller implements Caller {
 				log.warn("unsupport notice delay");
 			}
 		}
+		if(!cmd.getTraceNos().isEmpty()) {
+			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+		}
 		return msg;
 	}
 	
 	private Message buildOrderedNoticeMessage(BaseNoticeCommand cmd, Object orderKey) {
 		Message msg = new Message(buildOrderedNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
+		OrderedNoticeRequest req = buildOrderedNoticeRequest(cmd, orderKey);
+		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.ORDERED_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+		if(!cmd.getTraceNos().isEmpty()) {
+			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+		}
 		return msg;
 	}
 	

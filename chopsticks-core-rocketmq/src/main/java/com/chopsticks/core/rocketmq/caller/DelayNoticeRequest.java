@@ -1,6 +1,6 @@
 package com.chopsticks.core.rocketmq.caller;
 
-public class DelayNoticeRequest {
+public class DelayNoticeRequest extends BaseRequest{
 	private String rootId;
 	private long invokeTime;
 	private long executeTime;

@@ -1,6 +1,6 @@
 package com.chopsticks.core.rocketmq.caller;
 
-public class InvokeRequest {
+public class InvokeRequest extends BaseRequest{
 	private String reqId;
 	private long reqTime;
 	private long deadline;

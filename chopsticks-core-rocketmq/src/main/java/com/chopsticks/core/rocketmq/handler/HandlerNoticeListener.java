@@ -57,8 +57,9 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			}
 			
 			String noticeDealyReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
+			DelayNoticeRequest req = null;
 			if(!Strings.isNullOrEmpty(noticeDealyReqStr)) {
-				DelayNoticeRequest req = JSON.parseObject(noticeDealyReqStr, DelayNoticeRequest.class);
+				req = JSON.parseObject(noticeDealyReqStr, DelayNoticeRequest.class);
 				// TODO 等待原有延迟消费完毕 1.0.9
 				if(req.getExecuteGroupName() != null) {
 					if(!noticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
@@ -110,6 +111,9 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			try {
 				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), noticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, false);
+				if(req != null) {
+					ctx.setExtParams(req.getExtParams());
+				}
 				handler.notice(params, ctx);
 			}catch (DefaultCoreException e) {
 				log.error(e.getMessage(), e);

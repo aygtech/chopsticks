@@ -1,7 +1,6 @@
 package com.chopsticks.core.modern.caller;
 
-public interface NoticeCommand {
-	
+public interface ModernCommand {
 	public String getMethod();
-	public Object[] getParams(); 
+	public Object[] getParams();
 }

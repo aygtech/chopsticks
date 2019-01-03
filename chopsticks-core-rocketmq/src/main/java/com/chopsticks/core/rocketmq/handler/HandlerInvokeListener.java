@@ -64,7 +64,9 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					if(req.isCompress()) {
 						body = UtilAll.uncompress(body);
 					}
-					HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), new DefaultInvokeContext());       
+					DefaultInvokeContext ctx = new DefaultInvokeContext();
+					ctx.setExtParams(req.getExtParams());
+					HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), ctx);       
 					if(handlerResult != null) {
 						resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
 					}
@@ -98,6 +100,9 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 						log.error(String.format("unknow exception, invoke end, process send response, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e);
 					}
 				}
+			}else {
+				log.warn("InvokeRequest can not be null, msgid : {}", ext.getMsgId());
+				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
 		}
 		return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;

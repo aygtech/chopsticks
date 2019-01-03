@@ -13,6 +13,7 @@ import com.chopsticks.core.handler.InvokeParams;
 import com.chopsticks.core.handler.NoticeContext;
 import com.chopsticks.core.handler.NoticeParams;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
+import com.chopsticks.core.rocketmq.handler.BaseInvokeContext;
 import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 import com.chopsticks.core.rocketmq.modern.Const;
@@ -47,7 +48,10 @@ public class ModernHandler extends BaseHandler{
 			throw new ModernCoreException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e).setCode(ModernCoreException.MODERN_INVOKE_METHOD_NOT_FOUND);
 		}
 		Object ret;
+		BaseInvokeContext mqCtx = (BaseInvokeContext) ctx;
 		try {
+			
+			ModernContextHolder.setExtParams(mqCtx.getExtParams());
 			ret = Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
 			throw new ModernCoreException(String.format("invoke execute exception : %s, bean : %s, method : %s, params : %s"
@@ -56,6 +60,8 @@ public class ModernHandler extends BaseHandler{
 															, params.getMethod()
 															, args)
 					, e).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
+		}finally {
+			ModernContextHolder.remove();
 		}
 		
 		if(obj instanceof Observer) {
@@ -89,6 +95,7 @@ public class ModernHandler extends BaseHandler{
 		try {
 			DefaultModerNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
 			ModernContextHolder.setNoticeContext(baseCtx);
+			ModernContextHolder.setExtParams(baseCtx.getExtParams());
 			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {

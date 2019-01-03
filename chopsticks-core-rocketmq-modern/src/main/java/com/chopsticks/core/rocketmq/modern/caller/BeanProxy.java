@@ -32,7 +32,8 @@ public class BeanProxy extends BaseProxy {
 		} else {
 			body = JSON.toJSONString(args, SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 		}
-		InvokeResult result = client.invoke(new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body));
+		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body);
+		InvokeResult result = client.invoke(invokeCmd);
 		Class<?> returnType = method.getReturnType();
 		Object ret = null;
 		if (returnType != void.class && result.getBody() != null && result.getBody().length > 0) {

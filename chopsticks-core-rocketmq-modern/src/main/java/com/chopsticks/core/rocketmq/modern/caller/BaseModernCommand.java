@@ -1,37 +1,35 @@
-package com.chopsticks.core.rocketmq.caller;
+package com.chopsticks.core.rocketmq.modern.caller;
 
 import java.util.Map;
 import java.util.Set;
 
-import com.chopsticks.core.caller.Command;
+import com.chopsticks.core.modern.caller.ModernCommand;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
-public abstract class BaseCommand implements Command {
-	
-	private String topic;
-	private String tag;
-	private byte[] body;
+public abstract class BaseModernCommand implements ModernCommand {
+	private String method;
+	private Object[] params;
 	private Set<String> traceNos = Sets.newHashSet();
 	private Map<String, String> extParams = Maps.newHashMap();
-	public BaseCommand(String topic, String tag, byte[] body) {
-		this.topic = topic;
-		this.tag = tag;
-		this.body = body;
+	
+	public BaseModernCommand(String method, Object... params) {
+		this.method = method;
+		this.params = params;
 	}
-	public String getTopic() {
-		return topic;
-	}
-	public String getTag() {
-		return tag;
+	public void setMethod(String method) {
+		this.method = method;
 	}
 	@Override
 	public String getMethod() {
-		return tag;
+		return method;
+	}
+	public void setParams(Object[] params) {
+		this.params = params;
 	}
 	@Override
-	public byte[] getBody() {
-		return body;
+	public Object[] getParams() {
+		return params;
 	}
 	public void setTraceNos(Set<String> traceNos) {
 		this.traceNos = traceNos;

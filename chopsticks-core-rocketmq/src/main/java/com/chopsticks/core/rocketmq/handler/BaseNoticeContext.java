@@ -2,7 +2,7 @@ package com.chopsticks.core.rocketmq.handler;
 
 import com.chopsticks.core.handler.NoticeContext;
 
-public abstract class BaseNoticeContext implements NoticeContext{
+public abstract class BaseNoticeContext extends BaseContext implements NoticeContext{
 	
 	private String id;
 	private String originId;
@@ -13,6 +13,7 @@ public abstract class BaseNoticeContext implements NoticeContext{
 	
 	public BaseNoticeContext(BaseNoticeContext ctx) {
 		this(ctx.getId(), ctx.getOriginId(), ctx.getRetryCount(), ctx.isMaxRetryCount(), ctx.isOrderedNotice(), ctx.isDelayNotice());
+		setExtParams(ctx.getExtParams());
 	}
 	
 	public BaseNoticeContext(String id, String originId, int retryCount, boolean maxRetryCount, boolean orderedNotice, boolean delayNotice) {
