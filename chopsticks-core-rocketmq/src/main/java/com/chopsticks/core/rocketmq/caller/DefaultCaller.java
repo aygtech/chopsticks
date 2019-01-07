@@ -45,12 +45,11 @@ import com.chopsticks.core.caller.NoticeCommand;
 import com.chopsticks.core.caller.NoticeResult;
 import com.chopsticks.core.concurrent.Promise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
-import com.chopsticks.core.exception.InvokeException;
-import com.chopsticks.core.exception.InvokeExecuteException;
 import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Joiner;
@@ -81,7 +80,7 @@ public class DefaultCaller implements Caller {
 	
 	protected static final long DEFAULT_SYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(30);
 	
-	protected static final long DEFAULT_ASYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(5);
+	protected static final long DEFAULT_ASYNC_TIMEOUT_MILLIS = TimeUnit.SECONDS.toMillis(10);
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
 	
@@ -117,9 +116,9 @@ public class DefaultCaller implements Caller {
 			if(e instanceof MQClientException) {
 				MQClientException se = (MQClientException)e;
 				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new InvokeException("namesrv connection error");
+					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_CALLER_NAME_SERVER_CONNECTION_ERROR);
 				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new InvokeException("namesrv ip undefined");
+					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_CALLER_NO_NAME_SERVER_ERROR);
 				}
 			}
 			Throwables.throwIfUnchecked(e);
@@ -310,7 +309,7 @@ public class DefaultCaller implements Caller {
 					return examineConsumerConnectionInfo;
 				}
 			})) {
-				throw new InvokeExecuteException(cmd.getTopic() + " cannot found executor");
+				throw new DefaultCoreException(cmd.getTopic() + " cannot found executor").setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
 			invokeSender.send(msg, promise);
 			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
@@ -589,7 +588,7 @@ public class DefaultCaller implements Caller {
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Long delay, final TimeUnit delayTimeUnit) {
 		checkArgument(started, "must be call method start");
-		checkArgument(delay > 0, "delay must > 0");
+		checkArgument(delay > 0, "delay must > 0, cur : %s", delay);
 		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildDelayNoticeMessage(cmd, delay, delayTimeUnit);

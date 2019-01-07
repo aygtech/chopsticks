@@ -18,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.Client;
-import com.chopsticks.core.exception.InvokeException;
 import com.chopsticks.core.handler.Handler;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.DefaultCaller;
@@ -173,9 +172,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 			if(e instanceof MQClientException) {
 				MQClientException se = (MQClientException)e;
 				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new InvokeException("namesrv connection error");
+					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_INVOKE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
 				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new InvokeException("namesrv ip undefined");
+					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_INVOKE_CLIENT_NO_NAME_SERVER_ERROR);
 				}
 			}
 			Throwables.throwIfUnchecked(e);

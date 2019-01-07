@@ -12,9 +12,10 @@ import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
-import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeResult;
 import com.chopsticks.core.rocketmq.modern.Const;
+import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Sets;
 
 public class ExtBeanProxy extends BaseProxy {
 	private String clazzName;
@@ -47,8 +48,16 @@ public class ExtBeanProxy extends BaseProxy {
 		BaseNoticeResult baseResult;
 		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
-			noticeCmd.setTraceNos(((BaseModernCommand)cmd).getTraceNos());
 			noticeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
+			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
+				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
+					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+				}else {
+					noticeCmd.setTraceNos(ModernContextHolder.getTraceNos());
+				}
+			}else {
+				noticeCmd.setTraceNos(((BaseModernCommand) cmd).getTraceNos());
+			}
 		}
 		if(args.length == 1) {
 			baseResult = client.notice(noticeCmd);
@@ -62,8 +71,8 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
-		DefaultNoticeResult ret = new DefaultNoticeResult(baseResult.getId());
-		return ret;
+		baseResult.setTraceNos(noticeCmd.getTraceNos());
+		return baseResult;
 	}
 
 	private Object invoke(Method method, Object[] args) {
@@ -77,8 +86,16 @@ public class ExtBeanProxy extends BaseProxy {
 		BaseInvokeResult baseResult;
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
-			invokeCmd.setTraceNos(((BaseModernCommand)cmd).getTraceNos());
 			invokeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
+			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
+				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
+					invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+				}else {
+					invokeCmd.setTraceNos(ModernContextHolder.getTraceNos());
+				}
+			}else {
+				invokeCmd.setTraceNos(((BaseModernCommand) cmd).getTraceNos());
+			}
 		}
 		if(args.length == 1) {
 			baseResult = client.invoke(invokeCmd);
@@ -89,6 +106,7 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
+		baseResult.setTraceNos(invokeCmd.getTraceNos());
 		return baseResult;
 	}
 	

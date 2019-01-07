@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.OrderedNoticeRequest;
@@ -38,52 +39,62 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 	@Override
 	public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
 		for(MessageExt ext : msgs) {
-			String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
-			String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
-			if(Strings.isNullOrEmpty(topic)) {
-				topic = ext.getTopic();
-			}else {
-				msgId = ext.getProperty(MessageConst.PROPERTY_ORIGIN_MESSAGE_ID);
-			}
-			topic = topic.replace(Const.ORDERED_NOTICE_TOPIC_SUFFIX, "");
-			String orderedNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
-			OrderedNoticeRequest req = null;
-			if(!Strings.isNullOrEmpty(orderedNoticeReqStr)) {
-				req = JSON.parseObject(orderedNoticeReqStr, OrderedNoticeRequest.class);
-			}
-			if(!topicTags.keySet().contains(topic)) {
-				log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
-				return ConsumeOrderlyStatus.SUCCESS;
-			}
-			BaseHandler handler = getHandler(topic, ext.getTags());
-			if(handler == null) {
-				log.error("cannot find handler by orderedNotice, reconsumeTimes : {}, msgId: {}, topic : {}, tag : {}"
-						, ext.getReconsumeTimes()
-						, msgId
-						, topic
-						, ext.getTags());
-				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
-			}
 			try {
-				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
-				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), true, false);
-				if(req != null) {
-					ctx.setExtParams(req.getExtParams());
-				}
-				handler.notice(params, ctx);
-			}catch (DefaultCoreException e) {
+				return consumeMessage(ext, context);
+			}catch (CoreException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 			}catch (Throwable e) {
-				log.error(String.format("orderedNotice process exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
-						, ext.getReconsumeTimes()
-						, msgId
-						, topic
-						, ext.getTags()), e);
+				log.error(e.getMessage(), e);
 				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 			}
 		}
 		return ConsumeOrderlyStatus.SUCCESS;
 	}
-
+	
+	private ConsumeOrderlyStatus consumeMessage(MessageExt ext, ConsumeOrderlyContext context) {
+		String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
+		String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
+		if(Strings.isNullOrEmpty(topic)) {
+			topic = ext.getTopic();
+		}else {
+			msgId = ext.getProperty(MessageConst.PROPERTY_ORIGIN_MESSAGE_ID);
+		}
+		topic = topic.replace(Const.ORDERED_NOTICE_TOPIC_SUFFIX, "");
+		String orderedNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
+		OrderedNoticeRequest req = null;
+		if(!Strings.isNullOrEmpty(orderedNoticeReqStr)) {
+			req = JSON.parseObject(orderedNoticeReqStr, OrderedNoticeRequest.class);
+		}
+		if(!topicTags.keySet().contains(topic)) {
+			log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
+			return ConsumeOrderlyStatus.SUCCESS;
+		}
+		BaseHandler handler = getHandler(topic, ext.getTags());
+		if(handler == null) {
+			throw new DefaultCoreException(String.format("cannot find handler by orderedNotice, reconsumeTimes : %s, msgId: %s, topic : %s, tag : %s"
+					, ext.getReconsumeTimes()
+					, msgId
+					, topic
+					, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_ORDERED_NOTICE_HANDLER);
+		}
+		try {
+			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
+			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), true, false);
+			if(req != null) {
+				ctx.setExtParams(req.getExtParams());
+				ctx.setTraceNos(req.getTraceNos());
+			}
+			handler.notice(params, ctx);
+			return ConsumeOrderlyStatus.SUCCESS;
+		}catch (DefaultCoreException e) {
+			throw e;
+		}catch (Throwable e) {
+			throw new DefaultCoreException(String.format("orderedNotice process exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
+					, ext.getReconsumeTimes()
+					, msgId
+					, topic
+					, ext.getTags()), e).setCode(CoreException.UNKNOW_EXCEPTION);
+		} 
+	}
 }

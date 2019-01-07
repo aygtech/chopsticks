@@ -52,8 +52,12 @@ public class ModernHandler extends BaseHandler{
 		try {
 			
 			ModernContextHolder.setExtParams(mqCtx.getExtParams());
+			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
 			ret = Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
+			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
+				e = e.getCause();
+			}
 			throw new ModernCoreException(String.format("invoke execute exception : %s, bean : %s, method : %s, params : %s"
 															, e.getMessage()
 															, obj

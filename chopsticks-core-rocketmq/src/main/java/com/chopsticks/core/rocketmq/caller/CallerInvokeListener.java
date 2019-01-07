@@ -13,8 +13,8 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.concurrent.impl.GuavaPromise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
-import com.chopsticks.core.exception.InvokeExecuteException;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeResult;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 
 class CallerInvokeListener implements MessageListenerConcurrently{
@@ -36,7 +36,7 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 				GuavaPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(resp.getReqId());
 				if(promise != null) {
 					if(resp.getRespExceptionBody() != null) {
-						promise.setException(new InvokeExecuteException(resp.getRespExceptionBody()));
+						promise.setException(new DefaultCoreException(resp.getRespExceptionBody()).setCode(DefaultCoreException.INVOKE_EXECUTE_ERROR));
 					}else {
 						promise.set(new DefaultInvokeResult(resp.getRespBody()));
 					}

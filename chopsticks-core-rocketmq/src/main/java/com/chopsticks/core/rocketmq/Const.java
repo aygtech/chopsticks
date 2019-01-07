@@ -75,7 +75,6 @@ public class Const {
 	public static final int DEFAULT_TOPIC_QUEUE_SIZE = 64;
 
 	public static final String ERROR_MSG_CAN_NOT_FIND_MESSAGE_QUEUE = "Can not find Message Queue";
-	public static final String ERROR_TOPIC_NOT_EXIST = "The topic[%s] not exist";
 
 	public static void setDelayLevel(TreeMap<Long, Integer> delayLevel) {
 		synchronized (DELAY_LEVEL) {

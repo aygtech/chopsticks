@@ -8,4 +8,8 @@ public class DefaultNoticeResult extends BaseNoticeResult{
 		super(id);
 	}
 
+	@Override
+	public String toString() {
+		return "DefaultNoticeResult [getId()=" + getId() + ", getTraceNos()=" + getTraceNos() + "]";
+	}
 }

@@ -11,8 +11,10 @@ import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.modern.Const;
+import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Sets;
 
 public class BeanProxy extends BaseProxy {
 
@@ -33,6 +35,9 @@ public class BeanProxy extends BaseProxy {
 			body = JSON.toJSONString(args, SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 		}
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body);
+		if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
+			invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+		}
 		InvokeResult result = client.invoke(invokeCmd);
 		Class<?> returnType = method.getReturnType();
 		Object ret = null;

@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.DelayNoticeRequest;
@@ -46,104 +47,116 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 	@Override
 	public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 		for(MessageExt ext : msgs) {
-			ext.setTags(Const.getOriginTag(getClient().getGroupName(), ext.getTags()));
-			String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
-			String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
-			if(Strings.isNullOrEmpty(topic)) {
-				topic = ext.getTopic();
-			}
-			topic = topic.replace(Const.DELAY_NOTICE_TOPIC_SUFFIX, "");
-			if(!topicTags.keySet().contains(topic)) {
-				log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
-				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-			}
-			
-			String dealyNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
-			DelayNoticeRequest req = null;
-			if(!Strings.isNullOrEmpty(dealyNoticeReqStr)) {
-				req = JSON.parseObject(dealyNoticeReqStr, DelayNoticeRequest.class);
-				// TODO 等待原有延迟消费完毕 1.0.9
-				if(req.getExecuteGroupName() != null) {
-					if(!delayNoticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
-						log.trace("cur group is {}, msg group is {}, cancel consumer", delayNoticeConsumer.getConsumerGroup(), req.getExecuteGroupName());
-						return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-					}
-				}else {
-					req.setExecuteGroupName(delayNoticeConsumer.getConsumerGroup());
-				}
-				if(!Strings.isNullOrEmpty(req.getRootId())) {
-					msgId = req.getRootId();
-				}
-				req.setRootId(msgId);
-				long diff = req.getExecuteTime() - Const.CLIENT_TIME.getNow();
-				if(diff > 0) {
-					Optional<Entry<Long, Integer>> delayLevel = Const.getDelayLevel(diff);
-					if(delayLevel.isPresent()) {
-						Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getClient().getGroupName(), ext.getTags()), ext.getBody());
-						msg.setDelayTimeLevel(delayLevel.get().getValue());
-						msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-						msg.setKeys(req.getRootId() + Const.DELAY_NOTICE_CONSUMER_SUFFIX);
-						try {
-							SendResult ret = getClient().getProducer().send(msg);
-							if(ret.getSendStatus() != SendStatus.SEND_OK) {
-								throw new DefaultCoreException(ret.getSendStatus().name()).setCode(DefaultCoreException.DELAY_NOTICE_EXECUTE_FORWORD_SEND_NOT_OK);
-							}else {
-								log.trace("rootId : {}, newId : {}, invokeTime : {}, executeTime : {}, next delay(ms) : {}, diff(ms) : {}"
-										, msgId
-										, ret.getMsgId()
-										, TimeUtils.yyyyMMddHHmmssSSS(req.getInvokeTime())
-										, TimeUtils.yyyyMMddHHmmssSSS(req.getExecuteTime())
-										, String.format("%s-%s", delayLevel.get().getKey(), delayLevel.get().getValue())
-										, diff);
-								return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-							}
-						}catch (Throwable e) {
-							log.error(e.getMessage(), e);
-							return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-						}
-					}else {
-						log.trace("delayLevel be null, diff : {}", diff);
-						if(diff < TimeUnit.SECONDS.toMillis(1)) {
-							try {
-								TimeUnit.MILLISECONDS.sleep(diff);	
-							}catch (Throwable e) {
-								log.error(e.getMessage(), e);
-							}
-						}
-					}
-				}
-			}
-			
-			BaseHandler handler = getHandler(topic, ext.getTags());
-			if(handler == null) {
-				log.error("cannot find handler by notice, reconsumeTimes : {}, msgId: {}, topic : {}, tag : {}"
-						, ext.getReconsumeTimes()
-						, msgId
-						, topic
-						, ext.getTags());
-				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
-			}
 			try {
-				DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
-				DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, true);
-				if(req != null) {
-					ctx.setExtParams(req.getExtParams());
-				}
-				handler.notice(params, ctx);
-			}catch (DefaultCoreException e) {
+				return consumeMessage(ext, context);
+			}catch (CoreException e) {
 				log.error(e.getMessage(), e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}catch (Throwable e) {
-				log.error(String.format("handler notice execute exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
-										, ext.getReconsumeTimes()
-										, msgId
-										, topic
-										, ext.getTags())
-						, e);
+				log.error(e.getMessage(), e);
 				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}
 		}
 		return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+	}
+	
+	public ConsumeConcurrentlyStatus consumeMessage(MessageExt ext, ConsumeConcurrentlyContext context) {
+
+		ext.setTags(Const.getOriginTag(getClient().getGroupName(), ext.getTags()));
+		String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
+		String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
+		if(Strings.isNullOrEmpty(topic)) {
+			topic = ext.getTopic();
+		}
+		topic = topic.replace(Const.DELAY_NOTICE_TOPIC_SUFFIX, "");
+		if(!topicTags.keySet().contains(topic)) {
+			log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
+			return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+		}
+		
+		String dealyNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
+		DelayNoticeRequest req = null;
+		if(!Strings.isNullOrEmpty(dealyNoticeReqStr)) {
+			req = JSON.parseObject(dealyNoticeReqStr, DelayNoticeRequest.class);
+			// TODO 等待原有延迟消费完毕 1.0.9
+			if(req.getExecuteGroupName() != null) {
+				if(!delayNoticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
+					log.trace("cur group is {}, msg group is {}, cancel consumer", delayNoticeConsumer.getConsumerGroup(), req.getExecuteGroupName());
+					return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+				}
+			}else {
+				req.setExecuteGroupName(delayNoticeConsumer.getConsumerGroup());
+			}
+			if(!Strings.isNullOrEmpty(req.getRootId())) {
+				msgId = req.getRootId();
+			}
+			req.setRootId(msgId);
+			long diff = req.getExecuteTime() - Const.CLIENT_TIME.getNow();
+			if(diff > 0) {
+				Optional<Entry<Long, Integer>> delayLevel = Const.getDelayLevel(diff);
+				if(delayLevel.isPresent()) {
+					Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getClient().getGroupName(), ext.getTags()), ext.getBody());
+					msg.setDelayTimeLevel(delayLevel.get().getValue());
+					msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+					msg.setKeys(req.getRootId() + Const.DELAY_NOTICE_CONSUMER_SUFFIX);
+					try {
+						SendResult ret = getClient().getProducer().send(msg);
+						if(ret.getSendStatus() != SendStatus.SEND_OK) {
+							throw new DefaultCoreException(ret.getSendStatus().name()).setCode(DefaultCoreException.DELAY_NOTICE_EXECUTE_FORWORD_SEND_NOT_OK);
+						}else {
+							log.trace("rootId : {}, newId : {}, invokeTime : {}, executeTime : {}, next delay(ms) : {}, diff(ms) : {}"
+									, msgId
+									, ret.getMsgId()
+									, TimeUtils.yyyyMMddHHmmssSSS(req.getInvokeTime())
+									, TimeUtils.yyyyMMddHHmmssSSS(req.getExecuteTime())
+									, String.format("%s-%s", delayLevel.get().getKey(), delayLevel.get().getValue())
+									, diff);
+							return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+						}
+					}catch (Throwable e) {
+						throw new DefaultCoreException(e).setCode(CoreException.UNKNOW_EXCEPTION);
+					}
+				}else {
+					log.trace("delayLevel be null, diff : {}", diff);
+					if(diff < TimeUnit.SECONDS.toMillis(1)) {
+						try {
+							TimeUnit.MILLISECONDS.sleep(diff);	
+						}catch (Throwable e) {
+							log.error(e.getMessage(), e);
+						}
+					}
+				}
+			}
+		}
+		
+		BaseHandler handler = getHandler(topic, ext.getTags());
+		if(handler == null) {
+			throw new DefaultCoreException(String.format("cannot find handler by notice, reconsumeTimes : %s, msgId: %s, topic : %s, tag : %s"
+					, ext.getReconsumeTimes()
+					, msgId
+					, topic
+					, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_DELAY_NOTICE_HANDLER);
+		}
+		try {
+			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
+			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, true);
+			if(req != null) {
+				ctx.setExtParams(req.getExtParams());
+				ctx.setTraceNos(req.getTraceNos());
+			}
+			handler.notice(params, ctx);
+			return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+		}catch (DefaultCoreException e) {
+			throw e;
+		}catch (Throwable e) {
+			throw new DefaultCoreException(String.format("handler notice execute exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
+									, ext.getReconsumeTimes()
+									, msgId
+									, topic
+									, ext.getTags())
+					, e).setCode(CoreException.UNKNOW_EXCEPTION);
+		}
+	
 	}
 
 }

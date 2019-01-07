@@ -4,6 +4,8 @@ public class CoreException extends RuntimeException{
 
 	private static final long serialVersionUID = 1L;
 	
+	public static final int UNKNOW_EXCEPTION = -1; 
+	
 	private int code;
 
 	public CoreException() {

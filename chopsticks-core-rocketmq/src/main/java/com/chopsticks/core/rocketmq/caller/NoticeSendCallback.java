@@ -26,6 +26,7 @@ class NoticeSendCallback implements SendCallback {
 		setDone(true);
 		if(noticePromise.isCancelled()) {
 			log.error("promise is cancel, id : {}, status : {}", sendResult.getMsgId(), sendResult.getSendStatus());
+			return;
 		}
 		if(sendResult.getSendStatus() == SendStatus.SEND_OK) {
 			noticePromise.set(new DefaultNoticeResult(sendResult.getMsgId()));
