@@ -100,6 +100,7 @@ public class ModernHandler extends BaseHandler{
 			DefaultModerNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
 			ModernContextHolder.setNoticeContext(baseCtx);
 			ModernContextHolder.setExtParams(baseCtx.getExtParams());
+			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
 			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (Throwable e) {
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {

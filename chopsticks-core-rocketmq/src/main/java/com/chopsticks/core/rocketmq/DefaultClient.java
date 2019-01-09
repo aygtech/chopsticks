@@ -138,10 +138,27 @@ public class DefaultClient extends DefaultCaller implements Client{
 			buildTopicTagsAndTopicTagHandlers();
 			if(!topicTags.isEmpty()) {
 				addTest();
-				invokeConsumer = buildAndStartInvokeCosumer();
-				delayNoticeConsumer = buildAndStartDelayNoticeCosumer();
-				noticeConsumer = buildAndStartNoticeCosumer();
-				orderedNoticeConsumer = buildAndStartOrderedNoticeCosumer();
+				try {
+					invokeConsumer = buildAndStartInvokeCosumer();
+					delayNoticeConsumer = buildAndStartDelayNoticeCosumer();
+					noticeConsumer = buildAndStartNoticeCosumer();
+					orderedNoticeConsumer = buildAndStartOrderedNoticeCosumer();
+				}catch (Throwable e) {
+					if(invokeConsumer != null) {
+						invokeConsumer.shutdown();
+					}
+					if(delayNoticeConsumer != null) {
+						delayNoticeConsumer.shutdown();
+					}
+					if(noticeConsumer != null) {
+						noticeConsumer.shutdown();
+					}
+					if(orderedNoticeConsumer != null) {
+						orderedNoticeConsumer.shutdown();
+					}
+					Throwables.throwIfUnchecked(e);
+					throw new RuntimeException(e);
+				}
 			}
 			started = true;
 		}

@@ -2,15 +2,11 @@ package com.chopsticks.core.rocketmq.handler;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
-import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
@@ -20,11 +16,10 @@ import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
-import com.chopsticks.core.rocketmq.caller.DelayNoticeRequest;
+import com.chopsticks.core.rocketmq.caller.NoticeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
-import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 
@@ -72,46 +67,10 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 		}
 		
-		String noticeDealyReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
-		DelayNoticeRequest req = null;
-		if(!Strings.isNullOrEmpty(noticeDealyReqStr)) {
-			req = JSON.parseObject(noticeDealyReqStr, DelayNoticeRequest.class);
-			// TODO 等待原有延迟消费完毕 1.0.9
-			if(req.getExecuteGroupName() != null) {
-				if(!noticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {
-					log.trace("cur group is {}, msg group is {}, cancel consumer", noticeConsumer.getConsumerGroup(), req.getExecuteGroupName());
-					return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-				}
-			}else {
-				req.setExecuteGroupName(noticeConsumer.getConsumerGroup());
-			}
-			if(!Strings.isNullOrEmpty(req.getRootId())) {
-				msgId = req.getRootId();
-			}
-			req.setRootId(msgId);
-			long diff = req.getExecuteTime() - Const.CLIENT_TIME.getNow();
-			if(diff > 0) {
-				Optional<Entry<Long, Integer>> delayLevel = Const.getDelayLevel(diff);
-				if(delayLevel.isPresent()) {
-					Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getClient().getGroupName(), ext.getTags()), ext.getBody());
-					msg.setDelayTimeLevel(delayLevel.get().getValue());
-					msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-					msg.setKeys(req.getRootId());
-					try {
-						SendResult ret = getClient().getProducer().send(msg);
-						if(ret.getSendStatus() != SendStatus.SEND_OK) {
-							throw new DefaultCoreException(ret.getSendStatus().name()).setCode(DefaultCoreException.NOTICE_EXECUTE_FORWORD_SEND_NOT_OK);
-						}else {
-							log.trace("rootId : {}, newId : {}, next delay(ms) : {}, diff(ms) : {}", msgId, ret.getMsgId(), delayLevel.get().getKey(), diff);
-							return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-						}
-					}catch (Throwable e) {
-						throw new DefaultCoreException(e).setCode(CoreException.UNKNOW_EXCEPTION);
-					}
-				}else {
-					log.trace("delayLevel be null, diff : {}", diff);
-				}
-			}
+		String noticeReqStr = ext.getProperty(Const.NOTICE_REQUEST_KEY);
+		NoticeRequest req = null;
+		if(!Strings.isNullOrEmpty(noticeReqStr)) {
+			req = JSON.parseObject(noticeReqStr, NoticeRequest.class);
 		}
 		
 		BaseHandler handler = getHandler(topic, ext.getTags());

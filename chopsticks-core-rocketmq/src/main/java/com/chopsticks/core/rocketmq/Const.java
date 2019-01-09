@@ -56,6 +56,7 @@ public class Const {
 	public static final String ORDERED_NOTICE_TOPIC_SUFFIX = "_ORDERED_NOTICE_TOPIC";
 
 	public static final String INVOKE_REQUEST_KEY = "_INVOKE_REQUEST_";
+	public static final String NOTICE_REQUEST_KEY = "_NOTICE_REQUEST_";
 	public static final String DELAY_NOTICE_REQUEST_KEY = "_DELAY_NOTICE_REQUEST_";
 	public static final String ORDERED_NOTICE_REQUEST_KEY = "_ORDERED_NOTICE_REQUEST_";
 	public static final String INVOCE_RESP_TOPIC_SUFFIX = "_RESP_TOPIC";

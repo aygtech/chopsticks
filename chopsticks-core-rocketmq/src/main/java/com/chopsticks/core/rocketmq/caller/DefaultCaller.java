@@ -129,12 +129,26 @@ public class DefaultCaller implements Caller {
 	@Override
 	public synchronized void start() {
 		if(!started) {
-			callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaTimeoutPromise<BaseInvokeResult>>();
-			producer = buildAndStartProducer();
-			invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
-			mqAdminExt = buildAdminExt();
-			callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
-			started = true;
+			try {
+				callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaTimeoutPromise<BaseInvokeResult>>();
+				producer = buildAndStartProducer();
+				invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
+				mqAdminExt = buildAdminExt();
+				callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
+				started = true;	
+			}catch (Throwable e) {
+				if(producer != null) {
+					producer.shutdown();
+				}
+				if(invokeSender != null) {
+					invokeSender.shutdown();
+				}
+				if(callerInvokeConsumer != null) {
+					callerInvokeConsumer.shutdown();
+				}
+				Throwables.throwIfUnchecked(e);
+				throw new RuntimeException(e);
+			}
 		}
 	}
 	
@@ -360,7 +374,9 @@ public class DefaultCaller implements Caller {
 	}
 	
 	private Message buildNoticeMessage(BaseNoticeCommand cmd) {
+		NoticeRequest req = buildNoticeRequest(cmd);
 		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
+		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.NOTICE_REQUEST_KEY, JSON.toJSONString(req));
 		if(!cmd.getTraceNos().isEmpty()) {
 			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
 		}
@@ -397,6 +413,13 @@ public class DefaultCaller implements Caller {
 		req.setInvokeTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setExecuteTime(req.getInvokeTime() + timeoutUnit.toMillis(timeout));
 		req.setExtParams(cmd.getExtParams());
+		req.setTraceNos(cmd.getTraceNos());
+		return req;
+	}
+	
+	private NoticeRequest buildNoticeRequest(BaseNoticeCommand cmd) {
+		NoticeRequest req = new NoticeRequest();
+		req.setTraceNos(cmd.getTraceNos());
 		return req;
 	}
 	
