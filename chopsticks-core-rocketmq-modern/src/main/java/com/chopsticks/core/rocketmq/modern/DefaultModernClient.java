@@ -56,6 +56,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			if(!entry.getKey().isInterface()) {
 				throw new RuntimeException("key must be interface");
 			}
+			checkNotNull(entry.getValue(), "key : %s, value is null", entry.getKey());
 		}
 		this.handlers = handlers;
 	}

@@ -377,6 +377,10 @@ public class DefaultCaller implements Caller {
 		NoticeRequest req = buildNoticeRequest(cmd);
 		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+		Optional<Entry<Long, Integer>> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(TimeUnit.SECONDS.toMillis(1L));
+		if(level.isPresent()) {
+			msg.setDelayTimeLevel(level.get().getValue());
+		}
 		if(!cmd.getTraceNos().isEmpty()) {
 			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
 		}
@@ -438,6 +442,7 @@ public class DefaultCaller implements Caller {
 		req.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
 		req.setExtParams(cmd.getExtParams());
 		req.setExtParams(cmd.getExtParams());
+		req.setTraceNos(cmd.getTraceNos());
 		return req;
 	}
 
@@ -458,7 +463,11 @@ public class DefaultCaller implements Caller {
 				}
 				msg.setDelayTimeLevel(delayLevel.get().getValue());
 			}else {
-				log.warn("unsupport notice delay");
+				Optional<Entry<Long, Integer>> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(TimeUnit.SECONDS.toMillis(1L));
+				if(level.isPresent()) {
+					log.warn("delay notice is short : {}, change to : {}", delay, level.get().getKey());
+					msg.setDelayTimeLevel(level.get().getValue());
+				}
 			}
 		}
 		if(!cmd.getTraceNos().isEmpty()) {
@@ -471,6 +480,10 @@ public class DefaultCaller implements Caller {
 		Message msg = new Message(buildOrderedNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		OrderedNoticeRequest req = buildOrderedNoticeRequest(cmd, orderKey);
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.ORDERED_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+		Optional<Entry<Long, Integer>> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(TimeUnit.SECONDS.toMillis(1L));
+		if(level.isPresent()) {
+			msg.setDelayTimeLevel(level.get().getValue());
+		}
 		if(!cmd.getTraceNos().isEmpty()) {
 			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
 		}

@@ -5,6 +5,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.chopsticks.core.concurrent.Promise;
 import com.chopsticks.core.modern.caller.ModernInvokeCommand;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
 import com.chopsticks.core.rocketmq.DefaultClient;
@@ -28,8 +29,10 @@ public class ExtBeanProxy extends BaseProxy {
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		if(method.getName().equals("invoke")) {
-			return invoke(method, args);
+		if(method.getName().equals("asyncInvoke")) {
+			return asyncInvoke(method, args);
+		}else if(method.getName().equals("invoke")) {
+			return asyncInvoke(method, args).get();
 		}else if(method.getName().equals("notice")) {
 			return notice(method, args);
 		}else {
@@ -71,11 +74,10 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
-		baseResult.setTraceNos(noticeCmd.getTraceNos());
 		return baseResult;
 	}
-
-	private Object invoke(Method method, Object[] args) {
+	
+	private Promise<?> asyncInvoke(Method method, Object[] args) {
 		ModernInvokeCommand cmd = (ModernInvokeCommand)args[0];
 		byte[] body;
 		if(cmd.getParams() == null) {
@@ -83,7 +85,6 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			body = JSON.toJSONString(cmd.getParams(), SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 		}
-		BaseInvokeResult baseResult;
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
 			invokeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
@@ -97,17 +98,16 @@ public class ExtBeanProxy extends BaseProxy {
 				invokeCmd.setTraceNos(((BaseModernCommand) cmd).getTraceNos());
 			}
 		}
+		Promise<BaseInvokeResult> baseResult;
 		if(args.length == 1) {
-			baseResult = client.invoke(invokeCmd);
+			baseResult = client.asyncInvoke(invokeCmd);
 		}else if(args.length == 3){
 			Long delay = (Long)args[1];
 			TimeUnit delayTimeUnit = (TimeUnit)args[2];
-			baseResult = client.invoke(invokeCmd, delay, delayTimeUnit);
+			baseResult = client.asyncInvoke(invokeCmd, delay, delayTimeUnit);
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
-		baseResult.setTraceNos(invokeCmd.getTraceNos());
 		return baseResult;
 	}
-	
 }

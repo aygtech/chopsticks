@@ -87,6 +87,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), ctx);       
 				if(handlerResult != null) {
 					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
+					resp.setTraceNos(req.getTraceNos());
 				}
 			}catch (DefaultCoreException e) {
 				tmp = e;

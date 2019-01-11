@@ -1,8 +1,13 @@
 package com.chopsticks.core.rocketmq.handler;
 
+import java.util.Set;
+
+import com.google.common.collect.Sets;
+
 public class InvokeResponse {
 	
 	private String reqId;
+	private Set<String> traceNos = Sets.newHashSet();
 	private String respExceptionBody;
 	private byte[] respBody;
 	private long respTime;
@@ -54,5 +59,11 @@ public class InvokeResponse {
 	}
 	public void setReqTime(long reqTime) {
 		this.reqTime = reqTime;
+	}
+	public Set<String> getTraceNos() {
+		return traceNos;
+	}
+	public void setTraceNos(Set<String> traceNos) {
+		this.traceNos = traceNos;
 	}
 }

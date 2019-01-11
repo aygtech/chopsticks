@@ -38,7 +38,9 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 					if(resp.getRespExceptionBody() != null) {
 						promise.setException(new DefaultCoreException(resp.getRespExceptionBody()).setCode(DefaultCoreException.INVOKE_EXECUTE_ERROR));
 					}else {
-						promise.set(new DefaultInvokeResult(resp.getRespBody()));
+						DefaultInvokeResult ret = new DefaultInvokeResult(resp.getRespBody());
+						ret.setTraceNos(resp.getTraceNos());
+						promise.set(ret);
 					}
 				}else {
 					log.trace("promise not found, reqId : {}, respMsgId : {}, respTime : {}, reqTime : {}, diff : {}"
