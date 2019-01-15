@@ -54,4 +54,6 @@
 	1.修复traceNo无法传递的bug
 	2.所有的异步执行默认延迟1秒，避免当前业务还未提交，后续业务执行完毕
 1.1.5
-	1.extBean支持primise
+	1.extBean所有方法支持非阻塞调用
+	2.sdkClient新增orgKey,uniKey默认传递
+	3.修复extParams未传递bug

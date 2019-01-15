@@ -1,6 +1,7 @@
 package com.chopsticks.core.rocketmq.modern.caller;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
@@ -16,6 +17,7 @@ import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Charsets;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class ExtBeanProxy extends BaseProxy {
@@ -33,14 +35,16 @@ public class ExtBeanProxy extends BaseProxy {
 			return asyncInvoke(method, args);
 		}else if(method.getName().equals("invoke")) {
 			return asyncInvoke(method, args).get();
+		}else if(method.getName().equals("asyncNotice")) {
+			return asyncNotice(method, args);
 		}else if(method.getName().equals("notice")) {
-			return notice(method, args);
+			return asyncNotice(method, args).get();
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
 	}
-
-	private Object notice(Method method, Object[] args) {
+	
+	private Promise<BaseNoticeResult> asyncNotice(Method method, Object[] args){
 		ModernNoticeCommand cmd = (ModernNoticeCommand)args[0];
 		byte[] body;
 		if(cmd.getParams() == null) {
@@ -48,10 +52,12 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			body = JSON.toJSONString(cmd.getParams(), SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 		}
-		BaseNoticeResult baseResult;
+		
 		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
-			noticeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
+			Map<String, String> extParams = Maps.newHashMap(getExtParams());
+			extParams.putAll(((BaseModernCommand)cmd).getExtParams());
+			noticeCmd.setExtParams(extParams);
 			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
 				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
 					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
@@ -62,22 +68,23 @@ public class ExtBeanProxy extends BaseProxy {
 				noticeCmd.setTraceNos(((BaseModernCommand) cmd).getTraceNos());
 			}
 		}
+		Promise<BaseNoticeResult> baseResult = null;
 		if(args.length == 1) {
-			baseResult = client.notice(noticeCmd);
+			baseResult = client.asyncNotice(noticeCmd);
 		}else if(args.length == 2) {
 			Object orderKey = (String)args[1];
-			baseResult = client.notice(noticeCmd, orderKey);
+			baseResult = client.asyncNotice(noticeCmd, orderKey);
 		}else if(args.length == 3){
 			Long delay = (Long)args[1];
 			TimeUnit delayTimeUnit = (TimeUnit)args[2];
-			baseResult = client.notice(noticeCmd, delay, delayTimeUnit);
+			baseResult = client.asyncNotice(noticeCmd, delay, delayTimeUnit);
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
 		return baseResult;
 	}
 	
-	private Promise<?> asyncInvoke(Method method, Object[] args) {
+	private Promise<BaseInvokeResult> asyncInvoke(Method method, Object[] args) {
 		ModernInvokeCommand cmd = (ModernInvokeCommand)args[0];
 		byte[] body;
 		if(cmd.getParams() == null) {
@@ -87,7 +94,9 @@ public class ExtBeanProxy extends BaseProxy {
 		}
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
-			invokeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
+			Map<String, String> extParams = Maps.newHashMap(getExtParams());
+			extParams.putAll(((BaseModernCommand)cmd).getExtParams());
+			invokeCmd.setExtParams(extParams);
 			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
 				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
 					invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));

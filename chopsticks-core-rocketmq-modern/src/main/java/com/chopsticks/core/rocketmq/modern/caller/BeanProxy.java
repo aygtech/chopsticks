@@ -14,6 +14,7 @@ import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class BeanProxy extends BaseProxy {
@@ -38,6 +39,9 @@ public class BeanProxy extends BaseProxy {
 		if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
 			invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
 		}
+		Map<String, String> extParams = Maps.newHashMap(getExtParams());
+		invokeCmd.setExtParams(extParams);
+		
 		InvokeResult result = client.invoke(invokeCmd);
 		Class<?> returnType = method.getReturnType();
 		Object ret = null;

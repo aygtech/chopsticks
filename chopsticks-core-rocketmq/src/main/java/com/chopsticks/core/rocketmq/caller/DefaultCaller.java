@@ -229,7 +229,7 @@ public class DefaultCaller implements Caller {
 				Stopwatch watch = Stopwatch.createStarted();
 				do {
 					if(watch.elapsed(TimeUnit.MILLISECONDS) > DEFAULT_SYNC_TIMEOUT_MILLIS) {
-						throw new RuntimeException("caller connection server timeout, pls try again.");
+						throw new DefaultCoreException("caller connection server timeout, pls try again.").setCode(DefaultCoreException.INVOKE_CONSUMER_START_TIMEOUT);
 					}
 					if(consumeExecutor.getTaskCount() > 0) {
 						break;
@@ -300,14 +300,20 @@ public class DefaultCaller implements Caller {
 				@Override
 				public Boolean call() throws Exception {
 					boolean examineConsumerConnectionInfo = false;
-					try {
-						GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
-						for(String groupName : groupList.getGroupList()) {
-								mqAdminExt.examineConsumerConnectionInfo(groupName);
-								examineConsumerConnectionInfo = true;
-								break;
+					GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
+					Throwable tmp = null;
+					for(String groupName : groupList.getGroupList()) {
+						try {
+							mqAdminExt.examineConsumerConnectionInfo(groupName);
+							examineConsumerConnectionInfo = true;
+							break;
+						}catch (Throwable e) {
+							tmp = e;
+							continue;
 						}
-					}catch (Throwable e) {
+					}
+					if(!examineConsumerConnectionInfo && tmp != null) {
+						Throwable e = tmp;
 						if(e instanceof MQBrokerException) {
 							MQBrokerException se = (MQBrokerException)e;
 							if(se.getResponseCode() != ResponseCode.CONSUMER_NOT_ONLINE) {
@@ -424,12 +430,14 @@ public class DefaultCaller implements Caller {
 	private NoticeRequest buildNoticeRequest(BaseNoticeCommand cmd) {
 		NoticeRequest req = new NoticeRequest();
 		req.setTraceNos(cmd.getTraceNos());
+		req.setExtParams(cmd.getExtParams());
 		return req;
 	}
 	
 	private OrderedNoticeRequest buildOrderedNoticeRequest(BaseNoticeCommand cmd, Object orderKey) {
 		OrderedNoticeRequest req = new OrderedNoticeRequest();
 		req.setExtParams(cmd.getExtParams());
+		req.setTraceNos(cmd.getTraceNos());
 		return req;
 	}
 
@@ -440,7 +448,6 @@ public class DefaultCaller implements Caller {
 		req.setDeadline(req.getReqTime() + timeoutUnit.toMillis(timeout));
 		req.setRespTopic(buildRespTopic());
 		req.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
-		req.setExtParams(cmd.getExtParams());
 		req.setExtParams(cmd.getExtParams());
 		req.setTraceNos(cmd.getTraceNos());
 		return req;

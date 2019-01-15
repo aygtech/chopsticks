@@ -1,6 +1,7 @@
 package com.chopsticks.core.rocketmq.modern.caller;
 
 import java.lang.reflect.Method;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.alibaba.fastjson.JSON;
@@ -14,6 +15,7 @@ import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class NoticeBeanProxy extends BaseProxy{
@@ -42,7 +44,9 @@ public class NoticeBeanProxy extends BaseProxy{
 		BaseNoticeResult baseResult;
 		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
-			noticeCmd.setExtParams(((BaseModernCommand)cmd).getExtParams());
+			Map<String, String> extParams = Maps.newHashMap(getExtParams());
+			extParams.putAll(((BaseModernCommand)cmd).getExtParams());
+			noticeCmd.setExtParams(extParams);
 			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
 				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
 					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));

@@ -5,7 +5,6 @@ import com.chopsticks.core.exception.CoreException;
 public class DefaultCoreException extends CoreException {
 
 	private static final long serialVersionUID = 1L;
-	
 	public static final int DELAY_NOTICE_EXECUTE_FORWORD_SEND_NOT_OK = 10000;
 	public static final int NOTICE_EXECUTE_FORWORD_SEND_NOT_OK = -10000;
 	public static final int TEST_DELAY_NOTICE_CLIENT_BROKER_CONNECTION_ERROR = 10001;
@@ -31,6 +30,7 @@ public class DefaultCoreException extends CoreException {
 	public static final int TEST_CALLER_NAME_SERVER_CONNECTION_ERROR = 10021;
 	public static final int TEST_CALLER_NO_NAME_SERVER_ERROR = 10022;
 	public static final int INVOKE_EXECUTOR_NOT_FOUND = 10023;
+	public static final int INVOKE_CONSUMER_START_TIMEOUT = 10024;
 
 	public DefaultCoreException() {
 		super();

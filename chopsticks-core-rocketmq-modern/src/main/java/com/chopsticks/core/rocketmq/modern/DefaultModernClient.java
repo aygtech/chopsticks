@@ -149,7 +149,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			Object bean = BEAN_CACHE.get(clazz, new Callable<Object>() {
 				@Override
 				public Object call() throws Exception {
-					return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {clazz}, new BeanProxy(clazz, self));
+					return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {clazz}, getBeanProxy(clazz, self));
 				}
 			});
 			return clazz.cast(bean);
@@ -181,9 +181,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		}
 	}
 	
-	protected Class<? extends NoticeBean> getNoticeBeanClazz() {
-		return BaseNoticeBean.class;
-	}
+	
 	
 	@Override
 	public <T extends ExtBean> T getExtBean(final String clazzName) {
@@ -194,7 +192,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			T ret = (T) EXT_BEAN_CACHE.get(clazzName, new Callable<ExtBean>() {
 				@Override
 				public ExtBean call() throws Exception {
-					return getExtBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {getExtBeanClazz()}, new ExtBeanProxy(clazzName, self)));
+					return getExtBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {getExtBeanClazz()}, getExtBeanProxy(clazzName, self)));
 				}
 			});
 			return ret;
@@ -204,10 +202,21 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		}
 	}
 	
+	
+	protected BaseProxy getBeanProxy(Class<?> clazz, DefaultClient client){
+		return new BeanProxy(clazz, client);
+	}
+	
 	protected Class<? extends ExtBean> getExtBeanClazz(){
 		return BaseExtBean.class;
 	}
+	protected BaseProxy getExtBeanProxy(String clazzName, DefaultClient client) {
+		return new ExtBeanProxy(clazzName, client);
+	}
 	
+	protected Class<? extends NoticeBean> getNoticeBeanClazz() {
+		return BaseNoticeBean.class;
+	}
 	protected BaseProxy getNoticeBeanProxy(Class<?> clazz, DefaultClient client) {
 		return new NoticeBeanProxy(clazz, client);
 	}
