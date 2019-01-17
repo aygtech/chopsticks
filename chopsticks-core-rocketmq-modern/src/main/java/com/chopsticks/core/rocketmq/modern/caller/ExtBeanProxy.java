@@ -4,8 +4,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.chopsticks.core.concurrent.Promise;
 import com.chopsticks.core.modern.caller.ModernInvokeCommand;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
@@ -14,9 +12,7 @@ import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
-import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
-import com.google.common.base.Charsets;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -46,12 +42,7 @@ public class ExtBeanProxy extends BaseProxy {
 	
 	private Promise<BaseNoticeResult> asyncNotice(Method method, Object[] args){
 		ModernNoticeCommand cmd = (ModernNoticeCommand)args[0];
-		byte[] body;
-		if(cmd.getParams() == null) {
-			body = Const.EMPTY_PARAMS.getBytes(Charsets.UTF_8);
-		}else {
-			body = JSON.toJSONString(cmd.getParams(), SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
-		}
+		byte[] body = buildBody(cmd.getParams());
 		
 		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
@@ -86,12 +77,7 @@ public class ExtBeanProxy extends BaseProxy {
 	
 	private Promise<BaseInvokeResult> asyncInvoke(Method method, Object[] args) {
 		ModernInvokeCommand cmd = (ModernInvokeCommand)args[0];
-		byte[] body;
-		if(cmd.getParams() == null) {
-			body = Const.EMPTY_PARAMS.getBytes(Charsets.UTF_8);
-		}else {
-			body = JSON.toJSONString(cmd.getParams(), SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
-		}
+		byte[] body = buildBody(cmd.getParams());
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
 			Map<String, String> extParams = Maps.newHashMap(getExtParams());

@@ -6,11 +6,9 @@ import java.util.Collection;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
-import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -29,12 +27,7 @@ public class BeanProxy extends BaseProxy {
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		byte[] body;
-		if (args == null) {
-			body = Const.EMPTY_PARAMS.getBytes(Charsets.UTF_8);
-		} else {
-			body = JSON.toJSONString(args, SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
-		}
+		byte[] body = buildBody(args);
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body);
 		if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
 			invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));

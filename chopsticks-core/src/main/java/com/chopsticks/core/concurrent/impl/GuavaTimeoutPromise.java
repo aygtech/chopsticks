@@ -18,7 +18,6 @@ public class GuavaTimeoutPromise<V> extends GuavaPromise<V> {
 																																		.setNameFormat("DefaultPromiseTimeoutScheduleExecutor-%d")
 																																		.setDaemon(true)
 																																		.build());
-	
 	public GuavaTimeoutPromise(long timeout, TimeUnit timeoutUnit) {
 		super();
 		timeoutFuture = Futures.withTimeout(this, timeout, timeoutUnit, DEFAULT_PROMISE_TIMEOUT_SCHEDULE_EXECUTOR);
@@ -29,4 +28,5 @@ public class GuavaTimeoutPromise<V> extends GuavaPromise<V> {
 	public void addListener(PromiseListener<? super V> listener, Executor executor) {
 		Futures.addCallback(timeoutFuture, new GuavaPromiseListener<V>(listener), executor);
 	}
+	
 }

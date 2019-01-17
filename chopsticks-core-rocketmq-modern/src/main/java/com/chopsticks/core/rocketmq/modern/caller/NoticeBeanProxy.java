@@ -4,16 +4,12 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
-import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.chopsticks.core.utils.Reflect;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -31,14 +27,10 @@ public class NoticeBeanProxy extends BaseProxy{
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Preconditions.checkNotNull(args);
-		byte[] body;
 		ModernNoticeCommand cmd = ((ModernNoticeCommand)args[0]);
 		updateCmd(cmd);
-		if (cmd.getParams() == null) {
-			body = Const.EMPTY_PARAMS.getBytes(Charsets.UTF_8);
-		} else {
-			body = JSON.toJSONString(cmd.getParams(), SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
-		}
+		byte[] body = buildBody(cmd.getParams());
+		
 		// check method exist
 		Reflect.getMethod(proxy, cmd.getMethod(), cmd.getParams());
 		BaseNoticeResult baseResult;

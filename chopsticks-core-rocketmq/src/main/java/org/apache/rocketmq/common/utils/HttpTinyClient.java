@@ -61,11 +61,12 @@ public class HttpTinyClient {
             setHeaders(conn, headers, encoding);
             Stopwatch watch = Stopwatch.createStarted();
             conn.connect();
-            long time = watch.elapsed(TimeUnit.MILLISECONDS);
+            long diff = watch.elapsed(TimeUnit.MILLISECONDS);
+            log.trace("diff millis : {}", diff);
             long date = conn.getHeaderFieldLong("date", 0);
             if(date > 0) {
             	if(UPDATE_COUNT.getAndIncrement() % MAX_UPDATE_COUNT == 0) {
-            		Const.CLIENT_TIME.setNow(date - time);
+            		Const.CLIENT_TIME.setNow(date - diff);
             	}
             }
             

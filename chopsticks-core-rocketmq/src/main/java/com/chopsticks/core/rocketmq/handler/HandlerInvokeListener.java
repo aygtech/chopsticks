@@ -25,8 +25,8 @@ import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
+import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 
 public class HandlerInvokeListener extends BaseHandlerListener implements MessageListenerConcurrently{
 	
@@ -62,9 +62,9 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 			long now = Const.CLIENT_TIME.getNow();
 			if(now > req.getDeadline()) {
 				throw new DefaultCoreException(String.format("timeout, skip invoke process, reqTime : %s, deadline : %s, now : %s, topic : %s, tag : %s"
-													, req.getReqTime()
-													, req.getDeadline()
-													, now
+													, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+													, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
+													, TimeUtils.yyyyMMddHHmmssSSS(now)
 													, topic
 													, ext.getTags())).setCode(DefaultCoreException.INVOKE_BEFORE_PROCESS_TIMEOUT);
 			}
@@ -84,25 +84,27 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				DefaultInvokeContext ctx = new DefaultInvokeContext();
 				ctx.setExtParams(req.getExtParams());
 				ctx.setTraceNos(req.getTraceNos());
-				HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), ctx);       
+				HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), ctx);  
 				if(handlerResult != null) {
 					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
 					resp.setTraceNos(req.getTraceNos());
 				}
 			}catch (DefaultCoreException e) {
 				tmp = e;
-				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), Throwables.getStackTraceAsString(tmp));
+				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getMessage());
 			}catch (Throwable e) {
 				tmp = new DefaultCoreException(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e).setCode(CoreException.UNKNOW_EXCEPTION);
-				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), Throwables.getStackTraceAsString(tmp));
+				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getMessage());
 			}
 			if(!Strings.isNullOrEmpty(req.getRespTopic()) && resp != null) {
-				now = Const.CLIENT_TIME.getNow();
+				long processEnd = Const.CLIENT_TIME.getNow();
 				if(now > req.getDeadline()) {
-					throw new DefaultCoreException(String.format("timeout, skip invoke process response, reqTime : %s, deadline : %s, now : %s, topic : %s, tag : %s"
-														, req.getReqTime()
-														, req.getDeadline()
-														, now
+					throw new DefaultCoreException(String.format("timeout, skip invoke process response, reqId : %s, reqTime : %s, deadline : %s, begin : %s, processEnd : %s, topic : %s, tag : %s"
+														, req.getReqId()
+														, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+														, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
+														, TimeUtils.yyyyMMddHHmmssSSS(now)
+														, TimeUtils.yyyyMMddHHmmssSSS(processEnd)
 														, topic
 														, ext.getTags())).setCode(DefaultCoreException.INVOKE_PROCESS_TIMEOUT);
 				}
@@ -110,7 +112,15 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				try {
 					SendResult ret = getClient().getProducer().send(respMsg);
 					if(ret.getSendStatus() == SendStatus.SEND_OK) {
-						log.trace("invoke tag : {}, reqId : {}, msgId : {}, rec msgId : {}", ext.getTags(), req.getReqId(), ext.getMsgId(), ret.getMsgId());
+						log.trace("invoke tag : {}, reqId : {}, msgId : {}, rec msgId : {}, reqTime : {}, deadline : {}, begin : {}, processEnd : {}"
+								, ext.getTags()
+								, req.getReqId()
+								, ext.getMsgId()
+								, ret.getMsgId()
+								, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+								, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
+								, TimeUtils.yyyyMMddHHmmssSSS(now)
+								, TimeUtils.yyyyMMddHHmmssSSS(processEnd));
 						if(tmp == null) {
 							return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 						}else {
@@ -122,7 +132,8 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				}catch (CoreException e) {
 					throw e;
 				}catch (Throwable e) {
-					throw new DefaultCoreException(String.format("unknow exception, invoke end, process send response, msgid : %s, topic : %s, tag : %s"
+					throw new DefaultCoreException(String.format("unknow exception, invoke end, process send response, reqId : %s, msgid : %s, topic : %s, tag : %s"
+															, req.getReqId()
 															, ext.getMsgId()
 															, topic
 															, ext.getTags())

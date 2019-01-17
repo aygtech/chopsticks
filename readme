@@ -57,3 +57,8 @@
 	1.extBean所有方法支持非阻塞调用
 	2.sdkClient新增orgKey,uniKey默认传递
 	3.修复extParams未传递bug
+1.1.5.1
+	1.开放同步批处理设置
+	2.modern禁止数组调用和数组返回
+	3.完善同步执行者或同步主题不存在时的报错信息
+	4.修复Default.adminExt同一个实例启动多个的错误

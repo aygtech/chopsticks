@@ -64,6 +64,8 @@ public class Const {
 
 	public static final String PRODUCER_PREFIX = "PID_";
 	public static final String CONSUMER_PREFIX = "CID_";
+	
+	public static final String INVOKE_ADMIN_EXT_SUFFIX = "_INVOKE_ADMIN_EXT";
 
 	public static final String INVOKE_CONSUMER_SUFFIX = "_INVOKE_CONSUMER";
 	public static final String NOTICE_CONSUMER_SUFFIX = "_NOTICE_CONSUMER";

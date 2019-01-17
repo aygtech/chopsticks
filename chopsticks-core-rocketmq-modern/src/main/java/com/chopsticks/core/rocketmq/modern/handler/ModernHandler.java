@@ -58,12 +58,8 @@ public class ModernHandler extends BaseHandler{
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
 				e = e.getCause();
 			}
-			throw new ModernCoreException(String.format("invoke execute exception : %s, bean : %s, method : %s, params : %s"
-															, e.getMessage()
-															, obj
-															, params.getMethod()
-															, args)
-					, e).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
+			throw new ModernCoreException(String.format("invoke execute exception : %s", e.getMessage())
+										, e).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
 		}finally {
 			ModernContextHolder.remove();
 		}

@@ -24,6 +24,7 @@ import com.chopsticks.core.rocketmq.modern.caller.BaseProxy;
 import com.chopsticks.core.rocketmq.modern.caller.BeanProxy;
 import com.chopsticks.core.rocketmq.modern.caller.ExtBeanProxy;
 import com.chopsticks.core.rocketmq.modern.caller.NoticeBeanProxy;
+import com.chopsticks.core.rocketmq.modern.exception.ModernCoreException;
 import com.chopsticks.core.rocketmq.modern.handler.ModernHandler;
 import com.chopsticks.core.rocketmq.modern.handler.Picker;
 import com.google.common.base.Throwables;
@@ -128,6 +129,11 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			}
 		}else {
 			methods = interfaceMethods;
+		}
+		for(Method method : entry.getKey().getMethods()) {
+			if(methods.contains(method.getName()) && method.getReturnType().isArray()) {
+				throw new ModernCoreException("unsupport array result").setCode(ModernCoreException.UNSUPPORT_ARRAY_RESULT);
+			}
 		}
 		return methods;
 	}

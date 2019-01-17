@@ -45,6 +45,7 @@ import com.chopsticks.core.caller.NoticeCommand;
 import com.chopsticks.core.caller.NoticeResult;
 import com.chopsticks.core.concurrent.Promise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
@@ -57,7 +58,8 @@ import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder; 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Sets; 
 
 /**
  * 默认发送者实现
@@ -156,7 +158,7 @@ public class DefaultCaller implements Caller {
 
 	private DefaultMQAdminExt buildAdminExt() {
 		if(isInvokable()) {
-			DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt();
+			DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt(getGroupName() + com.chopsticks.core.rocketmq.Const.INVOKE_ADMIN_EXT_SUFFIX);
 			try {
 				mqAdminExt.setNamesrvAddr(namesrvAddr);
 				mqAdminExt.start();
@@ -300,17 +302,21 @@ public class DefaultCaller implements Caller {
 				@Override
 				public Boolean call() throws Exception {
 					boolean examineConsumerConnectionInfo = false;
-					GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
 					Throwable tmp = null;
-					for(String groupName : groupList.getGroupList()) {
-						try {
-							mqAdminExt.examineConsumerConnectionInfo(groupName);
-							examineConsumerConnectionInfo = true;
-							break;
-						}catch (Throwable e) {
-							tmp = e;
-							continue;
+					try {
+						GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
+						for(String groupName : groupList.getGroupList()) {
+							try {
+								mqAdminExt.examineConsumerConnectionInfo(groupName);
+								examineConsumerConnectionInfo = true;
+								break;
+							}catch (Throwable e) {
+								tmp = e;
+								continue;
+							}
 						}
+					}catch (Throwable e) {
+						tmp = e;
 					}
 					if(!examineConsumerConnectionInfo && tmp != null) {
 						Throwable e = tmp;
@@ -332,7 +338,7 @@ public class DefaultCaller implements Caller {
 				throw new DefaultCoreException(cmd.getTopic() + " cannot found executor").setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
 			invokeSender.send(msg, promise);
-			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req.getReqId()));
+			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req));
 		} catch (Throwable e) {
 			promise.setException(e);
 		}
@@ -413,7 +419,11 @@ public class DefaultCaller implements Caller {
 		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
 		if(!cmd.getTraceNos().isEmpty()) {
-			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+			Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
+			traceNos.add(req.getReqId());
+			msg.setKeys(Joiner.on(" ").join(traceNos));
+		}else {
+			msg.setKeys(req.getReqId());
 		}
 		return msg;
 	}
@@ -645,7 +655,7 @@ public class DefaultCaller implements Caller {
 		return promise;
 	}
 	
-	protected void setBatchExecuteIntervalMillis(long batchExecuteIntervalMillis) {
+	public void setBatchExecuteIntervalMillis(long batchExecuteIntervalMillis) {
 		this.batchExecuteIntervalMillis = batchExecuteIntervalMillis;
 	}
 	
@@ -711,8 +721,7 @@ public class DefaultCaller implements Caller {
 			}
 		}catch (Throwable e) {
 			if(!e.getMessage().contains(com.chopsticks.core.rocketmq.Const.ERROR_MSG_CAN_NOT_FIND_MESSAGE_QUEUE)) {
-				Throwables.throwIfUnchecked(e);
-				throw new RuntimeException(e);
+				throw new DefaultCoreException(e).setCode(CoreException.UNKNOW_EXCEPTION);
 			}
 		}finally {
 			if (mqs != null) {
