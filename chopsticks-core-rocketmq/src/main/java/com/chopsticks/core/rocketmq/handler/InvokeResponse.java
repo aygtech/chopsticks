@@ -10,6 +10,7 @@ public class InvokeResponse {
 	private Set<String> traceNos = Sets.newHashSet();
 	private String respExceptionBody;
 	private byte[] respBody;
+	private boolean compressRespBody;
 	private long respTime;
 	private long reqTime;
 	
@@ -65,5 +66,11 @@ public class InvokeResponse {
 	}
 	public void setTraceNos(Set<String> traceNos) {
 		this.traceNos = traceNos;
+	}
+	public boolean isCompressRespBody() {
+		return compressRespBody;
+	}
+	public void setCompressRespBody(boolean compressRespBody) {
+		this.compressRespBody = compressRespBody;
 	}
 }

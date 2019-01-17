@@ -26,6 +26,7 @@ public class ModernHandler extends BaseHandler{
 	
 	private static final Logger log = LoggerFactory.getLogger(ModernHandler.class);
 	
+	
 	private Object obj;
 	
 	public ModernHandler(Object obj, String topic, String tag) {
@@ -50,7 +51,7 @@ public class ModernHandler extends BaseHandler{
 		Object ret;
 		BaseInvokeContext mqCtx = (BaseInvokeContext) ctx;
 		try {
-			
+			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(mqCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
 			ret = Reflect.on(obj).call(params.getMethod(), args).get();
@@ -95,6 +96,7 @@ public class ModernHandler extends BaseHandler{
 		try {
 			DefaultModerNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
 			ModernContextHolder.setNoticeContext(baseCtx);
+			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(baseCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
 			Reflect.on(obj).call(params.getMethod(), args).get();
@@ -116,5 +118,4 @@ public class ModernHandler extends BaseHandler{
 		}
 		
 	}
-	
 }

@@ -2,17 +2,13 @@ package com.chopsticks.core.rocketmq.caller;
 
 public class InvokeRequest extends BaseRequest{
 	private String reqId;
-	private long reqTime;
 	private long deadline;
+	private boolean compress;
 	private String respTopic;
 	private String respTag;
-	private boolean compress;
-	public long getReqTime() {
-		return reqTime;
-	}
-	public void setReqTime(long reqTime) {
-		this.reqTime = reqTime;
-	}
+	private boolean respCompress;
+	
+	
 	public long getDeadline() {
 		return deadline;
 	}
@@ -42,5 +38,11 @@ public class InvokeRequest extends BaseRequest{
 	}
 	public void setCompress(boolean compress) {
 		this.compress = compress;
+	}
+	public boolean isRespCompress() {
+		return respCompress;
+	}
+	public void setRespCompress(boolean respCompress) {
+		this.respCompress = respCompress;
 	}
 }

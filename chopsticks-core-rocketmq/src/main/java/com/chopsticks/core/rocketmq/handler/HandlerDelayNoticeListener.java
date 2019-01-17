@@ -141,6 +141,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, true);
 			if(req != null) {
+				ctx.setReqTime(req.getReqTime());
 				ctx.setExtParams(req.getExtParams());
 				ctx.setTraceNos(req.getTraceNos());
 			}

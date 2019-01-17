@@ -7,4 +7,9 @@ public interface Handler{
 	public HandlerResult invoke(InvokeParams params, InvokeContext ctx);
 	
 	public void notice(NoticeParams params, NoticeContext ctx);
+	
+	public boolean isSupportInvoke();
+	public boolean isSupportNotice();
+	public boolean isSupportDelayNotice();
+	public boolean isSupportOrderedNotice();
 }

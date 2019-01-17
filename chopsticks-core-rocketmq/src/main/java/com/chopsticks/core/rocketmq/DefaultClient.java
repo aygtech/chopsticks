@@ -1,6 +1,7 @@
 package com.chopsticks.core.rocketmq;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -310,6 +311,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 					if(tags.contains(Const.ALL_TAGS)) {
 						orderedNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
+						Set<String> newTags = Sets.newHashSet(tags);
+						for(Iterator<String> iter = newTags.iterator(); iter.hasNext();) {
+							String tag = Const.getOriginTag(getGroupName(), iter.next());
+							if(!topicTagHandlers.get(buildSuccessTopic(entry.getKey()) + tag).isSupportOrderedNotice()) {
+								iter.remove();
+							}
+						}
 						orderedNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
@@ -351,6 +359,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 					if(tags.contains(Const.ALL_TAGS)) {
 						noticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
+						Set<String> newTags = Sets.newHashSet(tags);
+						for(Iterator<String> iter = newTags.iterator(); iter.hasNext();) {
+							String tag = Const.getOriginTag(getGroupName(), iter.next());
+							if(!topicTagHandlers.get(buildSuccessTopic(entry.getKey()) + tag).isSupportNotice()) {
+								iter.remove();
+							}
+						}
 						noticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
@@ -392,6 +407,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 					if(tags.contains(Const.ALL_TAGS)) {
 						delayNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
+						Set<String> newTags = Sets.newHashSet(tags);
+						for(Iterator<String> iter = newTags.iterator(); iter.hasNext();) {
+							String tag = Const.getOriginTag(getGroupName(), iter.next());
+							if(!topicTagHandlers.get(buildSuccessTopic(entry.getKey()) + tag).isSupportDelayNotice()) {
+								iter.remove();
+							}
+						}
 						delayNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
@@ -433,7 +455,14 @@ public class DefaultClient extends DefaultCaller implements Client{
 					if(tags.contains(Const.ALL_TAGS)) {
 						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
-						invokeConsumer.subscribe(topic, Joiner.on("||").join(tags));
+						Set<String> newTags = Sets.newHashSet(tags);
+						for(Iterator<String> iter = newTags.iterator(); iter.hasNext();) {
+							String tag = Const.getOriginTag(getGroupName(), iter.next());
+							if(!topicTagHandlers.get(buildSuccessTopic(entry.getKey()) + tag).isSupportInvoke()) {
+								iter.remove();
+							}
+						}
+						invokeConsumer.subscribe(topic, Joiner.on("||").join(newTags));
 					}
 				}
 				invokeConsumer.start();

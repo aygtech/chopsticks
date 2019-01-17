@@ -82,6 +82,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
 			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), true, false);
 			if(req != null) {
+				ctx.setReqTime(req.getReqTime());
 				ctx.setExtParams(req.getExtParams());
 				ctx.setTraceNos(req.getTraceNos());
 			}

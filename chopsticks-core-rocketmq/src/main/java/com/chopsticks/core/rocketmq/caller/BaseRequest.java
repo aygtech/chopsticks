@@ -7,6 +7,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public abstract class BaseRequest {
+	private long reqTime;
 	private Map<String, String> extParams = Maps.newHashMap();
 	private Set<String> traceNos = Sets.newHashSet();
 	
@@ -21,5 +22,11 @@ public abstract class BaseRequest {
 	}
 	public Set<String> getTraceNos() {
 		return traceNos;
+	}
+	public long getReqTime() {
+		return reqTime;
+	}
+	public void setReqTime(long reqTime) {
+		this.reqTime = reqTime;
 	}
 }

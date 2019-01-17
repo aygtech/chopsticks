@@ -27,4 +27,24 @@ public class BaseHandlerWapper extends BaseHandler {
 		handler.notice(params, ctx);
 	}
 
+	@Override
+	public boolean isSupportInvoke() {
+		return handler.isSupportInvoke();
+	}
+
+	@Override
+	public boolean isSupportNotice() {
+		return handler.isSupportNotice();
+	}
+
+	@Override
+	public boolean isSupportDelayNotice() {
+		return handler.isSupportDelayNotice();
+	}
+
+	@Override
+	public boolean isSupportOrderedNotice() {
+		return handler.isSupportOrderedNotice();
+	}
+
 }

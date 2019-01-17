@@ -25,6 +25,7 @@ import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
+import com.chopsticks.core.utils.Reflect;
 import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Strings;
 
@@ -82,6 +83,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					body = UtilAll.uncompress(body);
 				}
 				DefaultInvokeContext ctx = new DefaultInvokeContext();
+				ctx.setReqTime(req.getReqTime());
 				ctx.setExtParams(req.getExtParams());
 				ctx.setTraceNos(req.getTraceNos());
 				HandlerResult handlerResult = handler.invoke(new DefaultInvokeParams(topic, ext.getTags(), body), ctx);  
@@ -107,6 +109,15 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 														, TimeUtils.yyyyMMddHHmmssSSS(processEnd)
 														, topic
 														, ext.getTags())).setCode(DefaultCoreException.INVOKE_PROCESS_TIMEOUT);
+				}
+				if(req.isRespCompress() && resp.getRespBody() != null && resp.getRespBody().length > 0) {
+					try {
+						int level = Reflect.on(getClient().getProducer()).field("defaultMQProducerImpl").field("zipCompressLevel").get();
+						resp.setRespBody(UtilAll.compress(resp.getRespBody(), level));
+						resp.setCompressRespBody(true);
+					}catch (Throwable e) {
+						//ig no compress
+					}
 				}
 				Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
 				try {

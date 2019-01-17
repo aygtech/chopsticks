@@ -8,4 +8,5 @@ public class DefaultModerNoticeContext extends BaseNoticeContext implements Mode
 	public DefaultModerNoticeContext(BaseNoticeContext ctx) {
 		super(ctx);
 	}
+	
 }

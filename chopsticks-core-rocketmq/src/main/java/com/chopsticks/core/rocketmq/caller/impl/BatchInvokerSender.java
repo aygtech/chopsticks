@@ -9,17 +9,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
-import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
-import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.caller.InvokeSender;
-import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
@@ -120,21 +116,7 @@ public class BatchInvokerSender extends InvokeSender{
 			executor.shutdown();
 		}
 	}
-	private Message compress(Message msg) {
-		try {
-			InvokeRequest req = JSON.parseObject(msg.getUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
-			req.setCompress(true);
-			int level = Reflect.on(producer).field("defaultMQProducerImpl").field("zipCompressLevel").get();
-			byte[] body = UtilAll.compress(msg.getBody(), level);
-			msg.setBody(body);
-			msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
-		}catch (Throwable e) {
-			log.error(e.getMessage(), e);
-		}
-		return msg;
-	}
 	public void send(Message message, GuavaTimeoutPromise<BaseInvokeResult> promise) {
-		message = compress(message);
 		BatchMessage batchMsg = new BatchMessage();
 		batchMsg.msg = message;
 		batchMsg.length = size(message);

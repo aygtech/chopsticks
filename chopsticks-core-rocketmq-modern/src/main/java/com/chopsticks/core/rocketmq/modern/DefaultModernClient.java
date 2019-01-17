@@ -27,6 +27,10 @@ import com.chopsticks.core.rocketmq.modern.caller.NoticeBeanProxy;
 import com.chopsticks.core.rocketmq.modern.exception.ModernCoreException;
 import com.chopsticks.core.rocketmq.modern.handler.ModernHandler;
 import com.chopsticks.core.rocketmq.modern.handler.Picker;
+import com.chopsticks.core.rocketmq.modern.handler.UnSupportDelayNotice;
+import com.chopsticks.core.rocketmq.modern.handler.UnSupportInvoke;
+import com.chopsticks.core.rocketmq.modern.handler.UnSupportNotice;
+import com.chopsticks.core.rocketmq.modern.handler.UnSupportOrderedNotice;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -87,11 +91,34 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 				Set<BaseHandler> clientHandlers = Sets.newHashSet();
 				for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
 					Set<String> methods = getMethods(entry);
-					log.info("interface : {}, impl : {}, method : {}", entry.getKey(), entry.getValue(), methods);
+					Set<String> unSupportInvoke = getUnSupportInvoke(entry);
+					Set<String> unSupportNotice = getUnSupportNotice(entry);
+					Set<String> unSupportDelayNotice = getUnSupportDelayNotice(entry);
+					Set<String> unSupportOrderedNotice = getUnSupportOrderedNotice(entry);
+					
+					log.info("interface : {}, impl : {}, method : {}, unSupportInvoke : {}, unSupportNotice : {}, unSupportDelayNotice : {}, unSupportOrderedNotice : {}"
+								, entry.getKey()
+								, entry.getValue()
+								, methods
+								, unSupportInvoke
+								, unSupportNotice
+								, unSupportDelayNotice
+								, unSupportOrderedNotice);
 					for(String method : methods) {
-						clientHandlers.add(new ModernHandler(entry.getValue()
-								, entry.getKey().getName()
-								, method));
+						BaseHandler handler = new ModernHandler(entry.getValue(), entry.getKey().getName(), method);
+						if(unSupportInvoke.contains(method)) {
+							handler.setSupportInvoke(false);
+						}
+						if(unSupportNotice.contains(method)) {
+							handler.setSupportNotice(false);
+						}
+						if(unSupportDelayNotice.contains(method)) {
+							handler.setSupportDelayNotice(false);
+						}
+						if(unSupportOrderedNotice.contains(method)) {
+							handler.setSupportOrderedNotice(false);
+						}
+						clientHandlers.add(handler);
 					}
 				}
 				super.register(clientHandlers);
@@ -106,6 +133,35 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		log.info("Client {} end start", getGroupName());
 	}
 	
+	private Set<String> getUnSupportNotice(Entry<Class<?>, Object> entry) {
+		Set<String> unSupportNotice = Sets.newHashSet();
+		if(entry.getValue() instanceof UnSupportNotice) {
+			unSupportNotice = checkNotNull(((UnSupportNotice)entry.getValue()).unSupportNotice(), "unSupportNotice can not be null");
+		}
+		return unSupportNotice;
+	}
+	private Set<String> getUnSupportDelayNotice(Entry<Class<?>, Object> entry) {
+		Set<String> unSupportDelayNotice = Sets.newHashSet();
+		if(entry.getValue() instanceof UnSupportDelayNotice) {
+			unSupportDelayNotice = checkNotNull(((UnSupportDelayNotice)entry.getValue()).unSupportDelayNotice(), "unSupportDelayNotice can not be null");
+		}
+		return unSupportDelayNotice;
+	}
+	private Set<String> getUnSupportOrderedNotice(Entry<Class<?>, Object> entry) {
+		Set<String> unSupportOrderedNotice = Sets.newHashSet();
+		if(entry.getValue() instanceof UnSupportOrderedNotice) {
+			unSupportOrderedNotice = checkNotNull(((UnSupportOrderedNotice)entry.getValue()).unSupportOrderedNotice(), "unSupportOrderedNotice can not be null");
+		}
+		return unSupportOrderedNotice;
+	}
+	private Set<String> getUnSupportInvoke(Entry<Class<?>, Object> entry) {
+		Set<String> unSupportInvoke = Sets.newHashSet();
+		if(entry.getValue() instanceof UnSupportInvoke) {
+			unSupportInvoke = checkNotNull(((UnSupportInvoke)entry.getValue()).unSupportInvoke(), "unSupportInvoke can not be null");
+		}
+		return unSupportInvoke;
+	}
+
 	private Set<String> getMethods(Entry<Class<?>, Object> entry) {
 		Set<String> methods = null;
 		Set<String> interfaceMethods = getInterfaceMehtods(entry.getKey());

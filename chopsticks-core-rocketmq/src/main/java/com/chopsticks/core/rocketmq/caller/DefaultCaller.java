@@ -26,6 +26,7 @@ import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -337,7 +338,8 @@ public class DefaultCaller implements Caller {
 			})) {
 				throw new DefaultCoreException(cmd.getTopic() + " cannot found executor").setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
-			invokeSender.send(msg, promise);
+			Message compressMsg = compressInvokeMsgBody(msg);
+			invokeSender.send(compressMsg, promise);
 			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req));
 		} catch (Throwable e) {
 			promise.setException(e);
@@ -345,7 +347,19 @@ public class DefaultCaller implements Caller {
 	
 		return promise;
 	}
-	
+	private Message compressInvokeMsgBody(Message msg) {
+		try {
+			InvokeRequest req = JSON.parseObject(msg.getUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
+			req.setCompress(true);
+			int level = Reflect.on(producer).field("defaultMQProducerImpl").field("zipCompressLevel").get();
+			byte[] body = UtilAll.compress(msg.getBody(), level);
+			msg.setBody(body);
+			msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
+		}catch (Throwable e) {
+			log.error(e.getMessage(), e);
+		}
+		return msg;
+	}
 	
 	public BaseNoticeResult notice(BaseNoticeCommand cmd) {
 		try {
@@ -430,6 +444,7 @@ public class DefaultCaller implements Caller {
 	
 	private DelayNoticeRequest buildDelayNoticeRequest(BaseNoticeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		DelayNoticeRequest req = new DelayNoticeRequest();
+		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setInvokeTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setExecuteTime(req.getInvokeTime() + timeoutUnit.toMillis(timeout));
 		req.setExtParams(cmd.getExtParams());
@@ -439,6 +454,7 @@ public class DefaultCaller implements Caller {
 	
 	private NoticeRequest buildNoticeRequest(BaseNoticeCommand cmd) {
 		NoticeRequest req = new NoticeRequest();
+		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setTraceNos(cmd.getTraceNos());
 		req.setExtParams(cmd.getExtParams());
 		return req;
@@ -446,6 +462,7 @@ public class DefaultCaller implements Caller {
 	
 	private OrderedNoticeRequest buildOrderedNoticeRequest(BaseNoticeCommand cmd, Object orderKey) {
 		OrderedNoticeRequest req = new OrderedNoticeRequest();
+		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setExtParams(cmd.getExtParams());
 		req.setTraceNos(cmd.getTraceNos());
 		return req;
@@ -458,6 +475,7 @@ public class DefaultCaller implements Caller {
 		req.setDeadline(req.getReqTime() + timeoutUnit.toMillis(timeout));
 		req.setRespTopic(buildRespTopic());
 		req.setRespTag(cmd.getTag() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TAG_SUFFIX);
+		req.setRespCompress(true);
 		req.setExtParams(cmd.getExtParams());
 		req.setTraceNos(cmd.getTraceNos());
 		return req;

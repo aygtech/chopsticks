@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerConcurrently;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,7 +39,11 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 					if(resp.getRespExceptionBody() != null) {
 						promise.setException(new DefaultCoreException(resp.getRespExceptionBody()).setCode(DefaultCoreException.INVOKE_EXECUTE_ERROR));
 					}else {
-						DefaultInvokeResult ret = new DefaultInvokeResult(resp.getRespBody());
+						byte[] respBody = resp.getRespBody();
+						if(respBody != null && respBody.length > 0 && resp.isCompressRespBody()) {
+							respBody = UtilAll.uncompress(respBody);
+						}
+						DefaultInvokeResult ret = new DefaultInvokeResult(respBody);
 						ret.setTraceNos(resp.getTraceNos());
 						promise.set(ret);
 					}
