@@ -72,11 +72,11 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 		}
 		BaseHandler handler = getHandler(topic, ext.getTags());
 		if(handler == null) {
-			throw new DefaultCoreException(String.format("cannot find handler by orderedNotice, reconsumeTimes : %s, msgId: %s, topic : %s, tag : %s"
-					, ext.getReconsumeTimes()
-					, msgId
+			throw new DefaultCoreException(String.format("%s-%s cannot find handler by orderedNotice, reconsumeTimes : %s, msgId: %s"
 					, topic
-					, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_ORDERED_NOTICE_HANDLER);
+					, ext.getTags()
+					, ext.getReconsumeTimes()
+					, msgId)).setCode(DefaultCoreException.CANNOT_FIND_ORDERED_NOTICE_HANDLER);
 		}
 		try {
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
@@ -91,11 +91,12 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 		}catch (DefaultCoreException e) {
 			throw e;
 		}catch (Throwable e) {
-			throw new DefaultCoreException(String.format("orderedNotice process exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
-					, ext.getReconsumeTimes()
-					, msgId
-					, topic
-					, ext.getTags()), e).setCode(CoreException.UNKNOW_EXCEPTION);
+			throw new DefaultCoreException(String.format("%s-%s unknow orderedNotice execute exception, reconsumeTimes : %s, msgid : %s"
+											, topic
+											, ext.getTags()
+											, ext.getReconsumeTimes()
+											, msgId)
+					, e).setCode(CoreException.UNKNOW_EXCEPTION);
 		} 
 	}
 }

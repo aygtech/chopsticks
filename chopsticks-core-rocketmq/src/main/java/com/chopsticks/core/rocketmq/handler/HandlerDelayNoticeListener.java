@@ -70,7 +70,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		}
 		topic = topic.replace(Const.DELAY_NOTICE_TOPIC_SUFFIX, "");
 		if(!topicTags.keySet().contains(topic)) {
-			log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
+			log.warn("cancel consume {}-{}, msgId : {}", topic, ext.getTags(), msgId);
 			return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 		}
 		
@@ -131,11 +131,11 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		
 		BaseHandler handler = getHandler(topic, ext.getTags());
 		if(handler == null) {
-			throw new DefaultCoreException(String.format("cannot find handler by notice, reconsumeTimes : %s, msgId: %s, topic : %s, tag : %s"
-					, ext.getReconsumeTimes()
-					, msgId
+			throw new DefaultCoreException(String.format("%s-%s cannot find handler by notice, reconsumeTimes : %s, msgId: %s"
 					, topic
-					, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_DELAY_NOTICE_HANDLER);
+					, ext.getTags()
+					, ext.getReconsumeTimes()
+					, msgId)).setCode(DefaultCoreException.CANNOT_FIND_DELAY_NOTICE_HANDLER);
 		}
 		try {
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
@@ -150,11 +150,11 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		}catch (DefaultCoreException e) {
 			throw e;
 		}catch (Throwable e) {
-			throw new DefaultCoreException(String.format("handler notice execute exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
-									, ext.getReconsumeTimes()
-									, msgId
+			throw new DefaultCoreException(String.format("%s-%s handler notice execute exception, reconsumeTimes : %s, msgid : %s"
 									, topic
-									, ext.getTags())
+									, ext.getTags()				
+									, ext.getReconsumeTimes()
+									, msgId)
 					, e).setCode(CoreException.UNKNOW_EXCEPTION);
 		}
 	

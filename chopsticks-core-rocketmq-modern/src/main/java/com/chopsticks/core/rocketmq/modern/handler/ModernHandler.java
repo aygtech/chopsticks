@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.handler.InvokeContext;
 import com.chopsticks.core.handler.InvokeParams;
@@ -88,7 +89,7 @@ public class ModernHandler extends BaseHandler{
 		try {
 			Reflect.getMethod(obj, params.getMethod(), args);
 		}catch (Throwable e) {
-			log.error("bean : {}, method {} , params : {}, not found.", obj, params.getMethod(), args);
+			log.error("noticeId : {}, bean : {}, method {} , params : {}, not found.", ctx.getId(), obj, params.getMethod(), args);
 			return;
 		}
 		BaseNoticeContext mqCtx = (BaseNoticeContext) ctx;
@@ -100,6 +101,8 @@ public class ModernHandler extends BaseHandler{
 			ModernContextHolder.setExtParams(baseCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
 			Reflect.on(obj).call(params.getMethod(), args).get();
+		}catch (CoreException e) {
+			throw e;
 		}catch (Throwable e) {
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
 				e = e.getCause();

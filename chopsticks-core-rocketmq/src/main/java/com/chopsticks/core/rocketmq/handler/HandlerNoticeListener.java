@@ -75,11 +75,11 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 		
 		BaseHandler handler = getHandler(topic, ext.getTags());
 		if(handler == null) {
-			throw new DefaultCoreException(String.format("cannot find handler by notice, reconsumeTimes : %s, msgId: %s, topic : %s, tag : %s"
-					, ext.getReconsumeTimes()
-					, msgId
+			throw new DefaultCoreException(String.format("%s-%s cannot find handler by notice, reconsumeTimes : %s, msgId: %s"
 					, topic
-					, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_NOTICE_HANDLER);
+					, ext.getTags()
+					, ext.getReconsumeTimes()
+					, msgId)).setCode(DefaultCoreException.CANNOT_FIND_NOTICE_HANDLER);
 		}
 		try {
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
@@ -94,11 +94,11 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 		}catch (DefaultCoreException e) {
 			throw e;
 		}catch (Throwable e) {
-			throw new DefaultCoreException(String.format("handler notice execute exception, reconsumeTimes : %s, msgid : %s, topic : %s, tag : %s"
-									, ext.getReconsumeTimes()
-									, msgId
+			throw new DefaultCoreException(String.format("%s-%s unknow handler notice execute exception, reconsumeTimes : %s, msgid : %s"
 									, topic
-									, ext.getTags())
+									, ext.getTags()
+									, ext.getReconsumeTimes()
+									, msgId)
 					, e).setCode(CoreException.UNKNOW_EXCEPTION);
 		}
 	

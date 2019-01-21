@@ -20,7 +20,6 @@ import org.apache.rocketmq.client.common.ClientErrorCode;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.store.ReadOffsetType;
-import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
@@ -30,9 +29,10 @@ import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.common.protocol.ResponseCode;
+import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
+import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,7 +87,7 @@ public class DefaultCaller implements Caller {
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
 	
-	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(-1L);
+	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(100L);
 	
 	private InvokeSender invokeSender;
 	
@@ -95,7 +95,8 @@ public class DefaultCaller implements Caller {
 	
 	private DefaultMQAdminExt mqAdminExt;
 	
-	private Cache</*topic*/String, /*consumer exist*/Boolean> invokeMonitor = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
+	private static final Cache</*topic + tag*/String, /*consumer exist*/Boolean> INVOKE_TOPIC_TAG_MONITOR = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
+	private static final Cache</*topic*/String, Set<ConsumerConnection>> INVOKE_TOPIC_MONITOR = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	
 	/**
 	 *  <msgid, timeoutGuavaPromise>
@@ -299,44 +300,46 @@ public class DefaultCaller implements Caller {
 			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
 			callerInvokePromiseMap.put(req.getReqId(), promise);
 			final Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
-			if(!invokeMonitor.get(msg.getTopic(), new Callable<Boolean>() {
+			if(!INVOKE_TOPIC_TAG_MONITOR.get(msg.getTopic() + msg.getTags(), new Callable<Boolean>() {
 				@Override
 				public Boolean call() throws Exception {
 					boolean examineConsumerConnectionInfo = false;
-					Throwable tmp = null;
-					try {
-						GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
-						for(String groupName : groupList.getGroupList()) {
+					Set<ConsumerConnection> consumerConns = INVOKE_TOPIC_MONITOR.get(msg.getTopic(), new Callable<Set<ConsumerConnection>>() {
+						@Override
+						public Set<ConsumerConnection> call() throws Exception {
+							Set<ConsumerConnection> consumerConns = Sets.newHashSet();
 							try {
-								mqAdminExt.examineConsumerConnectionInfo(groupName);
-								examineConsumerConnectionInfo = true;
-								break;
+								GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
+								for(String groupName : groupList.getGroupList()) {
+									try {
+										if(groupName.endsWith(com.chopsticks.core.rocketmq.Const.INVOKE_CONSUMER_SUFFIX)) {
+											ConsumerConnection consumerConn = mqAdminExt.examineConsumerConnectionInfo(groupName);
+											consumerConns.add(consumerConn);
+										}
+									}catch (Throwable e) {
+										continue;
+									}
+								}
 							}catch (Throwable e) {
-								tmp = e;
-								continue;
 							}
+							return consumerConns;
 						}
-					}catch (Throwable e) {
-						tmp = e;
-					}
-					if(!examineConsumerConnectionInfo && tmp != null) {
-						Throwable e = tmp;
-						if(e instanceof MQBrokerException) {
-							MQBrokerException se = (MQBrokerException)e;
-							if(se.getResponseCode() != ResponseCode.CONSUMER_NOT_ONLINE) {
-								log.error(e.getMessage(), e);
+					});
+					for(ConsumerConnection consumerConn : consumerConns) {
+						try {
+							for(Entry<String, SubscriptionData> entry : consumerConn.getSubscriptionTable().entrySet()) {
+								if(entry.getKey().equals(msg.getTopic()) && (entry.getValue().getTagsSet().contains(msg.getTags()) || entry.getValue().getTagsSet().contains(com.chopsticks.core.rocketmq.Const.ALL_TAGS))) {
+									examineConsumerConnectionInfo = true;
+								}
 							}
-						}else if(e instanceof MQClientException) {
-							MQClientException se = (MQClientException)e;
-							if(se.getResponseCode() != ResponseCode.TOPIC_NOT_EXIST) {
-								log.error(e.getMessage(), e);
-							}
+						}catch (Throwable e) {
+						
 						}
 					}
 					return examineConsumerConnectionInfo;
 				}
 			})) {
-				throw new DefaultCoreException(cmd.getTopic() + " cannot found executor").setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
+				throw new DefaultCoreException(String.format("%s.%s cannot found executor", cmd.getTopic(), cmd.getTag())).setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
 			Message compressMsg = compressInvokeMsgBody(msg);
 			invokeSender.send(compressMsg, promise);
@@ -407,9 +410,9 @@ public class DefaultCaller implements Caller {
 		if(level.isPresent()) {
 			msg.setDelayTimeLevel(level.get().getValue());
 		}
-		if(!cmd.getTraceNos().isEmpty()) {
-			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
-		}
+		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
+		traceNo.add(buildTraceTag(cmd.getTag()));
+		msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
 		return msg;
 	}
 
@@ -432,13 +435,10 @@ public class DefaultCaller implements Caller {
 	protected Message buildInvokeMessage(InvokeRequest req, BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
-		if(!cmd.getTraceNos().isEmpty()) {
-			Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
-			traceNos.add(req.getReqId());
-			msg.setKeys(Joiner.on(" ").join(traceNos));
-		}else {
-			msg.setKeys(req.getReqId());
-		}
+		Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
+		traceNos.add(req.getReqId());
+		traceNos.add(buildTraceTag(cmd.getTag()));
+		msg.setKeys(Joiner.on(" ").join(traceNos));
 		return msg;
 	}
 	
@@ -505,9 +505,9 @@ public class DefaultCaller implements Caller {
 				}
 			}
 		}
-		if(!cmd.getTraceNos().isEmpty()) {
-			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
-		}
+		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
+		traceNo.add(buildTraceTag(cmd.getTag()));
+		msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
 		return msg;
 	}
 	
@@ -519,9 +519,9 @@ public class DefaultCaller implements Caller {
 		if(level.isPresent()) {
 			msg.setDelayTimeLevel(level.get().getValue());
 		}
-		if(!cmd.getTraceNos().isEmpty()) {
-			msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
-		}
+		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
+		traceNo.add(buildTraceTag(cmd.getTag()));
+		msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
 		return msg;
 	}
 	
@@ -747,5 +747,9 @@ public class DefaultCaller implements Caller {
 			}
 			consumer.shutdown();
 		}
+	}
+	
+	public String buildTraceTag(String tag) {
+		return String.format("_%s_", tag);
 	}
 }

@@ -62,16 +62,16 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 			InvokeRequest req = JSON.parseObject(invokeCmdExtStr, InvokeRequest.class);
 			long now = Const.CLIENT_TIME.getNow();
 			if(now > req.getDeadline()) {
-				throw new DefaultCoreException(String.format("timeout, skip invoke process, reqTime : %s, deadline : %s, now : %s, topic : %s, tag : %s"
+				throw new DefaultCoreException(String.format("timeout, %s-%s skip invoke process, reqTime : %s, deadline : %s, now : %s"
+													, topic
+													, ext.getTags()
 													, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
 													, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
-													, TimeUtils.yyyyMMddHHmmssSSS(now)
-													, topic
-													, ext.getTags())).setCode(DefaultCoreException.INVOKE_BEFORE_PROCESS_TIMEOUT);
+													, TimeUtils.yyyyMMddHHmmssSSS(now))).setCode(DefaultCoreException.INVOKE_BEFORE_PROCESS_TIMEOUT);
 			}
 			BaseHandler handler = getHandler(topic, ext.getTags());
 			if(handler == null) {
-				throw new DefaultCoreException(String.format("cannot find handler by invoke, msgId: %s, topic : %s, tag : %s"
+				throw new DefaultCoreException(String.format("cannot find handler by invoke, msgId: %s, %s-%s"
 											, ext.getMsgId()
 											, topic
 											, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_INVOKE_HANDLER);
@@ -95,20 +95,20 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				tmp = e;
 				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getMessage());
 			}catch (Throwable e) {
-				tmp = new DefaultCoreException(String.format("unknow exception, invoke process, msgid : %s, topic : %s, tag : %s", ext.getMsgId(), topic, ext.getTags()), e).setCode(CoreException.UNKNOW_EXCEPTION);
+				tmp = new DefaultCoreException(String.format("unknow exception, invoke process, msgid : %s, %s-%s", ext.getMsgId(), topic, ext.getTags()), e).setCode(CoreException.UNKNOW_EXCEPTION);
 				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getMessage());
 			}
 			if(!Strings.isNullOrEmpty(req.getRespTopic()) && resp != null) {
 				long processEnd = Const.CLIENT_TIME.getNow();
-				if(now > req.getDeadline()) {
-					throw new DefaultCoreException(String.format("timeout, skip invoke process response, reqId : %s, reqTime : %s, deadline : %s, begin : %s, processEnd : %s, topic : %s, tag : %s"
+				if(processEnd > req.getDeadline()) {
+					throw new DefaultCoreException(String.format("timeout, %s-%s skip invoke process response, reqId : %s, reqTime : %s, deadline : %s, begin : %s, processEnd : %s"
+														, topic
+														, ext.getTags()
 														, req.getReqId()
 														, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
 														, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
 														, TimeUtils.yyyyMMddHHmmssSSS(now)
-														, TimeUtils.yyyyMMddHHmmssSSS(processEnd)
-														, topic
-														, ext.getTags())).setCode(DefaultCoreException.INVOKE_PROCESS_TIMEOUT);
+														, TimeUtils.yyyyMMddHHmmssSSS(processEnd))).setCode(DefaultCoreException.INVOKE_PROCESS_TIMEOUT);
 				}
 				if(req.isRespCompress() && resp.getRespBody() != null && resp.getRespBody().length > 0) {
 					try {
@@ -120,10 +120,12 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					}
 				}
 				Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
+				respMsg.setKeys(req.getReqId());
 				try {
 					SendResult ret = getClient().getProducer().send(respMsg);
 					if(ret.getSendStatus() == SendStatus.SEND_OK) {
-						log.trace("invoke tag : {}, reqId : {}, msgId : {}, rec msgId : {}, reqTime : {}, deadline : {}, begin : {}, processEnd : {}"
+						log.trace("invoke {}-{}, reqId : {}, msgId : {}, rec msgId : {}, reqTime : {}, deadline : {}, begin : {}, processEnd : {}"
+								, topic
 								, ext.getTags()
 								, req.getReqId()
 								, ext.getMsgId()
@@ -138,16 +140,19 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 							throw tmp;
 						}
 					}else {
-						throw new DefaultCoreException(String.format("rec invoke error : %s", ret.getSendStatus().name())).setCode(DefaultCoreException.INVOKE_REC_ERROR);
+						throw new DefaultCoreException(String.format("%s-%s rec invoke error : %s"
+																	, topic
+																	, ext.getTags()
+																	, ret.getSendStatus().name())).setCode(DefaultCoreException.INVOKE_REC_ERROR);
 					}
 				}catch (CoreException e) {
 					throw e;
 				}catch (Throwable e) {
-					throw new DefaultCoreException(String.format("unknow exception, invoke end, process send response, reqId : %s, msgid : %s, topic : %s, tag : %s"
-															, req.getReqId()
-															, ext.getMsgId()
+					throw new DefaultCoreException(String.format("unknow exception, %s-%s invoke end, process send response, reqId : %s, msgid : %s"
 															, topic
-															, ext.getTags())
+															, ext.getTags()
+															, req.getReqId()
+															, ext.getMsgId())
 												, e).setCode(CoreException.UNKNOW_EXCEPTION);
 				}
 			}else {
