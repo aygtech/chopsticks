@@ -74,3 +74,5 @@
 	4.修复同步方法执行完超时也回执了bug
 	5.精简handler日志
 	6.默认开启批量同步调用，批量时间默认为 100 毫秒
+	7.SdkContextHolder新增方法isInvoke可以直接判断是否同步还是异步调用
+	8.SdkContextHoder新增方法getSdkNoticeContext(), 此SdkNoticeContext可判断异步的类型，顺序还是延迟，包括重试的次数，如果设置了重试次数，还可以判断是否达到了最大重试次数

@@ -545,7 +545,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 	public void setOrderedNoticeExecutableRetryCount(int orderedNoticeExecutableRetryCount) {
 		this.orderedNoticeExecutableRetryCount = orderedNoticeExecutableRetryCount;
 	}
-	public void setRetryCount(int retryCount) {
+	protected void setRetryCount(int retryCount) {
 		setNoticeExcecutableRetryCount(retryCount);
 		setDelayNoticeExecutableRetryCount(retryCount);
 		setOrderedNoticeExecutableRetryCount(retryCount);
