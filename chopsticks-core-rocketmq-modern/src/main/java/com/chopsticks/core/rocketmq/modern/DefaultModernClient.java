@@ -165,9 +165,9 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	private Set<String> getMethods(Entry<Class<?>, Object> entry) {
 		Set<String> methods = null;
 		Set<String> interfaceMethods = getInterfaceMehtods(entry.getKey());
-		if(entry.getValue() instanceof Picker) {
-			methods = ((Picker)entry.getValue()).pick();
-			if(methods == null || methods.isEmpty()) {
+		if(entry.getValue() instanceof Picker
+		&& (methods = ((Picker)entry.getValue()).pick()) != null) {
+			if(methods.isEmpty()) {
 				throw new RuntimeException(entry.getValue().getClass().getName() + " pick method must return data");
 			}else {
 				Set<String> tmp = Sets.newHashSet();

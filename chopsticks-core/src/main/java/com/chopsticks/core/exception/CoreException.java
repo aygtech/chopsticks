@@ -6,7 +6,7 @@ public class CoreException extends RuntimeException{
 	
 	public static final int UNKNOW_EXCEPTION = -1; 
 	
-	private int code;
+	private int code = UNKNOW_EXCEPTION;
 
 	public CoreException() {
 		super();
@@ -35,6 +35,10 @@ public class CoreException extends RuntimeException{
 	public CoreException setCode(int code) {
 		this.code = code;
 		return this;
+	}
+	
+	public String getOriMessage() {
+		return super.getMessage();
 	}
 	
 	@Override

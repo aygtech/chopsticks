@@ -16,7 +16,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Maps;
 
 public abstract class BaseProxy implements InvocationHandler {
-	private static final String DEFAULT_TRACK_NO_PREFIX = "DEFAULT_";
+	private static final String DEFAULT_TRACK_NO_PREFIX = "DEFAULT_TRACE_";
 	private Map<String, String> extParams = Maps.newHashMap();
 	
 	protected String getTopic(Class<?> clazz) {

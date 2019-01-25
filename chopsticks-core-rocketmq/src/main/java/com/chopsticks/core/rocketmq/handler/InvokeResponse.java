@@ -9,6 +9,7 @@ public class InvokeResponse {
 	private String reqId;
 	private Set<String> traceNos = Sets.newHashSet();
 	private String respExceptionBody;
+	private int respExceptionCode;
 	private byte[] respBody;
 	private boolean compressRespBody;
 	private long respTime;
@@ -72,5 +73,11 @@ public class InvokeResponse {
 	}
 	public void setCompressRespBody(boolean compressRespBody) {
 		this.compressRespBody = compressRespBody;
+	}
+	public int getRespExceptionCode() {
+		return respExceptionCode;
+	}
+	public void setRespExceptionCode(int respExceptionCode) {
+		this.respExceptionCode = respExceptionCode;
 	}
 }

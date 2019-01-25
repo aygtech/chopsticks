@@ -3,10 +3,10 @@ package com.chopsticks.core.rocketmq.caller;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
@@ -232,7 +232,7 @@ public class DefaultCaller implements Caller {
 														    .get();
 				Stopwatch watch = Stopwatch.createStarted();
 				do {
-					if(watch.elapsed(TimeUnit.MILLISECONDS) > DEFAULT_SYNC_TIMEOUT_MILLIS) {
+					if(watch.elapsed(TimeUnit.MILLISECONDS) > DEFAULT_SYNC_TIMEOUT_MILLIS * 2) {
 						throw new DefaultCoreException("caller connection server timeout, pls try again.").setCode(DefaultCoreException.INVOKE_CONSUMER_START_TIMEOUT);
 					}
 					if(consumeExecutor.getTaskCount() > 0) {
@@ -436,12 +436,13 @@ public class DefaultCaller implements Caller {
 		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
 		Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
-		traceNos.add(req.getReqId());
+		traceNos.add(buildTraceInvokeReqId(req.getReqId()));
 		traceNos.add(buildTraceTag(cmd.getTag()));
 		msg.setKeys(Joiner.on(" ").join(traceNos));
 		return msg;
 	}
 	
+
 	private DelayNoticeRequest buildDelayNoticeRequest(BaseNoticeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		DelayNoticeRequest req = new DelayNoticeRequest();
 		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
@@ -658,7 +659,7 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Long delay, final TimeUnit delayTimeUnit) {
-		checkArgument(started, "must be call method start");
+		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(delay > 0, "delay must > 0, cur : %s", delay);
 		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
@@ -697,11 +698,15 @@ public class DefaultCaller implements Caller {
 		try {
 			mqs = consumer.fetchSubscribeMessageQueues(topic);
 			if (mqs != null && !mqs.isEmpty()) {
-				TreeSet<MessageQueue> mqsNew = new TreeSet<MessageQueue>(mqs);
-				for (MessageQueue mq : mqsNew) {
-					long offset = consumer.maxOffset(mq);
-					if (offset >= 0) {
-						consumer.updateConsumeOffset(mq, offset);
+				for (Iterator<MessageQueue> iter = mqs.iterator(); iter.hasNext();) {
+					MessageQueue mq = iter.next();
+					long offset = consumer.getOffsetStore().readOffset(mq, ReadOffsetType.READ_FROM_STORE);
+					long maxOffset = consumer.maxOffset(mq);
+					if (maxOffset >= 0 && maxOffset > offset) {
+						consumer.updateConsumeOffset(mq, maxOffset);
+						log.debug("{} update  {}-{}, {} to {}", consumerGroup, mq.getTopic(), mq.getQueueId(), offset, maxOffset);
+					}else {
+						iter.remove();
 					}
 				}
 			}
@@ -711,7 +716,7 @@ public class DefaultCaller implements Caller {
 				throw new RuntimeException(e);
 			}
 		}finally {
-			if (mqs != null) {
+			if (mqs != null && !mqs.isEmpty()) {
 				consumer.getDefaultMQPullConsumerImpl().getOffsetStore().persistAll(mqs);
 			}
 			consumer.shutdown();
@@ -728,12 +733,15 @@ public class DefaultCaller implements Caller {
 		try {
 			mqs = consumer.fetchSubscribeMessageQueues(topic);
 			if (mqs != null && !mqs.isEmpty()) {
-				TreeSet<MessageQueue> mqsNew = new TreeSet<MessageQueue>(mqs);
-				for (MessageQueue mq : mqsNew) {
+				for (Iterator<MessageQueue> iter = mqs.iterator(); iter.hasNext();) {
+					MessageQueue mq = iter.next();
 					long offset = consumer.getOffsetStore().readOffset(mq, ReadOffsetType.READ_FROM_STORE);
 					long maxOffset = consumer.maxOffset(mq);
 					if (maxOffset > 0 && offset <= 0) {
 						consumer.updateConsumeOffset(mq, maxOffset);
+						log.debug("{} update  {}-{}, {} to {}", consumerGroup, mq.getTopic(), mq.getQueueId(), offset, maxOffset);
+					}else {
+						iter.remove();
 					}
 				}
 			}
@@ -742,7 +750,7 @@ public class DefaultCaller implements Caller {
 				throw new DefaultCoreException(e).setCode(CoreException.UNKNOW_EXCEPTION);
 			}
 		}finally {
-			if (mqs != null) {
+			if (mqs != null && !mqs.isEmpty()) {
 				consumer.getDefaultMQPullConsumerImpl().getOffsetStore().persistAll(mqs);
 			}
 			consumer.shutdown();
@@ -750,6 +758,9 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public String buildTraceTag(String tag) {
-		return String.format("_%s_", tag);
+		return String.format("%s%s", com.chopsticks.core.rocketmq.Const.TRACE_PREFIX, tag);
+	}
+	private String buildTraceInvokeReqId(String reqId) {
+		return String.format("%s%s", com.chopsticks.core.rocketmq.Const.TRACE_PREFIX, reqId);
 	}
 }

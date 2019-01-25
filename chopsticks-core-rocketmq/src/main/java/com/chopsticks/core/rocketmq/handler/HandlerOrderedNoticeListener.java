@@ -61,7 +61,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 			msgId = ext.getProperty(MessageConst.PROPERTY_ORIGIN_MESSAGE_ID);
 		}
 		topic = topic.replace(Const.ORDERED_NOTICE_TOPIC_SUFFIX, "");
-		String orderedNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
+		String orderedNoticeReqStr = ext.getProperty(Const.ORDERED_NOTICE_REQUEST_KEY);
 		OrderedNoticeRequest req = null;
 		if(!Strings.isNullOrEmpty(orderedNoticeReqStr)) {
 			req = JSON.parseObject(orderedNoticeReqStr, OrderedNoticeRequest.class);

@@ -76,3 +76,7 @@
 	6.默认开启批量同步调用，批量时间默认为 100 毫秒
 	7.SdkContextHolder新增方法isInvoke可以直接判断是否同步还是异步调用
 	8.SdkContextHoder新增方法getSdkNoticeContext(), 此SdkNoticeContext可判断异步的类型，顺序还是延迟，包括重试的次数，如果设置了重试次数，还可以判断是否达到了最大重试次数
+1.1.8	
+	1.traceNo 不允许传null
+	2.提升启动速度，修改不是每次启动都更新队列数量
+	3.修复orderedNotice接收请求参数取值错误的bug, 获取不到req就设置不了extParams等参数

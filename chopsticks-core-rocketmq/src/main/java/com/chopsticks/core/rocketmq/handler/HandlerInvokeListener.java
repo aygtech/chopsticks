@@ -76,7 +76,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 											, topic
 											, ext.getTags())).setCode(DefaultCoreException.CANNOT_FIND_INVOKE_HANDLER);
 			}
-			Throwable tmp = null;
+			CoreException tmp = null;
 			try {
 				byte[] body = ext.getBody();
 				if(req.isCompress()) {
@@ -91,12 +91,14 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), handlerResult.getBody());
 					resp.setTraceNos(req.getTraceNos());
 				}
-			}catch (DefaultCoreException e) {
+			}catch (CoreException e) {
 				tmp = e;
-				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getMessage());
+				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getOriMessage());
+				resp.setRespExceptionCode(tmp.getCode());
 			}catch (Throwable e) {
 				tmp = new DefaultCoreException(String.format("unknow exception, invoke process, msgid : %s, %s-%s", ext.getMsgId(), topic, ext.getTags()), e).setCode(CoreException.UNKNOW_EXCEPTION);
 				resp = new InvokeResponse(req.getReqId(), req.getReqTime(), Const.CLIENT_TIME.getNow(), tmp.getMessage());
+				resp.setRespExceptionCode(tmp.getCode());
 			}
 			if(!Strings.isNullOrEmpty(req.getRespTopic()) && resp != null) {
 				long processEnd = Const.CLIENT_TIME.getNow();

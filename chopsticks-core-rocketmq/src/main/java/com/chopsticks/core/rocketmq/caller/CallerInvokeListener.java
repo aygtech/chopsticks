@@ -37,7 +37,7 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 				GuavaPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(resp.getReqId());
 				if(promise != null) {
 					if(resp.getRespExceptionBody() != null) {
-						promise.setException(new DefaultCoreException(resp.getRespExceptionBody()).setCode(DefaultCoreException.INVOKE_EXECUTE_ERROR));
+						promise.setException(new DefaultCoreException(resp.getRespExceptionBody()).setCode(resp.getRespExceptionCode() == 0 ? DefaultCoreException.INVOKE_EXECUTE_ERROR : resp.getRespExceptionCode()));
 					}else {
 						byte[] respBody = resp.getRespBody();
 						if(respBody != null && respBody.length > 0 && resp.isCompressRespBody()) {
