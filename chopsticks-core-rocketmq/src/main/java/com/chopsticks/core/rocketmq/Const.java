@@ -119,4 +119,8 @@ public class Const {
 	public static String buildTestTag(String groupName) {
 		return groupName + CLIENT_TEST_TAG;
 	}
+	
+	public static String buildTraceInvokeReqId(String reqId) {
+		return TRACE_PREFIX + reqId;
+	}
 }

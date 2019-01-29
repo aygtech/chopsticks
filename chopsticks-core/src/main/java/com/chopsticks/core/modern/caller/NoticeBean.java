@@ -8,5 +8,5 @@ public interface NoticeBean {
 	
 	public NoticeResult notice(ModernNoticeCommand cmd);
 	public NoticeResult notice(ModernNoticeCommand cmd, Object orderKey);
-	public NoticeResult notice(ModernNoticeCommand cmd, Long delay, TimeUnit delayTimeUnit);
+	public NoticeResult notice(ModernNoticeCommand cmd, long delay, TimeUnit delayTimeUnit);
 }

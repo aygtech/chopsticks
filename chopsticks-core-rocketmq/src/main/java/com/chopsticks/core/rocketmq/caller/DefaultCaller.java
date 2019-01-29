@@ -54,7 +54,6 @@ import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
 import com.chopsticks.core.utils.Reflect;
-import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Throwables;
@@ -402,20 +401,6 @@ public class DefaultCaller implements Caller {
 		return promise;
 	}
 	
-	private Message buildNoticeMessage(BaseNoticeCommand cmd) {
-		NoticeRequest req = buildNoticeRequest(cmd);
-		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
-		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-		Optional<Entry<Long, Integer>> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(TimeUnit.SECONDS.toMillis(1L));
-		if(level.isPresent()) {
-			msg.setDelayTimeLevel(level.get().getValue());
-		}
-		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
-		traceNo.add(buildTraceTag(cmd.getTag()));
-		msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
-		return msg;
-	}
-
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Object orderKey) {
 		checkArgument(started, "must be call method start");
 		checkArgument(orderKey != null, "orderKey cannot be null");
@@ -432,24 +417,14 @@ public class DefaultCaller implements Caller {
 		return promise;
 	}
 	
-	protected Message buildInvokeMessage(InvokeRequest req, BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
-		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
-		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
-		Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
-		traceNos.add(buildTraceInvokeReqId(req.getReqId()));
-		traceNos.add(buildTraceTag(cmd.getTag()));
-		msg.setKeys(Joiner.on(" ").join(traceNos));
-		return msg;
-	}
-	
-
 	private DelayNoticeRequest buildDelayNoticeRequest(BaseNoticeCommand cmd, long timeout, TimeUnit timeoutUnit) {
 		DelayNoticeRequest req = new DelayNoticeRequest();
 		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setInvokeTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setExecuteTime(req.getInvokeTime() + timeoutUnit.toMillis(timeout));
 		req.setExtParams(cmd.getExtParams());
-		req.setTraceNos(cmd.getTraceNos());
+		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
+		req.setTraceNos(traceNo);
 		return req;
 	}
 	
@@ -486,6 +461,30 @@ public class DefaultCaller implements Caller {
 		return getGroupName() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TOPIC_SUFFIX;
 	}
 	
+	protected Message buildInvokeMessage(InvokeRequest req, BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
+		Message msg = new Message(buildInvokeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
+		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
+		Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
+		traceNos.add(com.chopsticks.core.rocketmq.Const.buildTraceInvokeReqId(req.getReqId()));
+		traceNos.add(buildTraceTag(cmd.getTag()));
+		msg.setKeys(traceNos);
+		return msg;
+	}
+	
+	private Message buildNoticeMessage(BaseNoticeCommand cmd) {
+		NoticeRequest req = buildNoticeRequest(cmd);
+		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
+		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.NOTICE_REQUEST_KEY, JSON.toJSONString(req));
+		Optional<Entry<Long, Integer>> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(TimeUnit.SECONDS.toMillis(1L));
+		if(level.isPresent()) {
+			msg.setDelayTimeLevel(level.get().getValue());
+		}
+		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
+		traceNo.add(buildTraceTag(cmd.getTag()));
+		msg.setKeys(traceNo);
+		return msg;
+	}
+	
 	private Message buildDelayNoticeMessage(BaseNoticeCommand cmd, Long delay, TimeUnit delayTimeUnit) {
 		Message msg = new Message(buildDelayNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		if(delay != null 
@@ -508,7 +507,7 @@ public class DefaultCaller implements Caller {
 		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
 		traceNo.add(buildTraceTag(cmd.getTag()));
-		msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+		msg.setKeys(traceNo);
 		return msg;
 	}
 	
@@ -522,7 +521,7 @@ public class DefaultCaller implements Caller {
 		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
 		traceNo.add(buildTraceTag(cmd.getTag()));
-		msg.setKeys(Joiner.on(" ").join(cmd.getTraceNos()));
+		msg.setKeys(traceNo);
 		return msg;
 	}
 	
@@ -636,17 +635,17 @@ public class DefaultCaller implements Caller {
 	}
 	
 	@Override
-	public NoticeResult notice(NoticeCommand cmd, Long delay, TimeUnit delayTimeUnit) {
+	public NoticeResult notice(NoticeCommand cmd, long delay, TimeUnit delayTimeUnit) {
 		return this.notice(buildBaseNoticeCommand(cmd), delay, delayTimeUnit);
 	}
 
 	@Override
-	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd, Long delay, TimeUnit delayTimeUnit) {
+	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd, long delay, TimeUnit delayTimeUnit) {
 		return this.asyncNotice(buildBaseNoticeCommand(cmd), delay, delayTimeUnit);
 	}
 	
 	
-	public BaseNoticeResult notice(BaseNoticeCommand cmd, Long delay, TimeUnit delayTimeUnit) {
+	public BaseNoticeResult notice(BaseNoticeCommand cmd, long delay, TimeUnit delayTimeUnit) {
 		try {
 			return this.asyncNotice(cmd, delay, delayTimeUnit).get();
 		}catch (Throwable e) {
@@ -658,7 +657,7 @@ public class DefaultCaller implements Caller {
 		}
 	}
 	
-	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Long delay, final TimeUnit delayTimeUnit) {
+	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final long delay, final TimeUnit delayTimeUnit) {
 		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(delay > 0, "delay must > 0, cur : %s", delay);
 		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -702,11 +701,16 @@ public class DefaultCaller implements Caller {
 					MessageQueue mq = iter.next();
 					long offset = consumer.getOffsetStore().readOffset(mq, ReadOffsetType.READ_FROM_STORE);
 					long maxOffset = consumer.maxOffset(mq);
-					if (maxOffset >= 0 && maxOffset > offset) {
+					if (maxOffset > offset) {
 						consumer.updateConsumeOffset(mq, maxOffset);
 						log.debug("{} update  {}-{}, {} to {}", consumerGroup, mq.getTopic(), mq.getQueueId(), offset, maxOffset);
 					}else {
-						iter.remove();
+						if(offset > maxOffset) {
+							consumer.updateConsumeOffset(mq, maxOffset);
+							log.error("{} update  {}-{}, {} to {}", consumerGroup, mq.getTopic(), mq.getQueueId(), offset, maxOffset);
+						}else {
+							iter.remove();
+						}
 					}
 				}
 			}
@@ -741,7 +745,12 @@ public class DefaultCaller implements Caller {
 						consumer.updateConsumeOffset(mq, maxOffset);
 						log.debug("{} update  {}-{}, {} to {}", consumerGroup, mq.getTopic(), mq.getQueueId(), offset, maxOffset);
 					}else {
-						iter.remove();
+						if(offset > maxOffset) {
+							consumer.updateConsumeOffset(mq, maxOffset);
+							log.error("{} update  {}-{}, {} to {}", consumerGroup, mq.getTopic(), mq.getQueueId(), offset, maxOffset);
+						}else {
+							iter.remove();
+						}
 					}
 				}
 			}
@@ -759,8 +768,5 @@ public class DefaultCaller implements Caller {
 	
 	public String buildTraceTag(String tag) {
 		return String.format("%s%s", com.chopsticks.core.rocketmq.Const.TRACE_PREFIX, tag);
-	}
-	private String buildTraceInvokeReqId(String reqId) {
-		return String.format("%s%s", com.chopsticks.core.rocketmq.Const.TRACE_PREFIX, reqId);
 	}
 }

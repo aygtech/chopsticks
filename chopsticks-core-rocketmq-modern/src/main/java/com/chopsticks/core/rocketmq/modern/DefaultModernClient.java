@@ -67,6 +67,13 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	}
 	
 	@Override
+	public synchronized void shutdown() {
+		log.info("Client {} begin shutdown", getGroupName());
+		super.shutdown();
+		log.info("Client {} end shutdown", getGroupName());
+	}
+	
+	@Override
 	public synchronized void start() {
 		log.info("Client {} begin start", getGroupName());
 		log.info("Invokable : {}, InvokeExecutable : {}, InvokeExecutableNum : {}, InvokeMaxExecutableTime : {}, NoticeExecutable : {}, NoticeExecutableNum : {}, NoticeExcecutableRetryCount : {}, NoticeMaxExecutableTime : {}, DelayNoticeExecutable : {}, DelayNoticeExecutableNum : {}, DelayNoticeExecutableRetryCount : {}, DelayNoticeMaxExecutableTime : {}, OrderedNoticeExecutable : {}, OrderedNoticeExecutableNum : {}, OrderedNoticeExecutableRetryCount : {}, OrderedNoticeMaxExecutableTime : {}"

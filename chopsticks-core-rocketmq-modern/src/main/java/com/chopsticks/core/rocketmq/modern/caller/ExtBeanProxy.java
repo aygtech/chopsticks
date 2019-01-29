@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.chopsticks.core.concurrent.Promise;
+import com.chopsticks.core.concurrent.PromiseListener;
 import com.chopsticks.core.modern.caller.ModernInvokeCommand;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
 import com.chopsticks.core.rocketmq.DefaultClient;
@@ -27,13 +28,13 @@ public class ExtBeanProxy extends BaseProxy {
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		if(method.getName().equals("asyncInvoke")) {
+		if(method.getName().toLowerCase().contains("asyncInvoke".toLowerCase())) {
 			return asyncInvoke(method, args);
-		}else if(method.getName().equals("invoke")) {
+		}else if(method.getName().toLowerCase().contains("invoke".toLowerCase())) {
 			return asyncInvoke(method, args).get();
-		}else if(method.getName().equals("asyncNotice")) {
+		}else if(method.getName().toLowerCase().contains("asyncNotice".toLowerCase())) {
 			return asyncNotice(method, args);
-		}else if(method.getName().equals("notice")) {
+		}else if(method.getName().toLowerCase().contains("notice".toLowerCase())) {
 			return asyncNotice(method, args).get();
 		}else {
 			throw new RuntimeException("unsupport method");
@@ -44,7 +45,7 @@ public class ExtBeanProxy extends BaseProxy {
 		ModernNoticeCommand cmd = (ModernNoticeCommand)args[0];
 		byte[] body = buildBody(cmd.getParams());
 		
-		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(clazzName, cmd.getMethod(), body);
+		final DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
 			Map<String, String> extParams = Maps.newHashMap(getExtParams());
 			extParams.putAll(((BaseModernCommand)cmd).getExtParams());
@@ -72,13 +73,21 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
+		baseResult.addListener(new PromiseListener<BaseNoticeResult>() {
+			@Override
+			public void onSuccess(BaseNoticeResult result) {
+				result.getTraceNos().addAll(noticeCmd.getTraceNos());
+			}
+			@Override
+			public void onFailure(Throwable t) {}
+		});
 		return baseResult;
 	}
 	
 	private Promise<BaseInvokeResult> asyncInvoke(Method method, Object[] args) {
 		ModernInvokeCommand cmd = (ModernInvokeCommand)args[0];
 		byte[] body = buildBody(cmd.getParams());
-		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(clazzName, cmd.getMethod(), body);
+		final DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
 			Map<String, String> extParams = Maps.newHashMap(getExtParams());
 			extParams.putAll(((BaseModernCommand)cmd).getExtParams());
@@ -103,6 +112,14 @@ public class ExtBeanProxy extends BaseProxy {
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
+		baseResult.addListener(new PromiseListener<BaseInvokeResult>() {
+			@Override
+			public void onSuccess(BaseInvokeResult result) {
+				result.getTraceNos().addAll(invokeCmd.getTraceNos());
+			}
+			@Override
+			public void onFailure(Throwable t) {}
+		});
 		return baseResult;
 	}
 }

@@ -98,7 +98,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 					Message msg = new Message(ext.getTopic(), Const.buildCustomTag(getClient().getGroupName(), ext.getTags()), ext.getBody());
 					msg.setDelayTimeLevel(delayLevel.get().getValue());
 					msg.putUserProperty(Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-					msg.setKeys(req.getRootId() + Const.DELAY_NOTICE_CONSUMER_SUFFIX);
+					msg.setKeys(getClient().getGroupName() + req.getRootId());
 					try {
 						SendResult ret = getClient().getProducer().send(msg);
 						if(ret.getSendStatus() != SendStatus.SEND_OK) {
@@ -139,7 +139,12 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		}
 		try {
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
-			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, true);
+			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId
+															, ext.getMsgId()
+															, ext.getReconsumeTimes()
+															, delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes()
+															, false
+															, true);
 			if(req != null) {
 				ctx.setReqTime(req.getReqTime());
 				ctx.setExtParams(req.getExtParams());

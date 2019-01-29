@@ -29,7 +29,9 @@ class NoticeSendCallback implements SendCallback {
 			return;
 		}
 		if(sendResult.getSendStatus() == SendStatus.SEND_OK) {
-			noticePromise.set(new DefaultNoticeResult(sendResult.getMsgId()));
+			DefaultNoticeResult ret = new DefaultNoticeResult(sendResult.getMsgId());
+			ret.setOriginId(sendResult.getOffsetMsgId());
+			noticePromise.set(ret);
 		}else {
 			noticePromise.setException(new RuntimeException(sendResult.getSendStatus().name()));
 		}

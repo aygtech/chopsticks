@@ -451,6 +451,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildInvokeTopic(topic);
+//					realConsumeFromLastOffset(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
 					resetNow(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
@@ -530,19 +531,19 @@ public class DefaultClient extends DefaultCaller implements Client{
 	protected int getNoticeExcecutableRetryCount() {
 		return noticeExcecutableRetryCount;
 	}
-	public void setNoticeExcecutableRetryCount(int noticeExcecutableRetryCount) {
+	protected void setNoticeExcecutableRetryCount(int noticeExcecutableRetryCount) {
 		this.noticeExcecutableRetryCount = noticeExcecutableRetryCount;
 	}
 	protected int getDelayNoticeExecutableRetryCount() {
 		return delayNoticeExecutableRetryCount;
 	}
-	public void setDelayNoticeExecutableRetryCount(int delayNoticeExecutableRetryCount) {
+	protected void setDelayNoticeExecutableRetryCount(int delayNoticeExecutableRetryCount) {
 		this.delayNoticeExecutableRetryCount = delayNoticeExecutableRetryCount;
 	}
 	protected int getOrderedNoticeExecutableRetryCount() {
 		return orderedNoticeExecutableRetryCount;
 	}
-	public void setOrderedNoticeExecutableRetryCount(int orderedNoticeExecutableRetryCount) {
+	protected void setOrderedNoticeExecutableRetryCount(int orderedNoticeExecutableRetryCount) {
 		this.orderedNoticeExecutableRetryCount = orderedNoticeExecutableRetryCount;
 	}
 	protected void setRetryCount(int retryCount) {

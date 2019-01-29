@@ -18,13 +18,13 @@ public interface Caller {
 	
 	public NoticeResult notice(NoticeCommand cmd, Object orderKey);
 	
-	public NoticeResult notice(NoticeCommand cmd, Long delay, TimeUnit delayTimeUnit);
+	public NoticeResult notice(NoticeCommand cmd, long delay, TimeUnit delayTimeUnit);
 	
 	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd);
 	
 	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd, Object orderKey);
 	
-	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd, Long delay, TimeUnit delayTimeUnit);
+	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd, long delay, TimeUnit delayTimeUnit);
 	
 	public void start();
 	

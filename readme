@@ -80,3 +80,7 @@
 	1.traceNo 不允许传null
 	2.提升启动速度，修改不是每次启动都更新队列数量
 	3.修复orderedNotice接收请求参数取值错误的bug, 获取不到req就设置不了extParams等参数
+	4.新增shutdown日志
+	5.新增sdk相关bean方法 sdkInvoke, sdkNotice 返回 SdkNoticeResult, SdkInvokeResult, 暂无考虑 async 调用
+	6.修复traceNo未设置bug
+	7.新增sdk相关promise，让调用层只依赖sdk，移除底层依赖

@@ -122,7 +122,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 					}
 				}
 				Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
-				respMsg.setKeys(req.getReqId());
+				respMsg.setKeys(Const.buildTraceInvokeReqId(req.getReqId()));
 				try {
 					SendResult ret = getClient().getProducer().send(respMsg);
 					if(ret.getSendStatus() == SendStatus.SEND_OK) {

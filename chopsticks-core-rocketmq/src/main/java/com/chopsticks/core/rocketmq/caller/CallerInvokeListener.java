@@ -17,6 +17,7 @@ import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeResult;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
+import com.chopsticks.core.utils.TimeUtils;
 
 class CallerInvokeListener implements MessageListenerConcurrently{
 	
@@ -51,8 +52,8 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 					log.trace("promise not found, reqId : {}, respMsgId : {}, respTime : {}, reqTime : {}, diff : {}"
 							, resp.getReqId()
 							, ext.getMsgId()
-							, resp.getRespTime()
-							, resp.getReqTime()
+							, TimeUtils.yyyyMMddHHmmssSSS(resp.getRespTime())
+							, TimeUtils.yyyyMMddHHmmssSSS(resp.getReqTime())
 							, resp.getRespTime() - resp.getReqTime());
 				}
 			}catch (Throwable e) {

@@ -33,7 +33,7 @@ public class NoticeBeanProxy extends BaseProxy{
 		
 		// check method exist
 		Reflect.getMethod(proxy, cmd.getMethod(), cmd.getParams());
-		BaseNoticeResult baseResult;
+		
 		DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(getTopic(clazz), cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
 			Map<String, String> extParams = Maps.newHashMap(getExtParams());
@@ -49,6 +49,7 @@ public class NoticeBeanProxy extends BaseProxy{
 				noticeCmd.setTraceNos(((BaseModernCommand) cmd).getTraceNos());
 			}
 		}
+		BaseNoticeResult baseResult = null;
 		if(args.length == 1) {
 			baseResult = client.notice(noticeCmd);
 		}else if(args.length == 2) {
@@ -61,7 +62,7 @@ public class NoticeBeanProxy extends BaseProxy{
 		}else {
 			throw new RuntimeException("unsupport method");
 		}
-		baseResult.setTraceNos(noticeCmd.getTraceNos());
+		baseResult.getTraceNos().addAll(noticeCmd.getTraceNos());
 		return baseResult;
 	}
 	
