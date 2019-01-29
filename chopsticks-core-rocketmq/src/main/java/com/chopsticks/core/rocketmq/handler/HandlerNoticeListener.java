@@ -83,7 +83,12 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 		}
 		try {
 			DefaultNoticeParams params = new DefaultNoticeParams(topic, ext.getTags(), ext.getBody());
-			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId, ext.getMsgId(), ext.getReconsumeTimes(), noticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes(), false, false);
+			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId
+															, ext.getMsgId()
+															, ext.getReconsumeTimes()
+															, noticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes()
+															, false
+															, false);
 			if(req != null) {
 				ctx.setReqTime(req.getReqTime());
 				ctx.setExtParams(req.getExtParams());

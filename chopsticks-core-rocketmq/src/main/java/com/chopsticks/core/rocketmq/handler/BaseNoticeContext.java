@@ -21,6 +21,7 @@ public abstract class BaseNoticeContext extends BaseContext implements NoticeCon
 		this.id = id;
 		this.originId = originId;
 		this.retryCount = retryCount;
+		this.maxRetryCount = maxRetryCount;
 		this.orderedNotice = orderedNotice;
 		this.delayNotice = delayNotice;
 	}

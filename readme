@@ -84,3 +84,5 @@
 	5.新增sdk相关bean方法 sdkInvoke, sdkNotice 返回 SdkNoticeResult, SdkInvokeResult, 暂无考虑 async 调用
 	6.修复traceNo未设置bug
 	7.新增sdk相关promise，让调用层只依赖sdk，移除底层依赖
+1.1.8.1
+	1.修复 BaseNoticeContext 未设置 maxRetryCount 的 bug
