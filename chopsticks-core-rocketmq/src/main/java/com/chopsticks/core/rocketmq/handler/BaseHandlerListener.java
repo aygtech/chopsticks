@@ -13,6 +13,7 @@ abstract class BaseHandlerListener{
 	 */
 	private Map<String, BaseHandler> topicTagHandlers;
 	private DefaultClient client;
+	private long beginExecutableTime;
 	
 	BaseHandlerListener(Map<String, BaseHandler> topicTagHandlers, DefaultClient client) {
 		this.topicTagHandlers = topicTagHandlers;
@@ -30,4 +31,13 @@ abstract class BaseHandlerListener{
 	protected DefaultClient getClient() {
 		return client;
 	}
+
+	protected long getBeginExecutableTime() {
+		return beginExecutableTime;
+	}
+
+	public void setBeginExecutableTime(long beginExecutableTime) {
+		this.beginExecutableTime = beginExecutableTime;
+	}
+
 }

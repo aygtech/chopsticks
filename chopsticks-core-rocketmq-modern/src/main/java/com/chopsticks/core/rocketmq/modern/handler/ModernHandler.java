@@ -51,6 +51,7 @@ public class ModernHandler extends BaseHandler{
 		}
 		Object ret;
 		BaseInvokeContext mqCtx = (BaseInvokeContext) ctx;
+		String oldThreadName = Thread.currentThread().getName();
 		try {
 			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(mqCtx.getExtParams());
@@ -69,6 +70,7 @@ public class ModernHandler extends BaseHandler{
 						, e).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
 			}
 		}finally {
+			Thread.currentThread().setName(oldThreadName);
 			ModernContextHolder.remove();
 		}
 		
@@ -99,13 +101,14 @@ public class ModernHandler extends BaseHandler{
 			return;
 		}
 		BaseNoticeContext mqCtx = (BaseNoticeContext) ctx;
-		
+		String oldThreadName = Thread.currentThread().getName();
 		try {
 			DefaultModerNoticeContext baseCtx = new DefaultModerNoticeContext(mqCtx);
 			ModernContextHolder.setNoticeContext(baseCtx);
 			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(baseCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
+			Thread.currentThread().setName(String.format("%s_%s", baseCtx.getId(), oldThreadName));
 			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (CoreException e) {
 			throw e;
@@ -123,6 +126,7 @@ public class ModernHandler extends BaseHandler{
 														, params.getMethod())
 					, e).setCode(ModernCoreException.MODERN_NOTICE_EXECUTE_ERROR);
 		}finally {
+			Thread.currentThread().setName(oldThreadName);
 			ModernContextHolder.remove();
 		}
 		

@@ -20,6 +20,7 @@ import com.chopsticks.core.rocketmq.caller.OrderedNoticeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
+import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 
@@ -38,6 +39,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 
 	@Override
 	public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
+		log.trace("#####");
 		for(MessageExt ext : msgs) {
 			try {
 				return consumeMessage(ext, context);
@@ -65,6 +67,13 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 		OrderedNoticeRequest req = null;
 		if(!Strings.isNullOrEmpty(orderedNoticeReqStr)) {
 			req = JSON.parseObject(orderedNoticeReqStr, OrderedNoticeRequest.class);
+			if(req.getReqTime() < getBeginExecutableTime()) {
+				log.trace("reqTime < beginExecutableTime, reqTime : {}, beginExecutableTime : {}, msgId : {}"
+						, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+						, TimeUtils.yyyyMMddHHmmssSSS(getBeginExecutableTime())
+						, msgId);
+				return ConsumeOrderlyStatus.SUCCESS;
+			}
 		}
 		if(!topicTags.keySet().contains(topic)) {
 			log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);

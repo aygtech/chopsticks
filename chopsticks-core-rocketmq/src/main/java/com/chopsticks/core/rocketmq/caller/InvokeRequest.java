@@ -1,11 +1,14 @@
 package com.chopsticks.core.rocketmq.caller;
 
+import org.apache.rocketmq.common.message.MessageQueue;
+
 public class InvokeRequest extends BaseRequest{
 	private String reqId;
 	private long deadline;
 	private boolean compress;
 	private String respTopic;
 	private String respTag;
+	private MessageQueue respQueue;
 	private boolean respCompress;
 	
 	
@@ -44,5 +47,11 @@ public class InvokeRequest extends BaseRequest{
 	}
 	public void setRespCompress(boolean respCompress) {
 		this.respCompress = respCompress;
+	}
+	public MessageQueue getRespQueue() {
+		return respQueue;
+	}
+	public void setRespQueue(MessageQueue respQueue) {
+		this.respQueue = respQueue;
 	}
 }

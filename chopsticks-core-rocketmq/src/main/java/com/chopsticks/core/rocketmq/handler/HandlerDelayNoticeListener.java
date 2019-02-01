@@ -78,6 +78,13 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		DelayNoticeRequest req = null;
 		if(!Strings.isNullOrEmpty(dealyNoticeReqStr)) {
 			req = JSON.parseObject(dealyNoticeReqStr, DelayNoticeRequest.class);
+			if(req.getReqTime() < getBeginExecutableTime()) {
+				log.trace("reqTime < beginExecutableTime, reqTime : {}, beginExecutableTime : {}, msgId : {}"
+						, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+						, TimeUtils.yyyyMMddHHmmssSSS(getBeginExecutableTime())
+						, msgId);
+				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+			}
 			// TODO 等待原有延迟消费完毕 1.0.9
 			if(req.getExecuteGroupName() != null) {
 				if(!delayNoticeConsumer.getConsumerGroup().equals(req.getExecuteGroupName())) {

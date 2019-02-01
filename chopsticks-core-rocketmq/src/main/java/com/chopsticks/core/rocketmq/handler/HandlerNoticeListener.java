@@ -20,6 +20,7 @@ import com.chopsticks.core.rocketmq.caller.NoticeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
+import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;
 
@@ -54,7 +55,6 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 	}
 	
 	public ConsumeConcurrentlyStatus consumeMessage(MessageExt ext, ConsumeConcurrentlyContext context) {
-
 		ext.setTags(Const.getOriginTag(getClient().getGroupName(), ext.getTags()));
 		String topic = ext.getProperty(MessageConst.PROPERTY_RETRY_TOPIC);
 		String msgId = ext.getProperty(MessageConst.PROPERTY_UNIQ_CLIENT_MESSAGE_ID_KEYIDX);
@@ -71,6 +71,13 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 		NoticeRequest req = null;
 		if(!Strings.isNullOrEmpty(noticeReqStr)) {
 			req = JSON.parseObject(noticeReqStr, NoticeRequest.class);
+			if(req.getReqTime() < getBeginExecutableTime()) {
+				log.trace("reqTime < beginExecutableTime, reqTime : {}, beginExecutableTime : {}, msgId : {}"
+						, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+						, TimeUtils.yyyyMMddHHmmssSSS(getBeginExecutableTime())
+						, msgId);
+				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+			}
 		}
 		
 		BaseHandler handler = getHandler(topic, ext.getTags());

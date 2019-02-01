@@ -7,24 +7,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.rocketmq.client.common.ClientErrorCode;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.exception.MQClientException;
-import org.apache.rocketmq.client.producer.SendResult;
-import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
-import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.Client;
 import com.chopsticks.core.handler.Handler;
-import com.chopsticks.core.rocketmq.caller.BaseInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.DefaultCaller;
-import com.chopsticks.core.rocketmq.caller.InvokeRequest;
-import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
-import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.handler.HandlerDelayNoticeListener;
@@ -86,6 +77,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private long noticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
 	private long delayNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
 	private long orderedNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
+	
+	private long invokeBeginExectableTime = Const.CLIENT_TIME.getNow();
+	private long noticeBeginExecutableTime = -1L;
+	private long delayNoticeBeginExecutableTime = -1L;
+	private long orderedNoticeBeginExecutableTime = -1L;
 	
 	public DefaultClient(String groupName) {
 		super(groupName);
@@ -173,102 +169,6 @@ public class DefaultClient extends DefaultCaller implements Client{
 		}
 	}
 
-	private void testInvokeClient(DefaultMQPushConsumer invokeConsumer) {
-		try {
-			for(String topic : topicTags.keySet()) {
-				BaseInvokeCommand cmd = new DefaultInvokeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes());
-				InvokeRequest req = buildInvokeRequest(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-				req.setRespTopic(null);
-				Message msg = buildInvokeMessage(req, cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
-				SendResult ret = getProducer().send(msg);
-				if(ret.getSendStatus() != SendStatus.SEND_OK) {
-					throw new RuntimeException(ret.getSendStatus().name());
-				}
-				invokeConsumer.fetchSubscribeMessageQueues(buildInvokeTopic(topic));
-			}
-		}catch (Throwable e) {
-			if(e instanceof MQClientException) {
-				MQClientException se = (MQClientException)e;
-				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_INVOKE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
-				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_INVOKE_CLIENT_NO_NAME_SERVER_ERROR);
-				}
-			}
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
-		}
-	}
-	
-	private void testDelayNoticeClient(DefaultMQPushConsumer delayNoticeConsumer) {
-		try {
-			for(String topic : topicTags.keySet()) {
-				this.notice(new DefaultNoticeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes()), TimeUnit.SECONDS.toMillis(1L), TimeUnit.MILLISECONDS);
-				delayNoticeConsumer.fetchSubscribeMessageQueues(buildDelayNoticeTopic(topic));
-			}
-		}catch (Throwable e) {
-			if(e instanceof MQClientException) {
-				MQClientException se = (MQClientException)e;
-				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_BROKER_CONNECTION_ERROR);
-				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
-				}else {
-					e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_ERROR);
-				}
-			}else {
-				e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_DELAY_NOTICE_CLIENT_ERROR);
-			}
-			Throwables.throwIfUnchecked(e);
-		}
-	}
-	
-	private void testNoticeClient(DefaultMQPushConsumer noticeConsumer) {
-		try {
-			for(String topic : topicTags.keySet()) {
-				this.notice(new DefaultNoticeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes()));
-				noticeConsumer.fetchSubscribeMessageQueues(buildNoticeTopic(topic));
-			}
-		}catch (Throwable e) {
-			if(e instanceof MQClientException) {
-				MQClientException se = (MQClientException)e;
-				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_NOTICE_CLIENT_BROKER_CONNECTION_ERROR);
-				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_NOTICE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
-				}else {
-					e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_NOTICE_CLIENT_ERROR);
-				}
-			}else {
-				e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_NOTICE_CLIENT_ERROR);
-			}
-			Throwables.throwIfUnchecked(e);
-		}
-	}
-	
-	private void testOrderedNoticeClient(DefaultMQPushConsumer orderedNoticeConsumer) {
-		try {
-			for(String topic : topicTags.keySet()) {
-				this.notice(new DefaultNoticeCommand(topic, Const.buildTestTag(getGroupName()), Const.CLIENT_TEST_TAG.getBytes()), Const.CLIENT_TEST_TAG);
-				orderedNoticeConsumer.fetchSubscribeMessageQueues(buildOrderedNoticeTopic(topic));
-			}
-		}catch (Throwable e) {
-			if(e instanceof MQClientException) {
-				MQClientException se = (MQClientException)e;
-				if(se.getResponseCode() == ClientErrorCode.NOT_FOUND_TOPIC_EXCEPTION){
-					e = new DefaultCoreException("namesrv connection error").setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_BROKER_CONNECTION_ERROR);
-				}else if(se.getResponseCode() == ClientErrorCode.NO_NAME_SERVER_EXCEPTION) {
-					e = new DefaultCoreException("namesrv ip undefined").setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_NAME_SERVER_CONNECTION_ERROR);
-				}else {
-					e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_ERROR);
-				}
-			}else {
-				e = new DefaultCoreException(e).setCode(DefaultCoreException.TEST_ORDERED_NOTICE_CLIENT_ERROR);
-			}
-			Throwables.throwIfUnchecked(e);
-		}
-	}
-
 	private void buildTopicTagsAndTopicTagHandlers() {
 		topicTags = MultimapBuilder.hashKeys().hashSetValues().build();
 		topicTagHandlers = Maps.newHashMap();
@@ -300,14 +200,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 			orderedNoticeConsumer.setConsumeTimeout(getOrderedNoticeMaxExecutableTime());
 			orderedNoticeConsumer.setSuspendCurrentQueueTimeMillis(TimeUnit.SECONDS.toMillis(5L));
 			orderedNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			orderedNoticeConsumer.registerMessageListener(new HandlerOrderedNoticeListener(this, orderedNoticeConsumer, topicTags, topicTagHandlers));
+			HandlerOrderedNoticeListener listener = new HandlerOrderedNoticeListener(this, orderedNoticeConsumer, topicTags, topicTagHandlers);
+			listener.setBeginExecutableTime(getOrderedNoticeBeginExecutableTime());
+			orderedNoticeConsumer.registerMessageListener(listener);
 			orderedNoticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
+				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildOrderedNoticeTopic(topic);
-					realConsumeFromLastOffset(orderedNoticeConsumer.getMessageModel(), orderedNoticeConsumer.getInstanceName(), orderedNoticeConsumer.getConsumerGroup(), topic);
+					topics.add(topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						orderedNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -321,15 +224,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 						orderedNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
+				createTopics(topics);
 				orderedNoticeConsumer.start();
 				orderedNoticeConsumer = Const.buildConsumer(orderedNoticeConsumer);
-				testOrderedNoticeClient(orderedNoticeConsumer);
+				for(String topic : topics) {
+					orderedNoticeConsumer.fetchSubscribeMessageQueues(topic);
+				}
 			}catch (Throwable e) {
 				if(orderedNoticeConsumer != null) {
 					orderedNoticeConsumer.shutdown();
 				}
-				Throwables.throwIfUnchecked(e);
-				throw new RuntimeException(e);
+				throw new DefaultCoreException(e);
 			}
 		}
 		return orderedNoticeConsumer;
@@ -348,14 +253,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 			noticeConsumer.setConsumeMessageBatchMaxSize(1);
 			noticeConsumer.setConsumeTimeout(getNoticeMaxExecutableTime());
 			noticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			noticeConsumer.registerMessageListener(new HandlerNoticeListener(this, noticeConsumer, topicTags, topicTagHandlers));
+			HandlerNoticeListener listener = new HandlerNoticeListener(this, noticeConsumer, topicTags, topicTagHandlers);
+			listener.setBeginExecutableTime(getNoticeBeginExecutableTime());
+			noticeConsumer.registerMessageListener(listener);
 			noticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
+				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildNoticeTopic(topic);
-					realConsumeFromLastOffset(noticeConsumer.getMessageModel(), noticeConsumer.getInstanceName(), noticeConsumer.getConsumerGroup(), topic);
+					topics.add(topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						noticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -369,15 +277,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 						noticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
+				createTopics(topics);
 				noticeConsumer.start();
 				noticeConsumer = Const.buildConsumer(noticeConsumer);
-				testNoticeClient(noticeConsumer);
+				for(String topic : topics) {
+					noticeConsumer.fetchSubscribeMessageQueues(topic);
+				}
 			}catch (Throwable e) {
 				if(noticeConsumer != null) {
 					noticeConsumer.shutdown();
 				}
-				Throwables.throwIfUnchecked(e);
-				throw new RuntimeException(e);
+				throw new DefaultCoreException(e);
 			}
 		}
 		return noticeConsumer;
@@ -396,14 +306,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 			delayNoticeConsumer.setConsumeMessageBatchMaxSize(1);
 			delayNoticeConsumer.setConsumeTimeout(getDelayNoticeMaxExecutableTime());
 			delayNoticeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			delayNoticeConsumer.registerMessageListener(new HandlerDelayNoticeListener(this, delayNoticeConsumer, topicTags, topicTagHandlers));
+			HandlerDelayNoticeListener listener = new HandlerDelayNoticeListener(this, delayNoticeConsumer, topicTags, topicTagHandlers);
+			listener.setBeginExecutableTime(getDelayNoticeBeginExecutableTime());
+			delayNoticeConsumer.registerMessageListener(listener);
 			delayNoticeConsumer.setPullThresholdSizeForTopic(10);
 			try {
+				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildDelayNoticeTopic(topic);
-					realConsumeFromLastOffset(delayNoticeConsumer.getMessageModel(), delayNoticeConsumer.getInstanceName(), delayNoticeConsumer.getConsumerGroup(), topic);
+					topics.add(topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						delayNoticeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -417,15 +330,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 						delayNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
+				createTopics(topics);
 				delayNoticeConsumer.start();
 				delayNoticeConsumer = Const.buildConsumer(delayNoticeConsumer);
-				testDelayNoticeClient(delayNoticeConsumer);
+				for(String topic : topics) {
+					delayNoticeConsumer.fetchSubscribeMessageQueues(topic);
+				}
 			}catch (Throwable e) {
 				if(delayNoticeConsumer != null) {
 					delayNoticeConsumer.shutdown();
 				}
-				Throwables.throwIfUnchecked(e);
-				throw new RuntimeException(e);
+				throw new DefaultCoreException(e);
 			}
 		}
 		return delayNoticeConsumer;
@@ -444,15 +359,17 @@ public class DefaultClient extends DefaultCaller implements Client{
 			invokeConsumer.setConsumeTimeout(getInvokeMaxExecutableTime());
 			invokeConsumer.setConsumeMessageBatchMaxSize(1);
 			invokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
-			invokeConsumer.registerMessageListener(new HandlerInvokeListener(this, topicTagHandlers));
+			HandlerInvokeListener listener = new HandlerInvokeListener(this, topicTagHandlers);
+			listener.setBeginExecutableTime(getInvokeBeginExectableTime());
+			invokeConsumer.registerMessageListener(listener);
 			invokeConsumer.setPullThresholdSizeForTopic(10);
 			try {
+				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
 					String topic = entry.getKey();
 					Collection<String> tags = entry.getValue();
 					topic = buildInvokeTopic(topic);
-//					realConsumeFromLastOffset(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
-					resetNow(invokeConsumer.getMessageModel(), invokeConsumer.getInstanceName(), invokeConsumer.getConsumerGroup(), topic);
+					topics.add(topic);
 					if(tags.contains(Const.ALL_TAGS)) {
 						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
@@ -466,9 +383,12 @@ public class DefaultClient extends DefaultCaller implements Client{
 						invokeConsumer.subscribe(topic, Joiner.on("||").join(newTags));
 					}
 				}
+				createTopics(topics);
 				invokeConsumer.start();
 				invokeConsumer = Const.buildConsumer(invokeConsumer);
-				testInvokeClient(invokeConsumer);
+				for(String topic : topics) {
+					invokeConsumer.fetchSubscribeMessageQueues(topic);
+				}
 			}catch (Throwable e) {
 				if(invokeConsumer != null) {
 					invokeConsumer.shutdown();
@@ -575,7 +495,32 @@ public class DefaultClient extends DefaultCaller implements Client{
 	public void setInvokeMaxExecutableTime(long invokeMaxExecutableTime) {
 		this.invokeMaxExecutableTime = invokeMaxExecutableTime;
 	}
-	public void setMaxExecutableTime(long maxExecutableTime) {
+	protected long getInvokeBeginExectableTime() {
+		return invokeBeginExectableTime;
+	}
+	protected void setInvokeBeginExectableTime(long invokeBeginExectableTime) {
+		this.invokeBeginExectableTime = invokeBeginExectableTime;
+	}
+	protected long getNoticeBeginExecutableTime() {
+		return noticeBeginExecutableTime;
+	}
+	protected void setNoticeBeginExecutableTime(long noticeBeginExecutableTime) {
+		this.noticeBeginExecutableTime = noticeBeginExecutableTime;
+	}
+	protected long getDelayNoticeBeginExecutableTime() {
+		return delayNoticeBeginExecutableTime;
+	}
+	protected void setDelayNoticeBeginExecutableTime(long delayNoticeBeginExecutableTime) {
+		this.delayNoticeBeginExecutableTime = delayNoticeBeginExecutableTime;
+	}
+	protected long getOrderedNoticeBeginExecutableTime() {
+		return orderedNoticeBeginExecutableTime;
+	}
+	protected void setOrderedNoticeBeginExecutableTime(long orderedNoticeBeginExecutableTime) {
+		this.orderedNoticeBeginExecutableTime = orderedNoticeBeginExecutableTime;
+	}
+	
+	protected void setMaxExecutableTime(long maxExecutableTime) {
 		setInvokeMaxExecutableTime(maxExecutableTime);
 		setNoticeMaxExecutableTime(maxExecutableTime);
 		setDelayNoticeMaxExecutableTime(maxExecutableTime);

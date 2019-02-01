@@ -86,3 +86,7 @@
 	7.新增sdk相关promise，让调用层只依赖sdk，移除底层依赖
 1.1.8.1
 	1.修复 BaseNoticeContext 未设置 maxRetryCount 的 bug
+1.1.8.2
+	1.移除所有test通道代码
+	2.调整发送回执处理者为集群，发送时提供处理队列要求回执时准确投递到处理队列
+	

@@ -60,14 +60,30 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 		String invokeCmdExtStr = ext.getUserProperty(Const.INVOKE_REQUEST_KEY);
 		if(!isNullOrEmpty(invokeCmdExtStr)) {
 			InvokeRequest req = JSON.parseObject(invokeCmdExtStr, InvokeRequest.class);
+			if(req.getReqTime() < getBeginExecutableTime()) {
+				log.trace("reqTime < beginExecutableTime, reqTime : {}, beginExecutableTime : {}, reqId : {}"
+						, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+						, TimeUtils.yyyyMMddHHmmssSSS(getBeginExecutableTime())
+						, req.getReqId());
+				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+			}
 			long now = Const.CLIENT_TIME.getNow();
 			if(now > req.getDeadline()) {
-				throw new DefaultCoreException(String.format("timeout, %s-%s skip invoke process, reqTime : %s, deadline : %s, now : %s"
+//				throw new DefaultCoreException(String.format("timeout, %s-%s skip invoke process, reqTime : %s, deadline : %s, now : %s, queue : %s"
+//													, topic
+//													, ext.getTags()
+//													, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
+//													, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
+//													, TimeUtils.yyyyMMddHHmmssSSS(now)
+//													, ext.getQueueId())).setCode(DefaultCoreException.INVOKE_BEFORE_PROCESS_TIMEOUT);
+				log.error("timeout, {}-{} skip invoke process, reqTime : {}, deadline : {}, now : {}, queue : {}"
 													, topic
 													, ext.getTags()
 													, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
 													, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
-													, TimeUtils.yyyyMMddHHmmssSSS(now))).setCode(DefaultCoreException.INVOKE_BEFORE_PROCESS_TIMEOUT);
+													, TimeUtils.yyyyMMddHHmmssSSS(now)
+													, ext.getQueueId());
+				return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 			}
 			BaseHandler handler = getHandler(topic, ext.getTags());
 			if(handler == null) {
@@ -124,14 +140,20 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 				Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
 				respMsg.setKeys(Const.buildTraceInvokeReqId(req.getReqId()));
 				try {
-					SendResult ret = getClient().getProducer().send(respMsg);
+					SendResult ret = null;
+					if(req.getRespQueue() != null) {
+						ret = getClient().getProducer().send(respMsg, req.getRespQueue());
+					}else {
+						ret = getClient().getProducer().send(respMsg);
+					}
 					if(ret.getSendStatus() == SendStatus.SEND_OK) {
-						log.trace("invoke {}-{}, reqId : {}, msgId : {}, rec msgId : {}, reqTime : {}, deadline : {}, begin : {}, processEnd : {}"
+						log.trace("invoke {}-{}, reqId : {}, msgId : {}, rec msgId : {}, recId : {}, reqTime : {}, deadline : {}, begin : {}, processEnd : {}"
 								, topic
 								, ext.getTags()
 								, req.getReqId()
 								, ext.getMsgId()
 								, ret.getMsgId()
+								, ret.getOffsetMsgId()
 								, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
 								, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
 								, TimeUtils.yyyyMMddHHmmssSSS(now)

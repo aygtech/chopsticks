@@ -14,6 +14,8 @@ public abstract class BaseNoticeContext extends BaseContext implements NoticeCon
 	public BaseNoticeContext(BaseNoticeContext ctx) {
 		this(ctx.getId(), ctx.getOriginId(), ctx.getRetryCount(), ctx.isMaxRetryCount(), ctx.isOrderedNotice(), ctx.isDelayNotice());
 		setExtParams(ctx.getExtParams());
+		setReqTime(ctx.getReqTime());
+		setTraceNos(ctx.getTraceNos());
 	}
 	
 	public BaseNoticeContext(String id, String originId, int retryCount, boolean maxRetryCount, boolean orderedNotice, boolean delayNotice) {

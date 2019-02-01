@@ -77,7 +77,7 @@ public class Const {
 	public static final String CALLER_INVOKE_CONSUMER_SUFFIX = "_CALLER_INVOKE_CONSUMER";
 	public static final String CLIENT_TEST_TAG = "_CLIENT_TEST_TAG";
 	
-	public static final int DEFAULT_TOPIC_QUEUE_SIZE = 64;
+	public static final int DEFAULT_TOPIC_QUEUE_SIZE = 32;
 
 	public static final String ERROR_MSG_CAN_NOT_FIND_MESSAGE_QUEUE = "Can not find Message Queue";
 
@@ -96,15 +96,28 @@ public class Const {
 	}
 	
 	public static DefaultMQPushConsumer buildConsumer(DefaultMQPushConsumer consumer) {
-		Reflect.on(consumer)
-			   .field("defaultMQPushConsumerImpl")
-			   .field("consumeMessageService")
-			   .field("consumeExecutor")
-			   .set("threadFactory", new ThreadFactoryBuilder()
-									.setDaemon(true)
-									.setNameFormat(consumer.getConsumerGroup() + "_%d")
-	
-									.build());
+		Reflect consumeMessageService = Reflect.on(consumer)
+											   .field("defaultMQPushConsumerImpl")
+											   .field("consumeMessageService");
+		
+		consumeMessageService.field("consumeExecutor")
+			   				 .set("threadFactory", new ThreadFactoryBuilder().setDaemon(true)
+																			 .setNameFormat(consumer.getConsumerGroup() + "_consume_%d")
+																			 .build());
+		//已经启动并启动好了一个调度线程，不太好改名字了
+//		if(consumeMessageService.fields().containsKey("cleanExpireMsgExecutors")) {
+//			consumeMessageService.field("cleanExpireMsgExecutors")
+//								 .field("e")
+//								 .set("threadFactory", new ThreadFactoryBuilder().setDaemon(true)
+//																				 .setNameFormat(consumer.getConsumerGroup() + "_clearExpireMsg_%d")
+//																				 .build());
+//		}
+//		consumeMessageService.field("scheduledExecutorService")
+//							 .field("e")
+//		 					 .set("threadFactory", new ThreadFactoryBuilder().setDaemon(true)
+//																			 .setNameFormat(consumer.getConsumerGroup() + "_schedule_%d")
+//																			 .build());
+		
 		return consumer;
 	}
 	

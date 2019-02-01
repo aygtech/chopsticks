@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.concurrent.impl.GuavaPromise;
 import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeResult;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
@@ -28,7 +29,7 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 	CallerInvokeListener(Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap) {
 		this.callerInvokePromiseMap = callerInvokePromiseMap;
 	}
-
+	private static final long BEGIN_EXECUTABLE_TIME = com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow();
 	@Override
 	public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
 		for(MessageExt ext : msgs) {
@@ -36,9 +37,13 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 				byte[] byteResp = ext.getBody();
 				InvokeResponse resp = JSON.parseObject(byteResp, InvokeResponse.class);
 				GuavaPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(resp.getReqId());
+				if(resp.getReqTime() < BEGIN_EXECUTABLE_TIME) {
+					continue;
+				}
 				if(promise != null) {
 					if(resp.getRespExceptionBody() != null) {
-						promise.setException(new DefaultCoreException(resp.getRespExceptionBody()).setCode(resp.getRespExceptionCode() == 0 ? DefaultCoreException.INVOKE_EXECUTE_ERROR : resp.getRespExceptionCode()));
+						CoreException e = new DefaultCoreException(String.format("%s-%s", resp.getReqId(), resp.getRespExceptionBody())).setCode(resp.getRespExceptionCode());
+						promise.setException(e);
 					}else {
 						byte[] respBody = resp.getRespBody();
 						if(respBody != null && respBody.length > 0 && resp.isCompressRespBody()) {

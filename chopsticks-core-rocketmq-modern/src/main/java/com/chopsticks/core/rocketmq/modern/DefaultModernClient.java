@@ -31,6 +31,7 @@ import com.chopsticks.core.rocketmq.modern.handler.UnSupportDelayNotice;
 import com.chopsticks.core.rocketmq.modern.handler.UnSupportInvoke;
 import com.chopsticks.core.rocketmq.modern.handler.UnSupportNotice;
 import com.chopsticks.core.rocketmq.modern.handler.UnSupportOrderedNotice;
+import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -76,19 +77,23 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	@Override
 	public synchronized void start() {
 		log.info("Client {} begin start", getGroupName());
-		log.info("Invokable : {}, InvokeExecutable : {}, InvokeExecutableNum : {}, InvokeMaxExecutableTime : {}, NoticeExecutable : {}, NoticeExecutableNum : {}, NoticeExcecutableRetryCount : {}, NoticeMaxExecutableTime : {}, DelayNoticeExecutable : {}, DelayNoticeExecutableNum : {}, DelayNoticeExecutableRetryCount : {}, DelayNoticeMaxExecutableTime : {}, OrderedNoticeExecutable : {}, OrderedNoticeExecutableNum : {}, OrderedNoticeExecutableRetryCount : {}, OrderedNoticeMaxExecutableTime : {}"
+		log.info("InvokeBeginExectableTime : {}, Invokable : {}, InvokeExecutable : {}, InvokeExecutableNum : {}, InvokeMaxExecutableTime : {}, NoticeBeginExecutableTime : {}, NoticeExecutable : {}, NoticeExecutableNum : {}, NoticeExcecutableRetryCount : {}, NoticeMaxExecutableTime : {}, DelayNoticeBeginExecutableTime : {}, DelayNoticeExecutable : {}, DelayNoticeExecutableNum : {}, DelayNoticeExecutableRetryCount : {}, DelayNoticeMaxExecutableTime : {}, OrderedNoticeBeginExecutableTime : {}, OrderedNoticeExecutable : {}, OrderedNoticeExecutableNum : {}, OrderedNoticeExecutableRetryCount : {}, OrderedNoticeMaxExecutableTime : {}"
+				, TimeUtils.yyyyMMddHHmmssSSS(getInvokeBeginExectableTime())
 				, isInvokable()
 				, isInvokeExecutable()
 				, getInvokeExecutableNum()
 				, getInvokeMaxExecutableTime()
+				, TimeUtils.yyyyMMddHHmmssSSS(getNoticeBeginExecutableTime())
 				, isNoticeExecutable()
 				, getNoticeExecutableNum()
 				, getNoticeExcecutableRetryCount()
 				, getNoticeMaxExecutableTime()
+				, TimeUtils.yyyyMMddHHmmssSSS(getDelayNoticeBeginExecutableTime())
 				, isDelayNoticeExecutable()
 				, getDelayNoticeExecutableNum()
 				, getDelayNoticeExecutableRetryCount()
 				, getDelayNoticeMaxExecutableTime()
+				, TimeUtils.yyyyMMddHHmmssSSS(getOrderedNoticeBeginExecutableTime())
 				, isOrderedNoticeExecutable()
 				, getOrderedNoticeExecutableNum()
 				, getOrderedNoticeExecutableRetryCount()
