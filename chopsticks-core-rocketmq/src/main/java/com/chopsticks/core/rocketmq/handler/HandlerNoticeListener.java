@@ -93,7 +93,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId
 															, ext.getMsgId()
 															, ext.getReconsumeTimes()
-															, noticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes()
+															, noticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()
 															, false
 															, false);
 			if(req != null) {

@@ -101,8 +101,7 @@ public class Const {
 											   .field("consumeMessageService");
 		
 		consumeMessageService.field("consumeExecutor")
-			   				 .set("threadFactory", new ThreadFactoryBuilder().setDaemon(true)
-																			 .setNameFormat(consumer.getConsumerGroup() + "_consume_%d")
+			   				 .set("threadFactory", new ThreadFactoryBuilder().setNameFormat(consumer.getConsumerGroup() + "_%d")
 																			 .build());
 		//已经启动并启动好了一个调度线程，不太好改名字了
 //		if(consumeMessageService.fields().containsKey("cleanExpireMsgExecutors")) {

@@ -145,9 +145,6 @@ public class HttpTinyClient {
         conn.addRequestProperty("Metaq-Client-RequestTS", ts);
     }
 
-    /**
-     * @return the http response of given http post request
-     */
     static public HttpResult httpPost(String url, List<String> headers, List<String> paramValues,
         String encoding, long readTimeoutMs) throws IOException {
         String encodedContent = encodingParams(paramValues, encoding);

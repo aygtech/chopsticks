@@ -3,6 +3,8 @@ package com.chopsticks.core.rocketmq.caller;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -38,7 +40,8 @@ import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.caller.NoticeCommand;
 import com.chopsticks.core.caller.NoticeResult;
 import com.chopsticks.core.concurrent.Promise;
-import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
@@ -46,9 +49,10 @@ import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
-import com.google.common.base.Throwables;
+import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import io.netty.util.internal.ThreadLocalRandom; 
@@ -92,7 +96,7 @@ public class DefaultCaller implements Caller {
 	/**
 	 *  <msgid, timeoutGuavaPromise>
 	 */
-	private Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap;
+	private Map<String, DefaultTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap;
 	
 	public DefaultCaller(String groupName) {
 		checkArgument(!isNullOrEmpty(groupName), "groupName cannot be null or empty");
@@ -103,7 +107,7 @@ public class DefaultCaller implements Caller {
 	public synchronized void start() {
 		if(!started) {
 			try {
-				callerInvokePromiseMap = new ConcurrentHashMap<String, GuavaTimeoutPromise<BaseInvokeResult>>();
+				callerInvokePromiseMap = new ConcurrentHashMap<String, DefaultTimeoutPromise<BaseInvokeResult>>();
 				producer = buildAndStartProducer();
 				invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
 				mqAdminExt = buildAdminExt();
@@ -119,7 +123,11 @@ public class DefaultCaller implements Caller {
 				if(callerInvokeConsumer != null) {
 					callerInvokeConsumer.shutdown();
 				}
-				throw new DefaultCoreException(e);
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
 			}
 		}
 	}
@@ -132,7 +140,11 @@ public class DefaultCaller implements Caller {
 			mqAdminExt.setNamesrvAddr(namesrvAddr);
 			mqAdminExt.start();
 		}catch (Throwable e) {
-			throw new DefaultCoreException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 		return mqAdminExt;
 		
@@ -189,11 +201,20 @@ public class DefaultCaller implements Caller {
 				createTopics(Sets.newHashSet(topic));
 				callerInvokeConsumer.start();
 				callerInvokeConsumer = com.chopsticks.core.rocketmq.Const.buildConsumer(callerInvokeConsumer);
+				long waitRebalanceMillis = 100L;
+				while(callerInvokeConsumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getProcessQueueTable().keySet().toArray(new MessageQueue[0]).length == 0) {
+					TimeUnit.MILLISECONDS.sleep(waitRebalanceMillis);
+					log.warn("continue wait rebalance time {}ms", waitRebalanceMillis);
+				}
 			}catch (Throwable e) {
 				if(callerInvokeConsumer != null) {
 					callerInvokeConsumer.shutdown();
 				}
-				throw new DefaultCoreException(e);
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
 			}
 		}
 		return callerInvokeConsumer;
@@ -210,8 +231,14 @@ public class DefaultCaller implements Caller {
 			producer.start();
 			return producer;
 		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(producer != null) {
+				producer.shutdown();
+			}
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 	
@@ -223,14 +250,17 @@ public class DefaultCaller implements Caller {
 		try {
 			return this.asyncInvoke(cmd, timeout, timeoutUnit).get();
 		} catch (Throwable e) {
-			if(e instanceof ExecutionException) {
+			while(e instanceof ExecutionException) {
 				e = e.getCause();
 			}
 			if(e instanceof CancellationException) {
 				e = new TimeoutException();
 			}
-			Throwables.throwIfUnchecked(e);
-			throw new DefaultCoreException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 
@@ -241,7 +271,8 @@ public class DefaultCaller implements Caller {
 	public Promise<BaseInvokeResult> asyncInvoke(final BaseInvokeCommand cmd, final long timeout, final TimeUnit timeoutUnit) {
 		checkArgument(started, "must be call method start");
 		checkArgument(invokable, "must be support invokable");
-		final GuavaTimeoutPromise<BaseInvokeResult> promise = new GuavaTimeoutPromise<BaseInvokeResult>(timeout, timeoutUnit);
+		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
+		final DefaultTimeoutPromise<BaseInvokeResult> promise = new DefaultTimeoutPromise<BaseInvokeResult>(timeout, timeoutUnit);
 		try {
 			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
 			callerInvokePromiseMap.put(req.getReqId(), promise);
@@ -313,11 +344,17 @@ public class DefaultCaller implements Caller {
 		try {
 			return this.asyncNotice(cmd).get();
 		}catch (Throwable e) {
-			if(e instanceof ExecutionException) {
+			while(e instanceof ExecutionException) {
 				e = e.getCause();
 			}
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CancellationException) {
+				e = new TimeoutException();
+			}
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 	
@@ -325,17 +362,24 @@ public class DefaultCaller implements Caller {
 		try {
 			return this.asyncNotice(cmd, orderKey).get();
 		}catch (Throwable e) {
-			if(e instanceof ExecutionException) {
+			while(e instanceof ExecutionException) {
 				e = e.getCause();
 			}
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CancellationException) {
+				e = new TimeoutException();
+			}
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(BaseNoticeCommand cmd) {
 		checkArgument(started, "must be call method start");
-		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
+		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildNoticeMessage(cmd);
 			NoticeSendCallback callback = new NoticeSendCallback(promise);
@@ -350,7 +394,8 @@ public class DefaultCaller implements Caller {
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Object orderKey) {
 		checkArgument(started, "must be call method start");
 		checkArgument(orderKey != null, "orderKey cannot be null");
-		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
+		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildOrderedNoticeMessage(cmd, orderKey);
 			NoticeSendCallback callback = new NoticeSendCallback(promise);
@@ -402,24 +447,34 @@ public class DefaultCaller implements Caller {
 		req.setExtParams(cmd.getExtParams());
 		req.setTraceNos(cmd.getTraceNos());
 		try {
-			MessageQueue[] mqs = callerInvokeConsumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getProcessQueueTable().keySet().toArray(new MessageQueue[0]);
+			List<MessageQueue> mqList = getRespQueue(this.callerInvokeConsumer);
 			MessageQueue mq = null;
-			do {
-				mq = mqs[ThreadLocalRandom.current().nextInt(mqs.length)];
-				if(mq.getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
-					continue;
-				}else {
-					break;
-				}
-			}while(true);
+			if(mqList.isEmpty()) {
+				throw new DefaultCoreException(String.format("resp queue %s is empty", getGroupName()));
+			}else {
+				mq = mqList.get(ThreadLocalRandom.current().nextInt(mqList.size()));
+			}
 			req.setRespQueue(mq);
 		}catch (Throwable e) {
-			throw new DefaultCoreException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 		
 		return req;
 	}
-
+	private List<MessageQueue> getRespQueue(DefaultMQPushConsumer callerInvokeConsumer){
+		MessageQueue[] mqs = callerInvokeConsumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getProcessQueueTable().keySet().toArray(new MessageQueue[0]);
+		List<MessageQueue> mqList = Lists.newArrayList(mqs);
+		for(Iterator<MessageQueue> iter = mqList.iterator(); iter.hasNext();) {
+			if(iter.next().getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
+				iter.remove();
+			}
+		}
+		return mqList;
+	}
 	private String buildRespTopic() {
 		return getGroupName() + com.chopsticks.core.rocketmq.Const.INVOCE_RESP_TOPIC_SUFFIX;
 	}
@@ -532,14 +587,17 @@ public class DefaultCaller implements Caller {
 		try {
 			return this.asyncInvoke(cmd, timeout, timeoutUnit).get();
 		} catch (Throwable e) {
-			if(e instanceof ExecutionException) {
+			while(e instanceof ExecutionException) {
 				e = e.getCause();
 			}
 			if(e instanceof CancellationException) {
 				e = new TimeoutException();
 			}
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 
@@ -563,11 +621,17 @@ public class DefaultCaller implements Caller {
 		try {
 			return this.asyncNotice(cmd, orderKey).get();
 		}catch (Throwable e) {
-			if(e instanceof ExecutionException) {
+			while(e instanceof ExecutionException) {
 				e = e.getCause();
 			}
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CancellationException) {
+				e = new TimeoutException();
+			}
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 
@@ -612,18 +676,25 @@ public class DefaultCaller implements Caller {
 		try {
 			return this.asyncNotice(cmd, delay, delayTimeUnit).get();
 		}catch (Throwable e) {
-			if(e instanceof ExecutionException) {
+			while(e instanceof ExecutionException) {
 				e = e.getCause();
 			}
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CancellationException) {
+				e = new TimeoutException();
+			}
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final long delay, final TimeUnit delayTimeUnit) {
 		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(delay > 0, "delay must > 0, cur : %s", delay);
-		final GuavaTimeoutPromise<BaseNoticeResult> promise = new GuavaTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
+		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildDelayNoticeMessage(cmd, delay, delayTimeUnit);
 			NoticeSendCallback callback = new NoticeSendCallback(promise);

@@ -11,6 +11,7 @@ public class ModernCoreException extends DefaultCoreException {
 	public static final int MODERN_INVOKE_EXECUTE_ERROR = 20002;
 	public static final int UNSUPPORT_ARRAY_ARGUMENTS = 20003;
 	public static final int UNSUPPORT_ARRAY_RESULT = 20004;
+	
 
 	public ModernCoreException() {
 		super();

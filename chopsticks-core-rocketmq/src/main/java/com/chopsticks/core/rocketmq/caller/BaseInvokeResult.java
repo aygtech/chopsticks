@@ -27,5 +27,16 @@ public abstract class BaseInvokeResult extends BaseResult implements InvokeResul
 	public <T> List<T> parseJsonArray(Class<T> clazz) {
 		return JSON.parseArray(new String(getBody()), clazz);
 	}
-
+	public Double parseDouble() {
+		return JSON.parseObject(getBody(), Double.class);
+	}
+	public Double parseString() {
+		return JSON.parseObject(getBody(), String.class);
+	}
+	public Double parseLong() {
+		return JSON.parseObject(getBody(), Long.class);
+	}
+	public Integer parseInteger() {
+		return JSON.parseObject(getBody(), Integer.class);
+	}
 }

@@ -39,7 +39,6 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 
 	@Override
 	public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
-		log.trace("#####");
 		for(MessageExt ext : msgs) {
 			try {
 				return consumeMessage(ext, context);
@@ -92,7 +91,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId
 															, ext.getMsgId()
 															, ext.getReconsumeTimes()
-															, orderedNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes()
+															, orderedNoticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()
 															, true
 															, false);
 			if(req != null) {

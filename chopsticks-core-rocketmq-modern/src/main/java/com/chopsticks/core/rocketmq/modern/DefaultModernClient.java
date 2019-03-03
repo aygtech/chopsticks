@@ -46,9 +46,9 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultModernClient.class);
 	
-	private static final Cache<Class<?>, Object> BEAN_CACHE = CacheBuilder.newBuilder().build();
-	private static final Cache<Class<?>, NoticeBean> NOTICE_BEAN_CACHE = CacheBuilder.newBuilder().build();
-	private static final Cache<String, ExtBean> EXT_BEAN_CACHE = CacheBuilder.newBuilder().build();
+	private final Cache<Class<?>, Object> beanCache = CacheBuilder.newBuilder().build();
+	private final Cache<Class<?>, NoticeBean> noticeBeanCache = CacheBuilder.newBuilder().build();
+	private final Cache<String, ExtBean> extBeanCache = CacheBuilder.newBuilder().build();
 	
 	private Map<Class<?>, Object> handlers;
 	
@@ -220,7 +220,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		checkArgument(clazz.isInterface(), "clazz must be interface");
 		try {
 			final DefaultClient self = this;
-			Object bean = BEAN_CACHE.get(clazz, new Callable<Object>() {
+			Object bean = beanCache.get(clazz, new Callable<Object>() {
 				@Override
 				public Object call() throws Exception {
 					return Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {clazz}, getBeanProxy(clazz, self));
@@ -241,7 +241,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		try {
 			final DefaultModernClient self = this;
 			@SuppressWarnings("unchecked")
-			T ret = (T) NOTICE_BEAN_CACHE.get(clazz, new Callable<NoticeBean>() {
+			T ret = (T) noticeBeanCache.get(clazz, new Callable<NoticeBean>() {
 				@Override
 				public NoticeBean call() throws Exception {
 					
@@ -263,7 +263,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		try {
 			final DefaultModernClient self = this;
 			@SuppressWarnings("unchecked")
-			T ret = (T) EXT_BEAN_CACHE.get(clazzName, new Callable<ExtBean>() {
+			T ret = (T) extBeanCache.get(clazzName, new Callable<ExtBean>() {
 				@Override
 				public ExtBean call() throws Exception {
 					return getExtBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {getExtBeanClazz()}, getExtBeanProxy(clazzName, self)));

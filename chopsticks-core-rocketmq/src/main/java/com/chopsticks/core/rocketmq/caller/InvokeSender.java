@@ -3,7 +3,7 @@ package com.chopsticks.core.rocketmq.caller;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.common.message.Message;
 
-import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
 
 public abstract class InvokeSender{
 	
@@ -13,7 +13,7 @@ public abstract class InvokeSender{
 		this.producer = producer;
 	}
 	
-	public abstract void send(Message message, GuavaTimeoutPromise<BaseInvokeResult> promise);
+	public abstract void send(Message message, DefaultTimeoutPromise<BaseInvokeResult> promise);
 	
 	public void shutdown() {}
 }

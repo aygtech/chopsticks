@@ -14,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.chopsticks.core.Client;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.handler.Handler;
 import com.chopsticks.core.rocketmq.caller.DefaultCaller;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
@@ -340,7 +341,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 				if(delayNoticeConsumer != null) {
 					delayNoticeConsumer.shutdown();
 				}
-				throw new DefaultCoreException(e);
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
 			}
 		}
 		return delayNoticeConsumer;
@@ -393,8 +398,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 				if(invokeConsumer != null) {
 					invokeConsumer.shutdown();
 				}
-				Throwables.throwIfUnchecked(e);
-				throw new RuntimeException(e);
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
 			}
 		}
 		return invokeConsumer;

@@ -63,12 +63,8 @@ public class ModernHandler extends BaseHandler{
 			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
 				e = e.getCause();
 			}
-			if(e instanceof CoreException) {
-				throw (CoreException)e;
-			}else {
-				throw new ModernCoreException(String.format("invoke execute exception : %s", e.getMessage())
+			throw new ModernCoreException(String.format("invoke execute exception : %s", e.getMessage())
 						, e).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
-			}
 		}finally {
 			Thread.currentThread().setName(oldThreadName);
 			ModernContextHolder.remove();

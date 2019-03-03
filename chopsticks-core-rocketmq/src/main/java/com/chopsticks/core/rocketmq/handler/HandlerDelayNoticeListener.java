@@ -149,7 +149,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 			DefaultNoticeContext ctx = new DefaultNoticeContext(msgId
 															, ext.getMsgId()
 															, ext.getReconsumeTimes()
-															, delayNoticeConsumer.getMaxReconsumeTimes() >= ext.getReconsumeTimes()
+															, delayNoticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()
 															, false
 															, true);
 			if(req != null) {

@@ -12,8 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.chopsticks.core.concurrent.impl.GuavaPromise;
-import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.concurrent.impl.DefaultPromise;
+import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeResult;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
@@ -24,9 +24,9 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 	
 	private static final Logger log = LoggerFactory.getLogger(CallerInvokeListener.class);
 	
-	private Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap;
+	private Map<String, DefaultTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap;
 	
-	CallerInvokeListener(Map<String, GuavaTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap) {
+	CallerInvokeListener(Map<String, DefaultTimeoutPromise<BaseInvokeResult>> callerInvokePromiseMap) {
 		this.callerInvokePromiseMap = callerInvokePromiseMap;
 	}
 	private static final long BEGIN_EXECUTABLE_TIME = com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow();
@@ -36,7 +36,7 @@ class CallerInvokeListener implements MessageListenerConcurrently{
 			try {
 				byte[] byteResp = ext.getBody();
 				InvokeResponse resp = JSON.parseObject(byteResp, InvokeResponse.class);
-				GuavaPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(resp.getReqId());
+				DefaultPromise<BaseInvokeResult> promise = callerInvokePromiseMap.remove(resp.getReqId());
 				if(resp.getReqTime() < BEGIN_EXECUTABLE_TIME) {
 					continue;
 				}

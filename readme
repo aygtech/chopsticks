@@ -88,5 +88,12 @@
 	1.修复 BaseNoticeContext 未设置 maxRetryCount 的 bug
 1.1.8.2
 	1.移除所有test通道代码
-	2.调整发送回执处理者为集群，发送时提供处理队列要求回执时准确投递到处理队列
-	
+	2.调整发送回执处理者为集群，发送时提供处理者要求回执时精准回传到处理者
+1.1.9
+	1.修复 method 为 null 不报错的 bug
+	2.修复同步处理器异步导致还没启动完毕调用方法报错
+	3.修复 SdkNoticeContext.isMaxRetryCount 一直为 true 的 bug
+	4.修复 SdkNoticeContext.shutdown 后重新start，然后 get[xx]Bean 发送失败的 bug, 全局缓存改成单 client 缓存
+	5.开放 SdkPromise 作为并发工具提供， 可替代 jdk 默认的 future
+2.0.0
+	1.客户端集群不匹配启动时快速失败---特性新增

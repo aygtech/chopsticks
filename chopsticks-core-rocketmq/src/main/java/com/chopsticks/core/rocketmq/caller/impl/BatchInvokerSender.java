@@ -13,7 +13,7 @@ import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chopsticks.core.concurrent.impl.GuavaTimeoutPromise;
+import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.InvokeSender;
 import com.google.common.base.MoreObjects;
@@ -66,7 +66,7 @@ public class BatchInvokerSender extends InvokeSender{
 									Collection<BatchMessage> value = batchMsgs.removeAll(batchMsg.msg.getTopic());
 									if(value != null && !value.isEmpty()) {
 										batchMsgSend(value);
-										log.trace("poll : {}, send : {}, batch {} num : {}, size : {}"
+										log.trace("tmp poll : {}, send : {}, batch {} num : {}, size : {}"
 												, pollTime
 												, watch.elapsed(TimeUnit.MILLISECONDS) - pollTime
 												, batchMsg.msg.getTopic()
@@ -75,6 +75,7 @@ public class BatchInvokerSender extends InvokeSender{
 									}
 									batchMsgs.put(batchMsg.msg.getTopic(), batchMsg);
 									size.put(batchMsg.msg.getTopic(), batchMsg.length);
+									watch.reset().start();
 								}
 							}
 						}
@@ -87,10 +88,11 @@ public class BatchInvokerSender extends InvokeSender{
 									, entry.getKey()
 									, entry.getValue().size()
 									, size.get(entry.getKey()));
+							watch.reset().start();
 						}
 					}
 				}
-				, executeIntervalMillis
+				, 0L
 				, executeIntervalMillis
 				, TimeUnit.MILLISECONDS);
 	}
@@ -116,7 +118,7 @@ public class BatchInvokerSender extends InvokeSender{
 			executor.shutdown();
 		}
 	}
-	public void send(Message message, GuavaTimeoutPromise<BaseInvokeResult> promise) {
+	public void send(Message message, DefaultTimeoutPromise<BaseInvokeResult> promise) {
 		BatchMessage batchMsg = new BatchMessage();
 		batchMsg.msg = message;
 		batchMsg.length = size(message);
@@ -135,6 +137,6 @@ public class BatchInvokerSender extends InvokeSender{
 	class BatchMessage {
 		Message msg;
 		long length;
-		GuavaTimeoutPromise<BaseInvokeResult> promise;
+		DefaultTimeoutPromise<BaseInvokeResult> promise;
 	}
 }

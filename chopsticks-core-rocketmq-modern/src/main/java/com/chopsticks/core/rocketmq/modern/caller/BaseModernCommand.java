@@ -43,4 +43,28 @@ public abstract class BaseModernCommand implements ModernCommand {
 	public Map<String, String> getExtParams() {
 		return extParams;
 	}
+	
+	/**
+	 * 添加单次调用扩展参数
+	 * @param key 扩展键
+	 * @param value 扩展值
+	 * @return 当前对象
+	 */
+	public <T extends BaseModernCommand> T addExtParam(String key, String value) {
+		getExtParams().put(key, value);
+		@SuppressWarnings("unchecked")
+		T ret = (T) this;
+		return ret;
+	}
+	/**
+	 * 添加轨迹标识
+	 * @param traceNo 轨迹标识
+	 * @return 当前对象
+	 */
+	public <T extends BaseModernCommand> T addTraceNo(String traceNo) {
+		getTraceNos().add(traceNo);
+		@SuppressWarnings("unchecked")
+		T ret = (T) this;
+		return ret;
+	}
 }

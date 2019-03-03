@@ -11,7 +11,7 @@ import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class GuavaPromise<V> extends AbstractFuture<V> implements Promise<V> {
+public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 	
 	private static final ThreadPoolExecutor DEFAULT_PROMISE_LISTENER_EXECUTOR = new ThreadPoolExecutor(
 																						0
@@ -42,6 +42,6 @@ public class GuavaPromise<V> extends AbstractFuture<V> implements Promise<V> {
 
 	@Override
 	public void addListener(PromiseListener<? super V> listener, Executor executor) {
-		Futures.addCallback(this, new GuavaPromiseListener<V>(listener), executor);
+		Futures.addCallback(this, new DefaultPromiseListener<V>(listener), executor);
 	}
 }

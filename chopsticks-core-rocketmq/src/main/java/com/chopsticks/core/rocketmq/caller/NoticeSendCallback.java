@@ -6,18 +6,18 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chopsticks.core.concurrent.impl.GuavaPromise;
+import com.chopsticks.core.concurrent.impl.DefaultPromise;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeResult;
 
 class NoticeSendCallback implements SendCallback {
 	
 	private static final Logger log = LoggerFactory.getLogger(NoticeSendCallback.class);
 	
-	private GuavaPromise<BaseNoticeResult> noticePromise;
+	private DefaultPromise<BaseNoticeResult> noticePromise;
 	
 	private boolean done;
 	
-	NoticeSendCallback(GuavaPromise<BaseNoticeResult> noticePromise) {
+	NoticeSendCallback(DefaultPromise<BaseNoticeResult> noticePromise) {
 		this.noticePromise = noticePromise;
 	}
 	
