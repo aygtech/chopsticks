@@ -1,9 +1,9 @@
 package com.chopsticks.core.rocketmq;
 
+import com.chopsticks.common.concurrent.Promise;
+import com.chopsticks.common.concurrent.PromiseListener;
 import com.chopsticks.core.Client;
 import com.chopsticks.core.caller.NoticeResult;
-import com.chopsticks.core.concurrent.Promise;
-import com.chopsticks.core.concurrent.PromiseListener;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.handler.InvokeContext;
 import com.chopsticks.core.handler.InvokeParams;

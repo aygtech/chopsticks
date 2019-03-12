@@ -2,7 +2,7 @@ package com.chopsticks.core.caller;
 
 import java.util.concurrent.TimeUnit;
 
-import com.chopsticks.core.concurrent.Promise;
+import com.chopsticks.common.concurrent.Promise;
 
 public interface Caller {
 

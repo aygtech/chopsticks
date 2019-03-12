@@ -3,7 +3,7 @@ package com.chopsticks.core.rocketmq.caller.impl;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.common.message.Message;
 
-import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.InvokeSender;
 

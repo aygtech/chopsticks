@@ -1,4 +1,4 @@
-package com.chopsticks.core.concurrent;
+package com.chopsticks.common.concurrent;
 
 import java.util.concurrent.Executor;
 

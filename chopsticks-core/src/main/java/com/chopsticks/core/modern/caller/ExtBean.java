@@ -2,9 +2,9 @@ package com.chopsticks.core.modern.caller;
 
 import java.util.concurrent.TimeUnit;
 
+import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.caller.NoticeResult;
-import com.chopsticks.core.concurrent.Promise;
 
 public interface ExtBean {
 	

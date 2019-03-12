@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.common.utils.TimeUtils;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.DefaultClient;
@@ -25,7 +26,6 @@ import com.chopsticks.core.rocketmq.caller.DelayNoticeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultNoticeParams;
-import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.collect.Multimap;

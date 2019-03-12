@@ -7,8 +7,8 @@ import java.util.concurrent.TimeUnit;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 
 import com.alibaba.fastjson.parser.ParserConfig;
-import com.chopsticks.core.utils.Reflect;
-import com.chopsticks.core.utils.SyncSystemMillis;
+import com.chopsticks.common.utils.Reflect;
+import com.chopsticks.common.utils.SyncSystemMillis;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;

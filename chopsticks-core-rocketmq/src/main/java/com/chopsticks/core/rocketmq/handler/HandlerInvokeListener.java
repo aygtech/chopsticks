@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.common.utils.TimeUtils;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.rocketmq.Const;
@@ -25,13 +26,12 @@ import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultInvokeParams;
-import com.chopsticks.core.utils.Reflect;
-import com.chopsticks.core.utils.TimeUtils;
 import com.google.common.base.Strings;
 
 public class HandlerInvokeListener extends BaseHandlerListener implements MessageListenerConcurrently{
 	
 	private static final Logger log = LoggerFactory.getLogger(HandlerInvokeListener.class);
+//	private static final long DEFAULT_INVOKE_RESP_COMPRESS_BODY_LENGTH = 1024 * 100;
 	
 	
 	public HandlerInvokeListener(DefaultClient client, Map<String, BaseHandler> topicTagHandlers) {
@@ -128,15 +128,16 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 														, TimeUtils.yyyyMMddHHmmssSSS(now)
 														, TimeUtils.yyyyMMddHHmmssSSS(processEnd))).setCode(DefaultCoreException.INVOKE_PROCESS_TIMEOUT);
 				}
-				if(req.isRespCompress() && resp.getRespBody() != null && resp.getRespBody().length > 0) {
-					try {
-						int level = Reflect.on(getClient().getProducer()).field("defaultMQProducerImpl").field("zipCompressLevel").get();
-						resp.setRespBody(UtilAll.compress(resp.getRespBody(), level));
-						resp.setCompressRespBody(true);
-					}catch (Throwable e) {
-						//ig no compress
-					}
-				}
+				//非批量发送，使用rocketmq默认压缩即可
+//				if(req.isRespCompress() && resp.getRespBody() != null && resp.getRespBody().length > DEFAULT_INVOKE_RESP_COMPRESS_BODY_LENGTH) {
+//					try {
+//						int level = Reflect.on(getClient().getProducer()).field("defaultMQProducerImpl").field("zipCompressLevel").get();
+//						resp.setRespBody(UtilAll.compress(resp.getRespBody(), level));
+//						resp.setCompressRespBody(true);
+//					}catch (Throwable e) {
+//						//ig no compress
+//					}
+//				}
 				Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
 				respMsg.setKeys(Const.buildTraceInvokeReqId(req.getReqId()));
 				try {

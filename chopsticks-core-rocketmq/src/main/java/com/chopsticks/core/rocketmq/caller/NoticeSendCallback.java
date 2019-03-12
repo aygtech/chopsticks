@@ -6,7 +6,7 @@ import org.apache.rocketmq.client.producer.SendStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chopsticks.core.concurrent.impl.DefaultPromise;
+import com.chopsticks.common.concurrent.impl.DefaultPromise;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeResult;
 
 class NoticeSendCallback implements SendCallback {

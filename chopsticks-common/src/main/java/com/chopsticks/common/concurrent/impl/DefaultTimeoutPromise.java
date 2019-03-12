@@ -1,11 +1,11 @@
-package com.chopsticks.core.concurrent.impl;
+package com.chopsticks.common.concurrent.impl;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.chopsticks.core.concurrent.PromiseListener;
+import com.chopsticks.common.concurrent.PromiseListener;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;

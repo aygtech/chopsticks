@@ -1,6 +1,6 @@
-package com.chopsticks.core.concurrent.impl;
+package com.chopsticks.common.concurrent.impl;
 
-import com.chopsticks.core.concurrent.PromiseListener;
+import com.chopsticks.common.concurrent.PromiseListener;
 
 class DefaultPromiseListener<V> implements com.google.common.util.concurrent.FutureCallback<V> {
 

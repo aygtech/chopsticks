@@ -31,6 +31,7 @@ public class DefaultCoreException extends CoreException {
 	public static final int TEST_CALLER_NO_NAME_SERVER_ERROR = 10022;
 	public static final int INVOKE_EXECUTOR_NOT_FOUND = 10023;
 	public static final int INVOKE_CONSUMER_START_TIMEOUT = 10024;
+	public static final int SUBSCRIPTION_NOT_MATCH = 10025;
 
 	public DefaultCoreException() {
 		super();

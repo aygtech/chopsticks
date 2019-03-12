@@ -4,12 +4,12 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
 import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
-import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

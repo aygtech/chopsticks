@@ -105,7 +105,7 @@ public class HttpTinyClient {
             }
             return new HttpResult(respCode, resp);
         }catch (Throwable e) {
-        	log.warn("connection server error, msg : {}", e.getMessage());
+        	log.warn("connection server error, msg : {}, url : {}", e.getMessage(), url);
         	Throwables.throwIfUnchecked(e);
         	throw new RuntimeException(e);
         }finally {

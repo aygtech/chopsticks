@@ -1,6 +1,6 @@
 package com.chopsticks.core;
 
-import com.chopsticks.core.utils.Reflect;
+import com.chopsticks.common.utils.Reflect;
 
 public class Const {
 	public static final int AVAILABLE_PROCESSORS = Runtime.getRuntime().availableProcessors();

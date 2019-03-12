@@ -9,12 +9,17 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
+import com.alibaba.fastjson.JSON;
+import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.common.utils.Reflect;
+import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
+import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.caller.InvokeSender;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
@@ -29,6 +34,8 @@ public class BatchInvokerSender extends InvokeSender{
 	private static final Logger log = LoggerFactory.getLogger(BatchInvokerSender.class);
 	
 	private static final long MAX_BATCH_SIZE = 1000 * 1000;
+	
+	private static final long DEFAULT_COMPRESS_BODY_LENGTH = 1024 * 100;
 	
 	private LinkedBlockingQueue<BatchMessage> msgQueue = new LinkedBlockingQueue<BatchMessage>();
 	
@@ -119,12 +126,33 @@ public class BatchInvokerSender extends InvokeSender{
 		}
 	}
 	public void send(Message message, DefaultTimeoutPromise<BaseInvokeResult> promise) {
+		Message compressMsg = message.getBody().length > DEFAULT_COMPRESS_BODY_LENGTH ? compressInvokeMsgBody(message) : message;
 		BatchMessage batchMsg = new BatchMessage();
-		batchMsg.msg = message;
-		batchMsg.length = size(message);
+		batchMsg.msg = compressMsg;
+		batchMsg.length = size(compressMsg);
 		batchMsg.promise = promise;
 		msgQueue.add(batchMsg);
 	}
+	
+	/**
+	 * 批量才需要手工压缩，其他情况rocketmq自带压缩机制
+	 * @param msg
+	 * @return
+	 */
+	private Message compressInvokeMsgBody(Message msg) {
+		try {
+			InvokeRequest req = JSON.parseObject(msg.getUserProperty(Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
+			req.setCompress(true);
+			int level = Reflect.on(producer).field("defaultMQProducerImpl").field("zipCompressLevel").get();
+			byte[] body = UtilAll.compress(msg.getBody(), level);
+			msg.setBody(body);
+			msg.putUserProperty(Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
+		}catch (Throwable e) {
+			log.error(e.getMessage(), e);
+		}
+		return msg;
+	}
+	
 	private long size(Message message) {
 		long size = message.getTopic().length() + message.getBody().length;
 		for(Entry<String, String> entry : message.getProperties().entrySet()) {

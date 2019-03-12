@@ -13,10 +13,13 @@ import java.util.concurrent.Callable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.chopsticks.common.utils.TimeUtils;
+import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.modern.ModernClient;
 import com.chopsticks.core.modern.caller.ExtBean;
 import com.chopsticks.core.modern.caller.NoticeBean;
 import com.chopsticks.core.rocketmq.DefaultClient;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.BaseHandler;
 import com.chopsticks.core.rocketmq.modern.caller.BaseExtBean;
 import com.chopsticks.core.rocketmq.modern.caller.BaseNoticeBean;
@@ -31,8 +34,6 @@ import com.chopsticks.core.rocketmq.modern.handler.UnSupportDelayNotice;
 import com.chopsticks.core.rocketmq.modern.handler.UnSupportInvoke;
 import com.chopsticks.core.rocketmq.modern.handler.UnSupportNotice;
 import com.chopsticks.core.rocketmq.modern.handler.UnSupportOrderedNotice;
-import com.chopsticks.core.utils.TimeUtils;
-import com.google.common.base.Throwables;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Sets;
@@ -60,7 +61,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	public void register(Map<Class<?>, Object> handlers) {
 		for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
 			if(!entry.getKey().isInterface()) {
-				throw new RuntimeException("key must be interface");
+				throw new ModernCoreException("key must be interface");
 			}
 			checkNotNull(entry.getValue(), "key : %s, value is null", entry.getKey());
 		}
@@ -138,9 +139,11 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			super.start();
 		}catch (Throwable e) {
 			this.shutdown();
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
-			
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new ModernCoreException(e);
+			}
 		}
 		log.info("Client {} end start", getGroupName());
 	}
@@ -228,8 +231,11 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			});
 			return clazz.cast(bean);
 		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new ModernCoreException(e);
+			}
 		}
 	}
 
@@ -244,14 +250,19 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			T ret = (T) noticeBeanCache.get(clazz, new Callable<NoticeBean>() {
 				@Override
 				public NoticeBean call() throws Exception {
-					
-					return getNoticeBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader(), new Class[] {getNoticeBeanClazz(), clazz}, getNoticeBeanProxy(clazz, self)));
+					return getNoticeBeanClazz().cast(Proxy.newProxyInstance(getClass().getClassLoader()
+																			, new Class[] {getNoticeBeanClazz(), clazz}
+																			, getNoticeBeanProxy(clazz, self))
+													);
 				}
 			});
 			return ret;
 		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new ModernCoreException(e);
+			}
 		}
 	}
 	
@@ -271,8 +282,11 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 			});
 			return ret;
 		}catch (Throwable e) {
-			Throwables.throwIfUnchecked(e);
-			throw new RuntimeException(e);
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 	}
 	

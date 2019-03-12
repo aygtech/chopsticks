@@ -26,7 +26,6 @@ import com.chopsticks.core.rocketmq.handler.HandlerOrderedNoticeListener;
 import com.chopsticks.core.rocketmq.handler.impl.BaseHandlerWapper;
 import com.google.common.base.Joiner;
 import com.google.common.base.Strings;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.MultimapBuilder;
@@ -154,8 +153,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 					if(orderedNoticeConsumer != null) {
 						orderedNoticeConsumer.shutdown();
 					}
-					Throwables.throwIfUnchecked(e);
-					throw new RuntimeException(e);
+					if(e instanceof CoreException) {
+						throw (CoreException)e;
+					}else {
+						throw new DefaultCoreException(e);
+					}
 				}
 			}
 			started = true;
@@ -226,6 +228,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				createTopics(topics);
+				checkConsumerSubscription(orderedNoticeConsumer);
 				orderedNoticeConsumer.start();
 				orderedNoticeConsumer = Const.buildConsumer(orderedNoticeConsumer);
 				for(String topic : topics) {
@@ -235,7 +238,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 				if(orderedNoticeConsumer != null) {
 					orderedNoticeConsumer.shutdown();
 				}
-				throw new DefaultCoreException(e);
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
 			}
 		}
 		return orderedNoticeConsumer;
@@ -279,6 +286,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				createTopics(topics);
+				checkConsumerSubscription(noticeConsumer);
 				noticeConsumer.start();
 				noticeConsumer = Const.buildConsumer(noticeConsumer);
 				for(String topic : topics) {
@@ -288,7 +296,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 				if(noticeConsumer != null) {
 					noticeConsumer.shutdown();
 				}
-				throw new DefaultCoreException(e);
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
 			}
 		}
 		return noticeConsumer;
@@ -332,6 +344,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				createTopics(topics);
+				checkConsumerSubscription(delayNoticeConsumer);
 				delayNoticeConsumer.start();
 				delayNoticeConsumer = Const.buildConsumer(delayNoticeConsumer);
 				for(String topic : topics) {
@@ -389,6 +402,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					}
 				}
 				createTopics(topics);
+				checkConsumerSubscription(invokeConsumer);
 				invokeConsumer.start();
 				invokeConsumer = Const.buildConsumer(invokeConsumer);
 				for(String topic : topics) {
@@ -408,19 +422,19 @@ public class DefaultClient extends DefaultCaller implements Client{
 		return invokeConsumer;
 	}
 	
-	protected void setInvokeExecutable(boolean invokeExecutable) {
+	public void setInvokeExecutable(boolean invokeExecutable) {
 		this.invokeExecutable = invokeExecutable;
 	}
 	protected boolean isInvokeExecutable() {
 		return invokeExecutable;
 	}
-	protected void setNoticeExecutable(boolean noticeExecutable) {
+	public void setNoticeExecutable(boolean noticeExecutable) {
 		this.noticeExecutable = noticeExecutable;
 	}
 	protected boolean isNoticeExecutable() {
 		return noticeExecutable;
 	}
-	protected void setOrderedNoticeExecutable(boolean orderedNoticeExecutable) {
+	public void setOrderedNoticeExecutable(boolean orderedNoticeExecutable) {
 		this.orderedNoticeExecutable = orderedNoticeExecutable;
 	}
 	protected boolean isOrderedNoticeExecutable() {
@@ -429,52 +443,53 @@ public class DefaultClient extends DefaultCaller implements Client{
 	protected int getInvokeExecutableNum() {
 		return invokeExecutableNum;
 	}
-	protected void setInvokeExecutableNum(int invokeExecutableNum) {
+	public void setInvokeExecutableNum(int invokeExecutableNum) {
 		this.invokeExecutableNum = invokeExecutableNum;
 	}
 	protected int getNoticeExecutableNum() {
 		return noticeExecutableNum;
 	}
-	protected void setNoticeExecutableNum(int noticeExecutableNum) {
+	public void setNoticeExecutableNum(int noticeExecutableNum) {
 		this.noticeExecutableNum = noticeExecutableNum;
 	}
 	protected int getOrderedNoticeExecutableNum() {
 		return orderedNoticeExecutableNum;
 	}
-	protected void setOrderedNoticeExecutableNum(int orderedNoticeExecutableNum) {
+	public void setOrderedNoticeExecutableNum(int orderedNoticeExecutableNum) {
 		this.orderedNoticeExecutableNum = orderedNoticeExecutableNum;
 	}
 	protected boolean isDelayNoticeExecutable() {
 		return delayNoticeExecutable;
 	}
-	protected void setDelayNoticeExecutable(boolean delayNoticeExecutable) {
+	public void setDelayNoticeExecutable(boolean delayNoticeExecutable) {
 		this.delayNoticeExecutable = delayNoticeExecutable;
 	}
 	protected int getDelayNoticeExecutableNum() {
 		return delayNoticeExecutableNum;
 	}
-	protected void setDelayNoticeExecutableNum(int delayNoticeExecutableNum) {
+	
+	public void setDelayNoticeExecutableNum(int delayNoticeExecutableNum) {
 		this.delayNoticeExecutableNum = delayNoticeExecutableNum;
 	}
 	protected int getNoticeExcecutableRetryCount() {
 		return noticeExcecutableRetryCount;
 	}
-	protected void setNoticeExcecutableRetryCount(int noticeExcecutableRetryCount) {
+	public void setNoticeExcecutableRetryCount(int noticeExcecutableRetryCount) {
 		this.noticeExcecutableRetryCount = noticeExcecutableRetryCount;
 	}
 	protected int getDelayNoticeExecutableRetryCount() {
 		return delayNoticeExecutableRetryCount;
 	}
-	protected void setDelayNoticeExecutableRetryCount(int delayNoticeExecutableRetryCount) {
+	public void setDelayNoticeExecutableRetryCount(int delayNoticeExecutableRetryCount) {
 		this.delayNoticeExecutableRetryCount = delayNoticeExecutableRetryCount;
 	}
 	protected int getOrderedNoticeExecutableRetryCount() {
 		return orderedNoticeExecutableRetryCount;
 	}
-	protected void setOrderedNoticeExecutableRetryCount(int orderedNoticeExecutableRetryCount) {
+	public void setOrderedNoticeExecutableRetryCount(int orderedNoticeExecutableRetryCount) {
 		this.orderedNoticeExecutableRetryCount = orderedNoticeExecutableRetryCount;
 	}
-	protected void setRetryCount(int retryCount) {
+	public void setRetryCount(int retryCount) {
 		setNoticeExcecutableRetryCount(retryCount);
 		setDelayNoticeExecutableRetryCount(retryCount);
 		setOrderedNoticeExecutableRetryCount(retryCount);
@@ -512,23 +527,23 @@ public class DefaultClient extends DefaultCaller implements Client{
 	protected long getNoticeBeginExecutableTime() {
 		return noticeBeginExecutableTime;
 	}
-	protected void setNoticeBeginExecutableTime(long noticeBeginExecutableTime) {
+	public void setNoticeBeginExecutableTime(long noticeBeginExecutableTime) {
 		this.noticeBeginExecutableTime = noticeBeginExecutableTime;
 	}
 	protected long getDelayNoticeBeginExecutableTime() {
 		return delayNoticeBeginExecutableTime;
 	}
-	protected void setDelayNoticeBeginExecutableTime(long delayNoticeBeginExecutableTime) {
+	public void setDelayNoticeBeginExecutableTime(long delayNoticeBeginExecutableTime) {
 		this.delayNoticeBeginExecutableTime = delayNoticeBeginExecutableTime;
 	}
 	protected long getOrderedNoticeBeginExecutableTime() {
 		return orderedNoticeBeginExecutableTime;
 	}
-	protected void setOrderedNoticeBeginExecutableTime(long orderedNoticeBeginExecutableTime) {
+	public void setOrderedNoticeBeginExecutableTime(long orderedNoticeBeginExecutableTime) {
 		this.orderedNoticeBeginExecutableTime = orderedNoticeBeginExecutableTime;
 	}
 	
-	protected void setMaxExecutableTime(long maxExecutableTime) {
+	public void setMaxExecutableTime(long maxExecutableTime) {
 		setInvokeMaxExecutableTime(maxExecutableTime);
 		setNoticeMaxExecutableTime(maxExecutableTime);
 		setDelayNoticeMaxExecutableTime(maxExecutableTime);

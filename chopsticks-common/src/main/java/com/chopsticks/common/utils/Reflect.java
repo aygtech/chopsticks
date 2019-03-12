@@ -1,4 +1,4 @@
-package com.chopsticks.core.utils;
+package com.chopsticks.common.utils;
 
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Constructor;

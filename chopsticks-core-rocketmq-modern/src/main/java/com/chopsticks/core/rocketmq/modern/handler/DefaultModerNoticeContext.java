@@ -5,6 +5,10 @@ import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 
 public class DefaultModerNoticeContext extends BaseNoticeContext implements ModernNoticeContext {
 	
+	public DefaultModerNoticeContext() {
+		super();
+	}
+	
 	public DefaultModerNoticeContext(BaseNoticeContext ctx) {
 		super(ctx);
 	}

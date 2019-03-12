@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.chopsticks.sdk</groupId>
 	<artifactId>chopsticks-parent</artifactId>
-	<version>1.1.9-SNAPSHOT</version>
+	<version>1.2.0-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<properties>
@@ -21,13 +21,9 @@
 		<mockito.version>2.6.3</mockito.version>
 		<aspose-cells.version>19.2</aspose-cells.version>
 		<javassist.version>3.12.1.GA</javassist.version>
+		<zip4j.version>1.3.2</zip4j.version>
 	</properties>
 	<dependencies>
-		<dependency>
-			<groupId>javassist</groupId>
-			<artifactId>javassist</artifactId>
-			<version>3.12.1.GA</version>
-		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
@@ -73,9 +69,19 @@
 	<dependencyManagement>
 		<dependencies>
 			<dependency>
+				<groupId>javassist</groupId>
+				<artifactId>javassist</artifactId>
+				<version>${javassist.version}</version>
+			</dependency>
+			<dependency>
 				<groupId>com.aspose</groupId>
 				<artifactId>aspose-cells</artifactId>
 				<version>${aspose-cells.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.chopsticks.sdk</groupId>
+				<artifactId>chopsticks-common</artifactId>
+				<version>${project.version}</version>
 			</dependency>
 			<dependency>
 				<groupId>com.chopsticks.sdk</groupId>
@@ -102,6 +108,11 @@
 				<artifactId>rocketmq-tools</artifactId>
 				<version>${rocketmq.version}</version>
 			</dependency>
+			<dependency>
+			    <groupId>net.lingala.zip4j</groupId>
+			    <artifactId>zip4j</artifactId>
+			    <version>${zip4j.version}</version>
+			</dependency>
 		</dependencies>
 	</dependencyManagement>
 	<build>
@@ -126,7 +137,8 @@
 		<module>chopsticks-core</module>
 		<module>chopsticks-core-rocketmq</module>
 		<module>chopsticks-core-rocketmq-modern</module>
-		<module>chopsticks-aspose</module>
+		<module>chopsticks-common</module>
+		<module>chopsticks-office</module>
 	</modules>
 	<repositories>
 		<repository>

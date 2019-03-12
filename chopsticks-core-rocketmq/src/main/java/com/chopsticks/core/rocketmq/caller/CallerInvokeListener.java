@@ -12,13 +12,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
-import com.chopsticks.core.concurrent.impl.DefaultPromise;
-import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.common.concurrent.impl.DefaultPromise;
+import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.common.utils.TimeUtils;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeResult;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.handler.InvokeResponse;
-import com.chopsticks.core.utils.TimeUtils;
 
 class CallerInvokeListener implements MessageListenerConcurrently{
 	

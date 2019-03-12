@@ -1,12 +1,12 @@
-package com.chopsticks.core.concurrent.impl;
+package com.chopsticks.common.concurrent.impl;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.SynchronousQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import com.chopsticks.core.concurrent.Promise;
-import com.chopsticks.core.concurrent.PromiseListener;
+import com.chopsticks.common.concurrent.Promise;
+import com.chopsticks.common.concurrent.PromiseListener;
 import com.google.common.util.concurrent.AbstractFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;

@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.common.utils.Reflect;
+import com.chopsticks.common.utils.Reflect.ReflectException;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.handler.HandlerResult;
 import com.chopsticks.core.handler.InvokeContext;
@@ -19,8 +21,6 @@ import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 import com.chopsticks.core.rocketmq.modern.Const;
 import com.chopsticks.core.rocketmq.modern.exception.ModernCoreException;
-import com.chopsticks.core.utils.Reflect;
-import com.chopsticks.core.utils.Reflect.ReflectException;
 import com.google.common.base.Charsets;
 
 public class ModernHandler extends BaseHandler{

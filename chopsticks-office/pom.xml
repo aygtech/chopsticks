@@ -5,10 +5,14 @@
 	<parent>
 		<groupId>com.chopsticks.sdk</groupId>
 		<artifactId>chopsticks-parent</artifactId>
-		<version>1.1.9-SNAPSHOT</version>
+		<version>1.2.0-SNAPSHOT</version>
 	</parent>
-	<artifactId>chopsticks-aspose</artifactId>
+	<artifactId>chopsticks-office</artifactId>
 	<dependencies>
+		<dependency>
+			<groupId>com.chopsticks.sdk</groupId>
+			<artifactId>chopsticks-common</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>com.aspose</groupId>
 			<artifactId>aspose-cells</artifactId>
@@ -16,20 +20,10 @@
 		<dependency>
 			<groupId>javassist</groupId>
 			<artifactId>javassist</artifactId>
-			<version>3.12.1.GA</version>
+		</dependency>
+		<dependency>
+			<groupId>net.lingala.zip4j</groupId>
+			<artifactId>zip4j</artifactId>
 		</dependency>
 	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
 </project>

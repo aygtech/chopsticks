@@ -12,6 +12,7 @@ import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -20,7 +21,6 @@ import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.MixAll;
-import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
@@ -33,26 +33,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.common.concurrent.Promise;
+import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
 import com.chopsticks.core.Const;
 import com.chopsticks.core.caller.Caller;
 import com.chopsticks.core.caller.InvokeCommand;
 import com.chopsticks.core.caller.InvokeResult;
 import com.chopsticks.core.caller.NoticeCommand;
 import com.chopsticks.core.caller.NoticeResult;
-import com.chopsticks.core.concurrent.Promise;
-import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
-import com.chopsticks.core.utils.Reflect;
 import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import io.netty.util.internal.ThreadLocalRandom; 
@@ -107,10 +107,10 @@ public class DefaultCaller implements Caller {
 	public synchronized void start() {
 		if(!started) {
 			try {
+				mqAdminExt = buildAdminExt();
 				callerInvokePromiseMap = new ConcurrentHashMap<String, DefaultTimeoutPromise<BaseInvokeResult>>();
 				producer = buildAndStartProducer();
 				invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
-				mqAdminExt = buildAdminExt();
 				callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
 				started = true;	
 			}catch (Throwable e) {
@@ -199,10 +199,11 @@ public class DefaultCaller implements Caller {
 				String topic = buildRespTopic();
 				callerInvokeConsumer.subscribe(topic, com.chopsticks.core.rocketmq.Const.ALL_TAGS);
 				createTopics(Sets.newHashSet(topic));
+				checkConsumerSubscription(callerInvokeConsumer);
 				callerInvokeConsumer.start();
 				callerInvokeConsumer = com.chopsticks.core.rocketmq.Const.buildConsumer(callerInvokeConsumer);
 				long waitRebalanceMillis = 100L;
-				while(callerInvokeConsumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getProcessQueueTable().keySet().toArray(new MessageQueue[0]).length == 0) {
+				while(getRespQueue(callerInvokeConsumer).isEmpty()) {
 					TimeUnit.MILLISECONDS.sleep(waitRebalanceMillis);
 					log.warn("continue wait rebalance time {}ms", waitRebalanceMillis);
 				}
@@ -317,27 +318,13 @@ public class DefaultCaller implements Caller {
 			})) {
 				throw new DefaultCoreException(String.format("%s.%s cannot found executor", cmd.getTopic(), cmd.getTag())).setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
-			Message compressMsg = compressInvokeMsgBody(msg);
-			invokeSender.send(compressMsg, promise);
+			invokeSender.send(msg, promise);
 			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req));
 		} catch (Throwable e) {
 			promise.setException(e);
 		}
 	
 		return promise;
-	}
-	private Message compressInvokeMsgBody(Message msg) {
-		try {
-			InvokeRequest req = JSON.parseObject(msg.getUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
-			req.setCompress(true);
-			int level = Reflect.on(producer).field("defaultMQProducerImpl").field("zipCompressLevel").get();
-			byte[] body = UtilAll.compress(msg.getBody(), level);
-			msg.setBody(body);
-			msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
-		}catch (Throwable e) {
-			log.error(e.getMessage(), e);
-		}
-		return msg;
 	}
 	
 	public BaseNoticeResult notice(BaseNoticeCommand cmd) {
@@ -711,7 +698,7 @@ public class DefaultCaller implements Caller {
 		this.batchExecuteIntervalMillis = batchExecuteIntervalMillis;
 	}
 	
-	protected void setInvokable(boolean invokable) {
+	public void setInvokable(boolean invokable) {
 		this.invokable = invokable;
 	}
 	
@@ -735,5 +722,34 @@ public class DefaultCaller implements Caller {
 	
 	public String buildTraceTag(String tag) {
 		return String.format("%s%s", com.chopsticks.core.rocketmq.Const.TRACE_PREFIX, tag);
+	}
+	
+	protected void checkConsumerSubscription(DefaultMQPushConsumer consumer) {
+		try {
+			ConsumerConnection consumerConn = mqAdminExt.examineConsumerConnectionInfo(consumer.getConsumerGroup());
+			ConcurrentMap<String, SubscriptionData> oldSubscriptionTable = consumerConn.getSubscriptionTable();
+			Map<String, Set<String>> oldSubscription = Maps.newHashMap();
+			for(Entry<String, SubscriptionData> entry : oldSubscriptionTable.entrySet()) {
+				if(entry.getKey().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
+					continue;
+				}
+				oldSubscription.put(entry.getKey(), entry.getValue().getTagsSet());
+			}
+			ConcurrentMap<String, SubscriptionData> newSubscriptionTable = consumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getSubscriptionInner();
+			Map<String, Set<String>> newSubscription = Maps.newHashMap();
+			for(Entry<String, SubscriptionData> entry : newSubscriptionTable.entrySet()) {
+				newSubscription.put(entry.getKey(), entry.getValue().getTagsSet());
+			}
+			
+			if(!newSubscription.equals(oldSubscription)) {
+				throw new DefaultCoreException(String.format("%s service not match", getGroupName())).setCode(DefaultCoreException.SUBSCRIPTION_NOT_MATCH);
+			}
+		}catch (Throwable e) {
+			if(e instanceof CoreException) {
+				throw (CoreException)e;
+			}else {
+				// ignore
+			}
+		}
 	}
 }

@@ -7,9 +7,9 @@ import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.chopsticks.core.concurrent.PromiseListener;
-import com.chopsticks.core.concurrent.impl.DefaultTimeoutPromise;
-import com.chopsticks.core.utils.TimeUtils;
+import com.chopsticks.common.concurrent.PromiseListener;
+import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.common.utils.TimeUtils;
 
 class CallerInvokeTimoutPromiseListener implements PromiseListener<BaseInvokeResult> {
 	

@@ -4,8 +4,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import com.chopsticks.core.concurrent.Promise;
-import com.chopsticks.core.concurrent.PromiseListener;
+import com.chopsticks.common.concurrent.Promise;
+import com.chopsticks.common.concurrent.PromiseListener;
 import com.chopsticks.core.modern.caller.ModernInvokeCommand;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
 import com.chopsticks.core.rocketmq.DefaultClient;

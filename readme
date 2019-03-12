@@ -7,7 +7,7 @@
 	1.支持自定义延迟消息
 1.0.4
 	1.优化实现
-	2.修改同步的回执id为自定义，不使用rocketmq的消息id，同步超时更准确
+	2.修改同步的id为自定义，不使用默认的id，同步超时更准确
 1.0.5
 	1.新增NoticeProxy扩展点
 	2.调整modernClient实现继承原生client
@@ -95,5 +95,9 @@
 	3.修复 SdkNoticeContext.isMaxRetryCount 一直为 true 的 bug
 	4.修复 SdkNoticeContext.shutdown 后重新start，然后 get[xx]Bean 发送失败的 bug, 全局缓存改成单 client 缓存
 	5.开放 SdkPromise 作为并发工具提供， 可替代 jdk 默认的 future
-2.0.0
-	1.客户端集群不匹配启动时快速失败---特性新增
+1.2.0
+	1.新增客户端集群不匹配启动时快速失败
+	2.优化同步调用的 CancellationException 和 TimeoutException 类型，明确抛出
+	3.构建通用common包
+	4.调整批量同步默认大于 100kb 才手工压缩，方便运维与节省 cpu 资源
+	5.提供 javadoc

@@ -1,4 +1,4 @@
-package com.chopsticks.core.utils;
+package com.chopsticks.common.utils;
 
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
