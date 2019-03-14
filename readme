@@ -97,7 +97,9 @@
 	5.开放 SdkPromise 作为并发工具提供， 可替代 jdk 默认的 future
 1.2.0
 	1.新增客户端集群不匹配启动时快速失败
-	2.优化同步调用的 CancellationException 和 TimeoutException 类型，明确抛出
+	2.优化同步调用的 CancellationException 和 TimeoutException 类型，明确抛出（未完成）
 	3.构建通用common包
 	4.调整批量同步默认大于 100kb 才手工压缩，方便运维与节省 cpu 资源
 	5.提供 javadoc
+1.2.1
+	1.优化同步调用的 CancellationException 和 TimeoutException 类型，明确抛出

@@ -93,6 +93,10 @@ public class DefaultCaller implements Caller {
 	private static final Cache</*topic + tag*/String, /*consumer exist*/Boolean> INVOKE_TOPIC_TAG_MONITOR = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	private static final Cache</*topic*/String, Set<ConsumerConnection>> INVOKE_TOPIC_MONITOR = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	
+	
+	private static final Cache</*topic + tag*/String, /*consumer exist*/Boolean> NOTICE_TOPIC_TAG_MONITOR = CacheBuilder.newBuilder().build();
+	private static final Cache</*topic*/String, Set<ConsumerConnection>> NOTICE_TOPIC_MONITOR = CacheBuilder.newBuilder().build();
+	
 	/**
 	 *  <msgid, timeoutGuavaPromise>
 	 */
@@ -278,44 +282,7 @@ public class DefaultCaller implements Caller {
 			InvokeRequest req = buildInvokeRequest(cmd, timeout, timeoutUnit);
 			callerInvokePromiseMap.put(req.getReqId(), promise);
 			final Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
-			if(!INVOKE_TOPIC_TAG_MONITOR.get(msg.getTopic() + msg.getTags(), new Callable<Boolean>() {
-				@Override
-				public Boolean call() throws Exception {
-					boolean examineConsumerConnectionInfo = false;
-					Set<ConsumerConnection> consumerConns = INVOKE_TOPIC_MONITOR.get(msg.getTopic(), new Callable<Set<ConsumerConnection>>() {
-						@Override
-						public Set<ConsumerConnection> call() throws Exception {
-							Set<ConsumerConnection> consumerConns = Sets.newHashSet();
-							try {
-								GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
-								for(String groupName : groupList.getGroupList()) {
-									try {
-										if(groupName.endsWith(com.chopsticks.core.rocketmq.Const.INVOKE_CONSUMER_SUFFIX)) {
-											ConsumerConnection consumerConn = mqAdminExt.examineConsumerConnectionInfo(groupName);
-											consumerConns.add(consumerConn);
-										}
-									}catch (Throwable e) {
-										continue;
-									}
-								}
-							}catch (Throwable e) {
-							}
-							return consumerConns;
-						}
-					});
-					for(ConsumerConnection consumerConn : consumerConns) {
-						for(Entry<String, SubscriptionData> entry : consumerConn.getSubscriptionTable().entrySet()) {
-							if(entry.getKey().equals(msg.getTopic())
-							&& (entry.getValue().getTagsSet().contains(msg.getTags()) 
-								|| entry.getValue().getTagsSet().contains(com.chopsticks.core.rocketmq.Const.ALL_TAGS))) {
-								examineConsumerConnectionInfo = true;
-								break;
-							}
-						}
-					}
-					return examineConsumerConnectionInfo;
-				}
-			})) {
+			if(!checkInvokeMessage(msg)) {
 				throw new DefaultCoreException(String.format("%s.%s cannot found executor", cmd.getTopic(), cmd.getTag())).setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
 			invokeSender.send(msg, promise);
@@ -325,6 +292,62 @@ public class DefaultCaller implements Caller {
 		}
 	
 		return promise;
+	}
+	
+	private Boolean checkNoticeMessage(final Message msg) throws ExecutionException{
+		return NOTICE_TOPIC_TAG_MONITOR.get(msg.getTopic() + msg.getTags(), new Callable<Boolean>() {
+			@Override
+			public Boolean call() throws Exception {
+				boolean examineConsumerConnectionInfo = false;
+				return null;
+			}
+		});
+	}
+	/**
+	 * 判断消息是否有在线的消费者处理
+	 * @param msg
+	 * @return
+	 * @throws ExecutionException
+	 */
+	private Boolean checkInvokeMessage(final Message msg) throws ExecutionException {
+		return INVOKE_TOPIC_TAG_MONITOR.get(msg.getTopic() + msg.getTags(), new Callable<Boolean>() {
+			@Override
+			public Boolean call() throws Exception {
+				boolean examineConsumerConnectionInfo = false;
+				Set<ConsumerConnection> consumerConns = INVOKE_TOPIC_MONITOR.get(msg.getTopic(), new Callable<Set<ConsumerConnection>>() {
+					@Override
+					public Set<ConsumerConnection> call() throws Exception {
+						Set<ConsumerConnection> consumerConns = Sets.newHashSet();
+						try {
+							GroupList groupList = mqAdminExt.queryTopicConsumeByWho(msg.getTopic());
+							for(String groupName : groupList.getGroupList()) {
+								try {
+									if(groupName.endsWith(com.chopsticks.core.rocketmq.Const.INVOKE_CONSUMER_SUFFIX)) {
+										ConsumerConnection consumerConn = mqAdminExt.examineConsumerConnectionInfo(groupName);
+										consumerConns.add(consumerConn);
+									}
+								}catch (Throwable e) {
+									continue;
+								}
+							}
+						}catch (Throwable e) {
+						}
+						return consumerConns;
+					}
+				});
+				for(ConsumerConnection consumerConn : consumerConns) {
+					for(Entry<String, SubscriptionData> entry : consumerConn.getSubscriptionTable().entrySet()) {
+						if(entry.getKey().equals(msg.getTopic())
+						&& (entry.getValue().getTagsSet().contains(msg.getTags()) 
+							|| entry.getValue().getTagsSet().contains(com.chopsticks.core.rocketmq.Const.ALL_TAGS))) {
+							examineConsumerConnectionInfo = true;
+							break;
+						}
+					}
+				}
+				return examineConsumerConnectionInfo;
+			}
+		});
 	}
 	
 	public BaseNoticeResult notice(BaseNoticeCommand cmd) {
