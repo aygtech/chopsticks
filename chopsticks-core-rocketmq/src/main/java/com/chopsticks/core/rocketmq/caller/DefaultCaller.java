@@ -51,6 +51,7 @@ import com.google.common.base.Optional;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -65,6 +66,8 @@ import io.netty.util.internal.ThreadLocalRandom;
 public class DefaultCaller implements Caller {
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultCaller.class);
+	
+	private static final Map<String, String> SAFE_NAMES = ImmutableMap.of("\\.", "_-_");
 	
 	private String namesrvAddr;
 	
@@ -84,7 +87,7 @@ public class DefaultCaller implements Caller {
 	
 	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(100L);
 	
-	private InvokeSender invokeSender;
+	private BaseInvokeSender invokeSender;
 	
 	private boolean invokable = true;
 	
@@ -105,6 +108,9 @@ public class DefaultCaller implements Caller {
 	public DefaultCaller(String groupName) {
 		checkArgument(!isNullOrEmpty(groupName), "groupName cannot be null or empty");
 		this.groupName = groupName;
+		for(Entry<String, String> entry : SAFE_NAMES.entrySet()) {
+			this.groupName = this.groupName.replaceAll(entry.getKey(), entry.getValue());
+		}
 	}
 	
 	@Override
@@ -154,8 +160,8 @@ public class DefaultCaller implements Caller {
 		
 	}
 
-	private InvokeSender buildInvokeSender(DefaultMQProducer producer, long batchExecuteIntervalMillis) {
-		InvokeSender invokeSender = null;
+	private BaseInvokeSender buildInvokeSender(DefaultMQProducer producer, long batchExecuteIntervalMillis) {
+		BaseInvokeSender invokeSender = null;
 		if(isInvokable()) {
 			if(batchExecuteIntervalMillis > 0L) {
 				invokeSender = new BatchInvokerSender(producer, batchExecuteIntervalMillis);
@@ -252,8 +258,10 @@ public class DefaultCaller implements Caller {
 	}
 
 	public BaseInvokeResult invoke(BaseInvokeCommand cmd, long timeout, TimeUnit timeoutUnit) {
+		Promise<BaseInvokeResult> promise = null;
 		try {
-			return this.asyncInvoke(cmd, timeout, timeoutUnit).get();
+			promise = this.asyncInvoke(cmd, timeout, timeoutUnit);
+			return promise.get();
 		} catch (Throwable e) {
 			while(e instanceof ExecutionException) {
 				e = e.getCause();
@@ -294,6 +302,13 @@ public class DefaultCaller implements Caller {
 		return promise;
 	}
 	
+	// TODO 未实现，异步调用是否存在处理者
+	/**
+	 * 判断是否有消费者处理，不管在线离线 
+	 * @param msg
+	 * @return
+	 * @throws ExecutionException
+	 */
 	private Boolean checkNoticeMessage(final Message msg) throws ExecutionException{
 		return NOTICE_TOPIC_TAG_MONITOR.get(msg.getTopic() + msg.getTags(), new Callable<Boolean>() {
 			@Override

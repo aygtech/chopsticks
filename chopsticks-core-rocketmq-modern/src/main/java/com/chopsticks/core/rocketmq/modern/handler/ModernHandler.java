@@ -2,11 +2,15 @@ package com.chopsticks.core.rocketmq.modern.handler;
 
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.chopsticks.common.concurrent.Promise;
+import com.chopsticks.common.concurrent.PromiseListener;
+import com.chopsticks.common.concurrent.impl.DefaultPromise;
 import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.common.utils.Reflect.ReflectException;
 import com.chopsticks.core.exception.CoreException;
@@ -44,19 +48,28 @@ public class ModernHandler extends BaseHandler{
 				args = JSON.parseArray(body).toArray();
 			}
 		}
+		Method invokeMethod = null;
 		try {
-			Reflect.getMethod(obj, params.getMethod(), args);
+			invokeMethod = Reflect.getMethod(obj, params.getMethod(), args);
 		}catch (Throwable e) {
 			throw new ModernCoreException(String.format("bean : %s, method %s , params : %s, not found.", obj, params.getMethod(), args), e).setCode(ModernCoreException.MODERN_INVOKE_METHOD_NOT_FOUND);
 		}
-		Object ret;
+		Object methodRet;
 		BaseInvokeContext mqCtx = (BaseInvokeContext) ctx;
 		String oldThreadName = Thread.currentThread().getName();
+		Promise<?> invokeExecutePromise = null;
 		try {
 			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(mqCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
-			ret = Reflect.on(obj).call(params.getMethod(), args).get();
+			methodRet = Reflect.on(obj).call(params.getMethod(), args).get();
+			invokeExecutePromise = ModernContextHolder.getInvokeExecutePromise();
+//			if(invokeExecutePromise != null) {
+//				Class<?> returnType = (Class<?>)((ParameterizedType)invokeExecutePromise.getClass().getGenericInterfaces()[0]).getActualTypeArguments()[0];
+//				if(invokeMethod.getReturnType() != returnType) {
+//					throw new ModernCoreException().setCode(ModernCoreException.INVOKE_RETURN_TYPE_NOT_MATCH);
+//				}
+//			}
 		}catch (CoreException e) {
 			throw e;
 		}catch (Throwable e) {
@@ -74,10 +87,41 @@ public class ModernHandler extends BaseHandler{
 			return null;
 		}
 		byte[] respBody = null;
-		if(ret != null && ret != obj) {
-			respBody = JSON.toJSONString(ret).getBytes(Charsets.UTF_8);
+		if(methodRet != null && methodRet != obj) {
+			respBody = JSON.toJSONString(methodRet).getBytes(Charsets.UTF_8);
 		}
-		return new DefaultHandlerResult(respBody);
+		DefaultHandlerResult ret = new DefaultHandlerResult(respBody);
+		if(invokeExecutePromise != null) {
+			final DefaultPromise<HandlerResult> promise = new DefaultPromise<HandlerResult>();
+			final Class<?> returnType = invokeMethod.getReturnType();
+			invokeExecutePromise.addListener(new PromiseListener<Object>() {
+				@Override
+				public void onFailure(Throwable t) {
+					while(t instanceof ReflectException || t instanceof InvocationTargetException) {
+						t = t.getCause();
+					}
+					if(!(t instanceof CoreException)) {
+						t = new ModernCoreException(String.format("invoke execute exception : %s", t.getMessage())
+									, t).setCode(ModernCoreException.MODERN_INVOKE_EXECUTE_ERROR);
+					}
+					promise.setException(t);
+				}
+				public void onSuccess(Object result) {
+					byte[] respBody = null;
+					if(result != null && result != obj) {
+						// TODO 未实现完全，泛型都无法判断准确性
+						if(!returnType.isAssignableFrom(result.getClass())) {
+							promise.setException(new ModernCoreException(String.format("promise value %s not match %s", result.getClass(), returnType)).setCode(ModernCoreException.INVOKE_RETURN_TYPE_NOT_MATCH));
+							return;
+						}
+						respBody = JSON.toJSONString(result).getBytes(Charsets.UTF_8);
+					}
+					promise.set(new DefaultHandlerResult(respBody));
+				};
+			});
+			ret.setPromise(promise);
+		}
+		return ret;
 	}
 	
 	@Override

@@ -20,7 +20,7 @@ import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
-import com.chopsticks.core.rocketmq.caller.InvokeSender;
+import com.chopsticks.core.rocketmq.caller.BaseInvokeSender;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
@@ -29,7 +29,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
-public class BatchInvokerSender extends InvokeSender{
+public class BatchInvokerSender extends BaseInvokeSender{
 	
 	private static final Logger log = LoggerFactory.getLogger(BatchInvokerSender.class);
 	

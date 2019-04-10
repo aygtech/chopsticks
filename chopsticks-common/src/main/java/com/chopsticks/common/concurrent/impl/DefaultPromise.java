@@ -13,7 +13,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 	
-	private static final ThreadPoolExecutor DEFAULT_PROMISE_LISTENER_EXECUTOR = new ThreadPoolExecutor(
+	protected static final ThreadPoolExecutor DEFAULT_PROMISE_LISTENER_EXECUTOR = new ThreadPoolExecutor(
 																						0
 																						, Integer.MAX_VALUE
 																						, 60L
@@ -22,7 +22,10 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
 																						, new ThreadFactoryBuilder()
 																								.setNameFormat("DefaultPromiseListenerExecutor-%d")
 																								.setDaemon(true)
-																								.build());
+																							.build());
+	public DefaultPromise() {
+		super();
+	}
 	
 	@Override
 	public boolean set(V value) {

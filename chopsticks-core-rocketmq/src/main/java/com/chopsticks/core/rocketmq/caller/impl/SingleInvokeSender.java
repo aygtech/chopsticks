@@ -5,9 +5,9 @@ import org.apache.rocketmq.common.message.Message;
 
 import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
-import com.chopsticks.core.rocketmq.caller.InvokeSender;
+import com.chopsticks.core.rocketmq.caller.BaseInvokeSender;
 
-public class SingleInvokeSender extends InvokeSender{
+public class SingleInvokeSender extends BaseInvokeSender{
 	
 	
 	public SingleInvokeSender(DefaultMQProducer producer) {

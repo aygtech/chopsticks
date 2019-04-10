@@ -11,14 +11,11 @@ public class ModernCoreException extends DefaultCoreException {
 	public static final int MODERN_INVOKE_EXECUTE_ERROR = 20002;
 	public static final int UNSUPPORT_ARRAY_ARGUMENTS = 20003;
 	public static final int UNSUPPORT_ARRAY_RESULT = 20004;
+	public static final int INVOKE_RETURN_TYPE_NOT_MATCH = 20005;
 	
 
 	public ModernCoreException() {
 		super();
-	}
-
-	public ModernCoreException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
 	}
 
 	public ModernCoreException(String message, Throwable cause) {
@@ -31,6 +28,10 @@ public class ModernCoreException extends DefaultCoreException {
 
 	public ModernCoreException(Throwable cause) {
 		super(cause);
+	}
+
+	public ModernCoreException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
 	}
 	
 }

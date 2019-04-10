@@ -37,11 +37,6 @@ public class DefaultCoreException extends CoreException {
 		super();
 	}
 
-	public DefaultCoreException(String message, Throwable cause, boolean enableSuppression,
-			boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
 	public DefaultCoreException(String message, Throwable cause) {
 		super(message, cause);
 	}
@@ -52,6 +47,11 @@ public class DefaultCoreException extends CoreException {
 
 	public DefaultCoreException(Throwable cause) {
 		super(cause);
+	}
+
+	public DefaultCoreException(String message, Throwable cause, boolean enableSuppression,
+			boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
 	}
 	
 }

@@ -5,11 +5,11 @@ import org.apache.rocketmq.common.message.Message;
 
 import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
 
-public abstract class InvokeSender{
+public abstract class BaseInvokeSender{
 	
 	protected DefaultMQProducer producer;
 	
-	public InvokeSender(DefaultMQProducer producer) {
+	public BaseInvokeSender(DefaultMQProducer producer) {
 		this.producer = producer;
 	}
 	
