@@ -151,6 +151,7 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 															, ext.getReconsumeTimes()
 															, delayNoticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()
 															, false
+															, null
 															, true);
 			if(req != null) {
 				ctx.setReqTime(req.getReqTime());

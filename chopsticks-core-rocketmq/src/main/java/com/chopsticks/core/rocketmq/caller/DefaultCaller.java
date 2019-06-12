@@ -18,12 +18,14 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
@@ -291,7 +293,7 @@ public class DefaultCaller implements Caller {
 			callerInvokePromiseMap.put(req.getReqId(), promise);
 			final Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
 			if(!checkInvokeMessage(msg)) {
-				throw new DefaultCoreException(String.format("%s.%s cannot found executor", cmd.getTopic(), cmd.getTag())).setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
+				throw new DefaultCoreException(String.format("%s.%s cannot found executor, need enable InvokeExecutable", cmd.getTopic(), cmd.getTag())).setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
 			invokeSender.send(msg, promise);
 			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req));
@@ -402,8 +404,10 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(BaseNoticeCommand cmd) {
-		checkArgument(started, "must be call method start");
+		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
+		checkArgument(cmd.getBody() != null && cmd.getBody().length > 0, "body can not be null ");
+		checkArgument(cmd.getBody().length <= producer.getMaxMessageSize(), "body size over max value, MAX : %s, CUR: %s", producer.getMaxMessageSize(), cmd.getBody().length);
 		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildNoticeMessage(cmd);
@@ -417,7 +421,7 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Object orderKey) {
-		checkArgument(started, "must be call method start");
+		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(orderKey != null, "orderKey cannot be null");
 		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
 		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -457,6 +461,11 @@ public class DefaultCaller implements Caller {
 		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setExtParams(cmd.getExtParams());
 		req.setTraceNos(cmd.getTraceNos());
+		if(orderKey instanceof Number || orderKey instanceof String) {
+			req.setOrderKey(orderKey);
+		}else {
+			log.warn("orderKey recommend String or Number : {}", orderKey);
+		}
 		return req;
 	}
 
@@ -509,7 +518,7 @@ public class DefaultCaller implements Caller {
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));
 		Set<String> traceNos = Sets.newHashSet(cmd.getTraceNos());
 		traceNos.add(com.chopsticks.core.rocketmq.Const.buildTraceInvokeReqId(req.getReqId()));
-		traceNos.add(buildTraceTag(cmd.getTag()));
+		traceNos.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByMethod(cmd.getTag()));
 		msg.setKeys(traceNos);
 		return msg;
 	}
@@ -523,7 +532,7 @@ public class DefaultCaller implements Caller {
 			msg.setDelayTimeLevel(level.get().getValue());
 		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
-		traceNo.add(buildTraceTag(cmd.getTag()));
+		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByMethod(cmd.getTag()));
 		msg.setKeys(traceNo);
 		return msg;
 	}
@@ -549,7 +558,7 @@ public class DefaultCaller implements Caller {
 			msg.putUserProperty(com.chopsticks.core.rocketmq.Const.DELAY_NOTICE_REQUEST_KEY, JSON.toJSONString(req));
 		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
-		traceNo.add(buildTraceTag(cmd.getTag()));
+		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByMethod(cmd.getTag()));
 		msg.setKeys(traceNo);
 		return msg;
 	}
@@ -563,7 +572,8 @@ public class DefaultCaller implements Caller {
 			msg.setDelayTimeLevel(level.get().getValue());
 		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
-		traceNo.add(buildTraceTag(cmd.getTag()));
+		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByMethod(cmd.getTag()));
+		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByOrdered(String.valueOf(orderKey)));
 		msg.setKeys(traceNo);
 		return msg;
 	}
@@ -756,10 +766,6 @@ public class DefaultCaller implements Caller {
 			throw new DefaultCoreException(e);
 		}
 		
-	}
-	
-	public String buildTraceTag(String tag) {
-		return String.format("%s%s", com.chopsticks.core.rocketmq.Const.TRACE_PREFIX, tag);
 	}
 	
 	protected void checkConsumerSubscription(DefaultMQPushConsumer consumer) {

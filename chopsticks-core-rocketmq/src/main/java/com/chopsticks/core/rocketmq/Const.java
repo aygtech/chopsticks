@@ -65,7 +65,10 @@ public class Const {
 	public static final String PRODUCER_PREFIX = "PID_";
 	public static final String CONSUMER_PREFIX = "CID_";
 	
-	public static final String TRACE_PREFIX = "TRACE_";
+	public static final String TRACE_METHOD_PREFIX = "TRACE_METHOD_";
+	public static final String TRACE_INVOKE_REQ_PREFIX = "TRACE_REQ_";
+	public static final String TRACE_ORDERED_PREFIX = "TRACE_ORDERED_";
+	
 	
 	public static final String INVOKE_ADMIN_EXT_SUFFIX = "_INVOKE_ADMIN_EXT";
 
@@ -133,6 +136,13 @@ public class Const {
 	}
 	
 	public static String buildTraceInvokeReqId(String reqId) {
-		return TRACE_PREFIX + reqId;
+		return TRACE_INVOKE_REQ_PREFIX + reqId;
+	}
+	
+	public static String buildTraceNoByMethod(String method) {
+		return TRACE_METHOD_PREFIX + method;
+	}
+	public static String buildTraceNoByOrdered(String orderKey) {
+		return TRACE_ORDERED_PREFIX + orderKey;
 	}
 }

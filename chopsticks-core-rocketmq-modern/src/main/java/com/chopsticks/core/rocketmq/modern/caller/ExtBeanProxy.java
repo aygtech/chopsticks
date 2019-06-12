@@ -8,26 +8,27 @@ import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.common.concurrent.PromiseListener;
 import com.chopsticks.core.modern.caller.ModernInvokeCommand;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
-import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class ExtBeanProxy extends BaseProxy {
 	private String clazzName;
-	private DefaultClient client;
+	private DefaultModernClient client;
 
-	public ExtBeanProxy(String clazzName, DefaultClient client) {
+	public ExtBeanProxy(String clazzName, DefaultModernClient client) {
 		this.clazzName = clazzName;
 		this.client = client;
 	}
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		client.getModernClientProxy().beforeExtBeanInvoke(proxy, getMethod(method), args);
 		if(method.getName().toLowerCase().contains("asyncInvoke".toLowerCase())) {
 			return asyncInvoke(method, args);
 		}else if(method.getName().toLowerCase().contains("invoke".toLowerCase())) {
@@ -52,7 +53,7 @@ public class ExtBeanProxy extends BaseProxy {
 			noticeCmd.setExtParams(extParams);
 			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
 				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
-					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTraceNo()));
 				}else {
 					noticeCmd.setTraceNos(ModernContextHolder.getTraceNos());
 				}
@@ -94,7 +95,7 @@ public class ExtBeanProxy extends BaseProxy {
 			invokeCmd.setExtParams(extParams);
 			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
 				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
-					invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+					invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTraceNo()));
 				}else {
 					invokeCmd.setTraceNos(ModernContextHolder.getTraceNos());
 				}

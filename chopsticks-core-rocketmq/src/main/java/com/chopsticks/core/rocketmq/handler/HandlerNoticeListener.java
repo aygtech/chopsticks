@@ -95,6 +95,7 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 															, ext.getReconsumeTimes()
 															, noticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()
 															, false
+															, null
 															, false);
 			if(req != null) {
 				ctx.setReqTime(req.getReqTime());

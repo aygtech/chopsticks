@@ -106,3 +106,10 @@
 	2.新增 SdkContextHolder.setInvokeExecutePromise, 解决同步处理服务受制与三方，例如其他Sdk同步服务提供者，或者百度，阿里等公有api提供商.
 	3.新增 SdkHttpClient，配合 SdkContextHolder.setInvokeExecutePromise 一起使用可以达到全流程无阻塞
 	4.groupName 允许使用特殊符号 "."
+1.2.2
+	1.DefaultSdkClient 新增方法  setClientProxy, 可以拦截所有的服务执行与调用
+	2.修复 http 客户端不传 header 的 bug
+	3.调整默认的方法traceNo前缀
+	4.调整默认的同步调用traceNo前缀
+	5.新增默认的顺序异步traceNo
+	6.SdkNoticeContext 可以获取到 String 或 Number 类型的 orderKey

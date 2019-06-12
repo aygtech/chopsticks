@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import com.chopsticks.common.concurrent.impl.DefaultPromise;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeResult;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 
 class NoticeSendCallback implements SendCallback {
 	
@@ -33,7 +34,7 @@ class NoticeSendCallback implements SendCallback {
 			ret.setOriginId(sendResult.getOffsetMsgId());
 			noticePromise.set(ret);
 		}else {
-			noticePromise.setException(new RuntimeException(sendResult.getSendStatus().name()));
+			noticePromise.setException(new DefaultCoreException(sendResult.getSendStatus().name()));
 		}
 	}
 	

@@ -4,11 +4,13 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.chopsticks.sdk</groupId>
 	<artifactId>chopsticks-parent</artifactId>
-	<version>1.2.1-SNAPSHOT</version>
+	<version>1.2.2-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<properties>
-
+		<maven.compiler.source>1.6</maven.compiler.source>  
+        <maven.compiler.target>1.6</maven.compiler.target>  
+        <encoding>UTF-8</encoding>  
 		<maven.test.skip>true</maven.test.skip>
 
 		<!-- guava version 21.0 only support jdk7 or later -->
@@ -25,6 +27,7 @@
 		<httpasyncclient.version>4.1.4</httpasyncclient.version>
 		<httpmime.version>4.5.8</httpmime.version>
 		<fastjson.version>1.2.51</fastjson.version>
+		<jmh.version>1.21</jmh.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -35,13 +38,11 @@
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jul-to-slf4j</artifactId>
-			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>
-			<version>${slf4j.version}</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -68,9 +69,25 @@
 			<version>${mockito.version}</version>
 			<scope>test</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.openjdk.jmh</groupId>
+			<artifactId>jmh-generator-annprocess</artifactId>
+			<version>${jmh.version}</version>
+			<scope>test</scope>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jcl-over-slf4j</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>org.slf4j</groupId>
+				<artifactId>jul-to-slf4j</artifactId>
+				<version>${slf4j.version}</version>
+			</dependency>
 			<dependency>
 				<groupId>com.alibaba</groupId>
 				<artifactId>fastjson</artifactId>
@@ -139,9 +156,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<source>1.6</source>
-					<target>1.6</target>
-					<encoding>UTF-8</encoding>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+					<encoding>${encoding}</encoding>
 				</configuration>
 			</plugin>
 			<!-- <plugin> <groupId>org.apache.maven.plugins</groupId> <artifactId>maven-javadoc-plugin</artifactId> 
@@ -158,6 +175,9 @@
 		<module>chopsticks-common</module>
 		<module>chopsticks-office</module>
 		<module>chopsticks-http</module>
+		<module>chopsticks-t-schedule-engine</module>
+		<module>chopsticks-t-schedule-interface</module>
+		<module>chopsticks-t-schedule-app</module>
 	</modules>
 	<repositories>
 		<repository>

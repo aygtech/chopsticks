@@ -9,8 +9,9 @@ public class DefaultNoticeContext extends BaseNoticeContext {
 							, int retryCount
 							, boolean maxRetryCount
 							, boolean orderedNotice
+							, Object orderKey
 							, boolean delayNotice) {
-		super(id, originId, retryCount, maxRetryCount, orderedNotice, delayNotice);
+		super(id, originId, retryCount, maxRetryCount, orderedNotice, orderKey, delayNotice);
 	}
 
 	

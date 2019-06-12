@@ -93,6 +93,7 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 															, ext.getReconsumeTimes()
 															, orderedNoticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()
 															, true
+															, req != null ? req.getOrderKey() : null
 															, false);
 			if(req != null) {
 				ctx.setReqTime(req.getReqTime());

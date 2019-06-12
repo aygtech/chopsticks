@@ -24,6 +24,7 @@ import com.chopsticks.core.rocketmq.handler.BaseInvokeContext;
 import com.chopsticks.core.rocketmq.handler.BaseNoticeContext;
 import com.chopsticks.core.rocketmq.handler.impl.DefaultHandlerResult;
 import com.chopsticks.core.rocketmq.modern.Const;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 import com.chopsticks.core.rocketmq.modern.exception.ModernCoreException;
 import com.google.common.base.Charsets;
 
@@ -33,10 +34,12 @@ public class ModernHandler extends BaseHandler{
 	
 	
 	private Object obj;
+	private DefaultModernClient client;
 	
-	public ModernHandler(Object obj, String topic, String tag) {
+	public ModernHandler(Object obj, String topic, String tag, DefaultModernClient client) {
 		super(topic, tag);
 		this.obj = obj;
+		this.client = client;
 	}
 
 	@Override
@@ -62,7 +65,7 @@ public class ModernHandler extends BaseHandler{
 			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(mqCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
-			methodRet = Reflect.on(obj).call(params.getMethod(), args).get();
+			methodRet = client.getModernClientProxy().invokeExecuteProxy(obj, params.getMethod(), args);
 			invokeExecutePromise = ModernContextHolder.getInvokeExecutePromise();
 //			if(invokeExecutePromise != null) {
 //				Class<?> returnType = (Class<?>)((ParameterizedType)invokeExecutePromise.getClass().getGenericInterfaces()[0]).getActualTypeArguments()[0];
@@ -149,7 +152,8 @@ public class ModernHandler extends BaseHandler{
 			ModernContextHolder.setExtParams(baseCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
 			Thread.currentThread().setName(String.format("%s_%s", baseCtx.getId(), oldThreadName));
-			Reflect.on(obj).call(params.getMethod(), args).get();
+			client.getModernClientProxy().noticeExecuteProxy(obj, params.getMethod(), args);
+//			Reflect.on(obj).call(params.getMethod(), args).get();
 		}catch (CoreException e) {
 			throw e;
 		}catch (Throwable e) {

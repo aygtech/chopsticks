@@ -44,6 +44,7 @@ import com.chopsticks.common.concurrent.impl.DefaultPromise;
 import com.chopsticks.http.entity.HttpMultiValue;
 import com.chopsticks.http.entity.HttpRequest;
 import com.chopsticks.http.entity.HttpResponse;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.base.Throwables;
@@ -159,7 +160,7 @@ public class HttpClient {
 				}
 				if(!nvps.isEmpty()) {
 					try {
-						post.setEntity(new UrlEncodedFormEntity(nvps));
+						post.setEntity(new UrlEncodedFormEntity(nvps, Charsets.UTF_8));
 					}catch (Throwable e) {
 						Throwables.throwIfUnchecked(e);
 						throw new RuntimeException(e);
@@ -190,6 +191,15 @@ public class HttpClient {
 			throw new RuntimeException("unsupport method" + req.getMethod());
 		}
 		try {
+			if(req.getHeaders() != null) {
+				for(Entry<String, List<String>> entry : req.getHeaders().entrySet()) {
+					if(entry.getValue() != null) {
+						for(String value : entry.getValue()) {
+							realReq.addHeader(entry.getKey(), value);
+						}
+					}
+				}
+			}
 			client.execute(realReq, ctx, new FutureCallback<org.apache.http.HttpResponse>() {
 				@Override
 				public void failed(Exception ex) {

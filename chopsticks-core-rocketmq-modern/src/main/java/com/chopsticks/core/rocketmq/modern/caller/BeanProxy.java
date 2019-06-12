@@ -7,8 +7,8 @@ import java.util.Map;
 
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.core.caller.InvokeResult;
-import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Charsets;
 import com.google.common.base.Throwables;
@@ -18,19 +18,20 @@ import com.google.common.collect.Sets;
 public class BeanProxy extends BaseProxy {
 
 	private Class<?> clazz;
-	private DefaultClient client;
+	private DefaultModernClient client;
 
-	public BeanProxy(Class<?> clazz, DefaultClient client) {
+	public BeanProxy(Class<?> clazz, DefaultModernClient client) {
 		this.clazz = clazz;
 		this.client = client;
 	}
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+		client.getModernClientProxy().beforeBeanInvoke(proxy, getMethod(method), args);
 		byte[] body = buildBody(args);
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body);
 		if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
-			invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+			invokeCmd.setTraceNos(Sets.newHashSet(getDefaultTraceNo()));
 		}
 		Map<String, String> extParams = Maps.newHashMap(getExtParams());
 		invokeCmd.setExtParams(extParams);

@@ -16,7 +16,7 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Maps;
 
 public abstract class BaseProxy implements InvocationHandler {
-	private static final String DEFAULT_TRACK_NO_PREFIX = "DEFAULT_TRACE_";
+	private static final String DEFAULT_TRACE_NO_PREFIX = "DEFAULT_TRACE_";
 	private Map<String, String> extParams = Maps.newHashMap();
 	
 	protected String getTopic(Class<?> clazz) {
@@ -34,12 +34,12 @@ public abstract class BaseProxy implements InvocationHandler {
 		return method.getName();
 	}
 	
-	protected String getDefaultTrackNo() {
-		return DEFAULT_TRACK_NO_PREFIX + UUID.randomUUID().toString();
+	protected String getDefaultTraceNo() {
+		return DEFAULT_TRACE_NO_PREFIX + UUID.randomUUID().toString();
 	}
 
-	public static String getDefaultTrackNoPrefix() {
-		return DEFAULT_TRACK_NO_PREFIX;
+	public static String getDefaultTraceNoPrefix() {
+		return DEFAULT_TRACE_NO_PREFIX;
 	}
 	
 	public Map<String, String> getExtParams() {

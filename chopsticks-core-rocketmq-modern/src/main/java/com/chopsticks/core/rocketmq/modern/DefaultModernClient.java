@@ -50,13 +50,18 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	private final Cache<Class<?>, Object> beanCache = CacheBuilder.newBuilder().build();
 	private final Cache<Class<?>, NoticeBean> noticeBeanCache = CacheBuilder.newBuilder().build();
 	private final Cache<String, ExtBean> extBeanCache = CacheBuilder.newBuilder().build();
-	
+	private ModernClientProxy modernClientProxy = new ModernClientProxy();
 	private Map<Class<?>, Object> handlers;
 	
 	public DefaultModernClient(String groupName) {
 		super(groupName);
 	}
-	
+	public void setModernClientProxy(ModernClientProxy clientProxy) {
+		this.modernClientProxy = clientProxy;
+	}
+	public ModernClientProxy getModernClientProxy() {
+		return modernClientProxy;
+	}
 	@Override
 	public void register(Map<Class<?>, Object> handlers) {
 		for(Entry<Class<?>, Object> entry : handlers.entrySet()) {
@@ -118,7 +123,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 								, unSupportDelayNotice
 								, unSupportOrderedNotice);
 					for(String method : methods) {
-						BaseHandler handler = new ModernHandler(entry.getValue(), entry.getKey().getName(), method);
+						BaseHandler handler = new ModernHandler(entry.getValue(), entry.getKey().getName(), method, this);
 						if(unSupportInvoke.contains(method)) {
 							handler.setSupportInvoke(false);
 						}
@@ -222,7 +227,7 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 		checkNotNull(clazz);
 		checkArgument(clazz.isInterface(), "clazz must be interface");
 		try {
-			final DefaultClient self = this;
+			final DefaultModernClient self = this;
 			Object bean = beanCache.get(clazz, new Callable<Object>() {
 				@Override
 				public Object call() throws Exception {
@@ -291,21 +296,21 @@ public class DefaultModernClient extends DefaultClient implements ModernClient {
 	}
 	
 	
-	protected BaseProxy getBeanProxy(Class<?> clazz, DefaultClient client){
+	protected BaseProxy getBeanProxy(Class<?> clazz, DefaultModernClient client){
 		return new BeanProxy(clazz, client);
 	}
 	
 	protected Class<? extends ExtBean> getExtBeanClazz(){
 		return BaseExtBean.class;
 	}
-	protected BaseProxy getExtBeanProxy(String clazzName, DefaultClient client) {
+	protected BaseProxy getExtBeanProxy(String clazzName, DefaultModernClient client) {
 		return new ExtBeanProxy(clazzName, client);
 	}
 	
 	protected Class<? extends NoticeBean> getNoticeBeanClazz() {
 		return BaseNoticeBean.class;
 	}
-	protected BaseProxy getNoticeBeanProxy(Class<?> clazz, DefaultClient client) {
+	protected BaseProxy getNoticeBeanProxy(Class<?> clazz, DefaultModernClient client) {
 		return new NoticeBeanProxy(clazz, client);
 	}
 }

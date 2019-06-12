@@ -9,6 +9,8 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.SendResult;
+import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.message.Message;
 import org.slf4j.Logger;
@@ -20,6 +22,7 @@ import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
+import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeSender;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
@@ -111,7 +114,12 @@ public class BatchInvokerSender extends BaseInvokeSender{
 				for(BatchMessage batchMsg : collection) {
 					msgs.add(batchMsg.msg);
 				}
-				super.producer.send(msgs);
+				SendResult sendResult = super.producer.send(msgs);
+				if(sendResult.getSendStatus() != SendStatus.SEND_OK) {
+					for(BatchMessage batchMsg : collection) {
+						batchMsg.promise.setException(new DefaultCoreException(sendResult.getSendStatus().name()));
+					}
+				}
 			}catch (Throwable e) {
 				for(BatchMessage batchMsg : collection) {
 					batchMsg.promise.setException(e);

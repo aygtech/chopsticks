@@ -6,9 +6,9 @@ import java.util.concurrent.TimeUnit;
 
 import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.core.modern.caller.ModernNoticeCommand;
-import com.chopsticks.core.rocketmq.DefaultClient;
 import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
@@ -17,9 +17,9 @@ import com.google.common.collect.Sets;
 public class NoticeBeanProxy extends BaseProxy{
 	
 	private Class<?> clazz;
-	private DefaultClient client;
+	private DefaultModernClient client;
 	
-	public NoticeBeanProxy(Class<?> clazz, DefaultClient client) {
+	public NoticeBeanProxy(Class<?> clazz, DefaultModernClient client) {
 		this.clazz = clazz;
 		this.client = client;
 	}
@@ -27,6 +27,7 @@ public class NoticeBeanProxy extends BaseProxy{
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		Preconditions.checkNotNull(args);
+		client.getModernClientProxy().beforeNoticeBeanInvoke(proxy, getMethod(method), args);
 		ModernNoticeCommand cmd = ((ModernNoticeCommand)args[0]);
 		updateCmd(cmd);
 		byte[] body = buildBody(cmd.getParams());
@@ -41,7 +42,7 @@ public class NoticeBeanProxy extends BaseProxy{
 			noticeCmd.setExtParams(extParams);
 			if(((BaseModernCommand) cmd).getTraceNos().isEmpty()) {
 				if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
-					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTrackNo()));
+					noticeCmd.setTraceNos(Sets.newHashSet(getDefaultTraceNo()));
 				}else {
 					noticeCmd.setTraceNos(ModernContextHolder.getTraceNos());
 				}
