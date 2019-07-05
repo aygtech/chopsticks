@@ -293,7 +293,10 @@ public class DefaultCaller implements Caller {
 			callerInvokePromiseMap.put(req.getReqId(), promise);
 			final Message msg = buildInvokeMessage(req, cmd, timeout, timeoutUnit);
 			if(!checkInvokeMessage(msg)) {
-				throw new DefaultCoreException(String.format("%s.%s cannot found executor, need enable InvokeExecutable", cmd.getTopic(), cmd.getTag())).setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
+				throw new DefaultCoreException(String.format("%s.%s cannot found executor, please check if InvokeExecutable is enabled on server-side"
+															, cmd.getTopic()
+															, cmd.getTag()))
+					.setCode(DefaultCoreException.INVOKE_EXECUTOR_NOT_FOUND);
 			}
 			invokeSender.send(msg, promise);
 			promise.addListener(new CallerInvokeTimoutPromiseListener(callerInvokePromiseMap, req));
@@ -500,7 +503,11 @@ public class DefaultCaller implements Caller {
 		return req;
 	}
 	private List<MessageQueue> getRespQueue(DefaultMQPushConsumer callerInvokeConsumer){
-		MessageQueue[] mqs = callerInvokeConsumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getProcessQueueTable().keySet().toArray(new MessageQueue[0]);
+		MessageQueue[] mqs = callerInvokeConsumer.getDefaultMQPushConsumerImpl()
+												 .getRebalanceImpl()
+												 .getProcessQueueTable()
+												 .keySet()
+												 .toArray(new MessageQueue[0]);
 		List<MessageQueue> mqList = Lists.newArrayList(mqs);
 		for(Iterator<MessageQueue> iter = mqList.iterator(); iter.hasNext();) {
 			if(iter.next().getTopic().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
@@ -573,7 +580,9 @@ public class DefaultCaller implements Caller {
 		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
 		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByMethod(cmd.getTag()));
-		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByOrdered(String.valueOf(orderKey)));
+		if(orderKey instanceof String || orderKey instanceof Number) {
+			traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByOrdered(String.valueOf(orderKey)));
+		}
 		msg.setKeys(traceNo);
 		return msg;
 	}

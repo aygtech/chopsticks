@@ -4,4 +4,5 @@ import java.util.List;
 
 public class Vehicle {
 	private List<Order> orders;
+	private VehicleModel model;
 }

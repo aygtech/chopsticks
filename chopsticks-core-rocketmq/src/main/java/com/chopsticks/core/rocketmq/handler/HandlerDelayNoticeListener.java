@@ -49,12 +49,13 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		for(MessageExt ext : msgs) {
 			try {
 				return consumeMessage(ext, context);
-			}catch (CoreException e) {
-				log.error(e.getMessage(), e);
-				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 			}catch (Throwable e) {
 				log.error(e.getMessage(), e);
-				return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+				if(delayNoticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()) {
+					return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+				}else {
+					return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+				}
 			}
 		}
 		return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;

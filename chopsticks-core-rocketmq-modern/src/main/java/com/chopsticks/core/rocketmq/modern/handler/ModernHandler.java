@@ -48,7 +48,11 @@ public class ModernHandler extends BaseHandler{
 		if(params.getBody() != null && params.getBody().length > 0) {
 			String body = new String(params.getBody(), Charsets.UTF_8);
 			if(!Const.EMPTY_PARAMS.equals(body)) {
-				args = JSON.parseArray(body).toArray();
+				try {
+					args = JSON.parseArray(body).toArray();
+				}catch (Throwable e) {
+					throw new ModernCoreException(String.format("bean : %s, method %s , params : %s build error", obj, params.getMethod(), body), e).setCode(ModernCoreException.MODERN_INVOKE_METHOD_PARAMS_BUILD_ERROR);
+				}
 			}
 		}
 		Method invokeMethod = null;
@@ -134,7 +138,11 @@ public class ModernHandler extends BaseHandler{
 		if(params.getBody() != null && params.getBody().length > 0) {
 			String body = new String(params.getBody(), Charsets.UTF_8);
 			if(!Const.EMPTY_PARAMS.equals(body)) {
-				args = JSON.parseArray(body).toArray();
+				try {
+					args = JSON.parseArray(body).toArray();
+				}catch (Throwable e) {
+					throw new ModernCoreException(String.format("bean : %s, method %s , params : %s build error", obj, params.getMethod(), body), e).setCode(ModernCoreException.MODERN_NOTICE_METHOD_PARAMS_BUILD_ERROR);
+				}
 			}
 		}
 		try {

@@ -12,6 +12,8 @@ public class ModernCoreException extends DefaultCoreException {
 	public static final int UNSUPPORT_ARRAY_ARGUMENTS = 20003;
 	public static final int UNSUPPORT_ARRAY_RESULT = 20004;
 	public static final int INVOKE_RETURN_TYPE_NOT_MATCH = 20005;
+	public static final int MODERN_INVOKE_METHOD_PARAMS_BUILD_ERROR = 20006;
+	public static final int MODERN_NOTICE_METHOD_PARAMS_BUILD_ERROR = 20007;
 	
 
 	public ModernCoreException() {

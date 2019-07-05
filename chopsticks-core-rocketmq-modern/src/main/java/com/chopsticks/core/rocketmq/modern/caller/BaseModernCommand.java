@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.chopsticks.core.modern.caller.ModernCommand;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -16,6 +17,11 @@ public abstract class BaseModernCommand implements ModernCommand {
 	public BaseModernCommand(String method, Object... params) {
 		this.method = method;
 		this.params = params;
+		if(params != null) {
+			for(Object param : params) {
+				Preconditions.checkNotNull(param);
+			}
+		}
 	}
 	public void setMethod(String method) {
 		this.method = method;
@@ -26,6 +32,11 @@ public abstract class BaseModernCommand implements ModernCommand {
 	}
 	public void setParams(Object[] params) {
 		this.params = params;
+		if(params != null) {
+			for(Object param : params) {
+				Preconditions.checkNotNull(param);
+			}
+		}
 	}
 	@Override
 	public Object[] getParams() {

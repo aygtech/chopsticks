@@ -73,10 +73,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 	private int delayNoticeExecutableRetryCount = Integer.MAX_VALUE;
 	private int orderedNoticeExecutableRetryCount = Integer.MAX_VALUE;
 	
-	private long invokeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
-	private long noticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
-	private long delayNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
-	private long orderedNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(15);
+	private long invokeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(60);
+	private long noticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(60);
+	private long delayNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(60);
+	private long orderedNoticeMaxExecutableTime = TimeUnit.MINUTES.toMinutes(60);
 	
 	private long invokeBeginExectableTime = Const.CLIENT_TIME.getNow();
 	private long noticeBeginExecutableTime = -1L;

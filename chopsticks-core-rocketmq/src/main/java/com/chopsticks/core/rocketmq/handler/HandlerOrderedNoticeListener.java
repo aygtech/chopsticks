@@ -42,12 +42,13 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 		for(MessageExt ext : msgs) {
 			try {
 				return consumeMessage(ext, context);
-			}catch (CoreException e) {
-				log.error(e.getMessage(), e);
-				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 			}catch (Throwable e) {
 				log.error(e.getMessage(), e);
-				return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+				if(orderedNoticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()) {
+					return ConsumeOrderlyStatus.SUCCESS;
+				}else {
+					return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+				}
 			}
 		}
 		return ConsumeOrderlyStatus.SUCCESS;
