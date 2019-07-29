@@ -12,6 +12,7 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.Header;
+import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
@@ -22,6 +23,7 @@ import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.concurrent.FutureCallback;
 import org.apache.http.config.Registry;
 import org.apache.http.config.RegistryBuilder;
+import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.content.InputStreamBody;
@@ -51,6 +53,7 @@ import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
 public class HttpClient {
+	
 	private static final Logger log = LoggerFactory.getLogger(HttpClient.class);
 	
 	private static final Registry<SchemeIOSessionStrategy> registry;
@@ -71,7 +74,8 @@ public class HttpClient {
 			};
 			SSLContext sslContext = SSLContext.getInstance("TLS");
 			sslContext.init(null, trustAllCerts, null);
-            SSLIOSessionStrategy sslioSessionStrategy = new SSLIOSessionStrategy(sslContext, SSLIOSessionStrategy.ALLOW_ALL_HOSTNAME_VERIFIER);
+			// (HostnameVerifier)SSLIOSessionStrategy.ALLOW_ALL_HOSTNAME_VERIFIER
+            SSLIOSessionStrategy sslioSessionStrategy = new SSLIOSessionStrategy(sslContext, NoopHostnameVerifier.INSTANCE);
             registry = RegistryBuilder.<SchemeIOSessionStrategy>create()
                     .register("http", NoopIOSessionStrategy.INSTANCE)
                     .register("https", sslioSessionStrategy)
@@ -138,9 +142,14 @@ public class HttpClient {
 		Preconditions.checkArgument(started, "must call start method");
 		final DefaultPromise<HttpResponse> ret = new DefaultPromise<HttpResponse>();
 		HttpClientContext ctx = new HttpClientContext();
+		HttpHost proxy = null;
+		if(!Strings.isNullOrEmpty(req.getProxyAddr())) {
+			proxy = new HttpHost(req.getProxyAddr(), req.getProxyPort(), req.getProxyScheme());
+		}
 		RequestConfig cfg = RequestConfig.custom()
 										 .setConnectionRequestTimeout(req.getConnTimeoutMillis())
 										 .setSocketTimeout(req.getReadTimeoutMillis())
+										 .setProxy(proxy)
 										 .build();
 		ctx.setRequestConfig(cfg);
 		HttpUriRequest realReq = null;

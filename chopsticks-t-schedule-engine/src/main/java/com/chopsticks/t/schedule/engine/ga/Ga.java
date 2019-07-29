@@ -2,18 +2,16 @@ package com.chopsticks.t.schedule.engine.ga;
 
 import java.util.Arrays;
 import java.util.BitSet;
-import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
 import com.chopsticks.common.utils.MoreInts;
-import com.google.common.primitives.Ints;
 
 public class Ga {
 	
-	public static int[][] crossover(Random random, int[] a, int[] b, float varLenRatio, int x, int y) {
+	public static int[][] crossover(int[] a, int[] b, float varLenRatio, int x, int y) {
 		int[][] ret;
 		int minLen = Math.min(a.length, b.length);
-		int croIdx = random.nextInt(minLen);
+		int croIdx = ThreadLocalRandom.current().nextInt(minLen);
 		int varLen = Math.round(varLenRatio * minLen);
 		int end = croIdx + varLen;
 		int[] aPart = Arrays.copyOfRange(a, croIdx, end > a.length ? a.length : end);
@@ -34,16 +32,6 @@ public class Ga {
 			}
 		}
 		return ret;
-	}
-	public static int[] mutation(int src[], float varLenRatio, int x, int y) {
-		int varLen = Math.round(varLenRatio * src.length);
-		int aMutIdx = ThreadLocalRandom.current().nextInt(src.length);
-		int bMutIdx = ThreadLocalRandom.current().nextInt(src.length);
-		if(aMutIdx == bMutIdx) {
-			return src.clone();
-		}else {
-			return mutation1(src, aMutIdx, bMutIdx, varLen, x, y);
-		}
 	}
 	private static int[] crossover1(int[] src, int[] part, int croIdx, int x, int y) {
 		int[] tmp = new int[src.length + part.length];
@@ -137,7 +125,16 @@ public class Ga {
 		}
 		return size == tmp.length ? tmp : Arrays.copyOf(tmp, size);
 	}
-	
+	public static int[] mutation(int src[], float varLenRatio, int x, int y) {
+		int varLen = Math.round(varLenRatio * src.length);
+		int aMutIdx = ThreadLocalRandom.current().nextInt(src.length);
+		int bMutIdx = ThreadLocalRandom.current().nextInt(src.length);
+		if(aMutIdx == bMutIdx) {
+			return src.clone();
+		}else {
+			return mutation1(src, aMutIdx, bMutIdx, varLen, x, y);
+		}
+	}
 	public static int[] mutation1(int[] src, int aMutIdx, int bMutIdx, int len, int x, int y) {
 		int[] tmp = src.clone();
 		int c;

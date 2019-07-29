@@ -207,6 +207,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			listener.setBeginExecutableTime(getOrderedNoticeBeginExecutableTime());
 			orderedNoticeConsumer.registerMessageListener(listener);
 			orderedNoticeConsumer.setPullThresholdSizeForTopic(10);
+			orderedNoticeConsumer.setPullThresholdForTopic(200);
 			try {
 				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -265,6 +266,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			listener.setBeginExecutableTime(getNoticeBeginExecutableTime());
 			noticeConsumer.registerMessageListener(listener);
 			noticeConsumer.setPullThresholdSizeForTopic(10);
+			noticeConsumer.setPullThresholdForTopic(200);
 			try {
 				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -323,6 +325,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			listener.setBeginExecutableTime(getDelayNoticeBeginExecutableTime());
 			delayNoticeConsumer.registerMessageListener(listener);
 			delayNoticeConsumer.setPullThresholdSizeForTopic(10);
+			delayNoticeConsumer.setPullThresholdForTopic(200);
 			try {
 				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {
@@ -381,6 +384,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 			listener.setBeginExecutableTime(getInvokeBeginExectableTime());
 			invokeConsumer.registerMessageListener(listener);
 			invokeConsumer.setPullThresholdSizeForTopic(10);
+			invokeConsumer.setPullThresholdForTopic(200);
 			try {
 				Set<String> topics = Sets.newHashSet();
 				for(Entry<String, Collection<String>> entry: topicTags.asMap().entrySet()) {

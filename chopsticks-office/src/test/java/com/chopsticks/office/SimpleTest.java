@@ -5,9 +5,9 @@ import java.io.File;
 import org.junit.Test;
 
 import com.aspose.cells.License;
+import com.aspose.pdf.LatexLoadOptions;
 
 import net.lingala.zip4j.core.ZipFile;
-import net.lingala.zip4j.model.FileHeader;
 
 public class SimpleTest {
 	@Test
@@ -27,6 +27,13 @@ public class SimpleTest {
 		if(zipFile.isValidZipFile()) {
 			zipFile.removeFile("META-INF/LE-9AD48.RSA");
 		}
-		
+	}
+	@Test
+	public void test1() {
+		LatexLoadOptions Latexoptions = new LatexLoadOptions();
+		//Create Document object
+		com.aspose.pdf.Document doc = new com.aspose.pdf.Document("C:\\Users\\lzl\\Documents\\WXWork\\1688851555278454\\Cache\\File\\2019-07\\示例1.tex", Latexoptions);
+		//Save the output in PDF file
+		doc.save("C:\\Users\\lzl\\Documents\\WXWork\\1688851555278454\\Cache\\File\\2019-07\\示例1.pdf");
 	}
 }

@@ -18,6 +18,10 @@
 			<artifactId>aspose-cells</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>com.aspose</groupId>
+			<artifactId>aspose-pdf</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>javassist</groupId>
 			<artifactId>javassist</artifactId>
 		</dependency>

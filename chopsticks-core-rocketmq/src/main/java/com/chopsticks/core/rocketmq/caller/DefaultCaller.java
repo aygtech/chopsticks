@@ -207,6 +207,7 @@ public class DefaultCaller implements Caller {
 			callerInvokeConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 			callerInvokeConsumer.registerMessageListener(new CallerInvokeListener(callerInvokePromiseMap));
 			callerInvokeConsumer.setPullThresholdSizeForTopic(10);
+			callerInvokeConsumer.setPullThresholdForTopic(200);
 			try {
 				String topic = buildRespTopic();
 				callerInvokeConsumer.subscribe(topic, com.chopsticks.core.rocketmq.Const.ALL_TAGS);
@@ -410,7 +411,7 @@ public class DefaultCaller implements Caller {
 		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
 		checkArgument(cmd.getBody() != null && cmd.getBody().length > 0, "body can not be null ");
-		checkArgument(cmd.getBody().length <= producer.getMaxMessageSize(), "body size over max value, MAX : %s, CUR: %s", producer.getMaxMessageSize(), cmd.getBody().length);
+		// checkArgument(cmd.getBody().length <= producer.getMaxMessageSize(), "body size over max value, MAX : %s, CUR: %s", producer.getMaxMessageSize(), cmd.getBody().length);
 		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildNoticeMessage(cmd);

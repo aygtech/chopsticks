@@ -78,7 +78,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 //													, TimeUtils.yyyyMMddHHmmssSSS(req.getDeadline())
 //													, TimeUtils.yyyyMMddHHmmssSSS(now)
 //													, ext.getQueueId())).setCode(DefaultCoreException.INVOKE_BEFORE_PROCESS_TIMEOUT);
-				log.error("timeout, {}-{} skip invoke process, reqTime : {}, deadline : {}, now : {}, queue : {}"
+				log.warn("timeout, {}-{} skip invoke process, reqTime : {}, deadline : {}, now : {}, queue : {}"
 													, topic
 													, ext.getTags()
 													, TimeUtils.yyyyMMddHHmmssSSS(req.getReqTime())
@@ -183,7 +183,7 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 			long now, CoreException tmp) {
 		long processEnd = Const.CLIENT_TIME.getNow();
 		if(processEnd > req.getDeadline()) {
-			throw new DefaultCoreException(String.format("timeout, %s-%s skip invoke process response, reqId : %s, reqTime : %s, deadline : %s, begin : %s, processEnd : %s"
+			throw new DefaultCoreException(String.format("timeout, slow Invocation, %s-%s skip invoke process response, reqId : %s, reqTime : %s, deadline : %s, begin : %s, processEnd : %s"
 												, topic
 												, ext.getTags()
 												, req.getReqId()

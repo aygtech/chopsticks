@@ -24,6 +24,9 @@ public class HttpRequest {
 	
 	private String url;
 	private String method = "get";
+	private String proxyScheme = "http";
+	private String proxyAddr;
+	private int proxyPort = 80;
 	private int connTimeoutMillis = (int)TimeUnit.SECONDS.toMillis(5L);
 	private int readTimeoutMillis = (int)TimeUnit.SECONDS.toMillis(30L);
 	private int getConnTimeoutMillis = (int)TimeUnit.SECONDS.toMillis(5L);
@@ -133,5 +136,23 @@ public class HttpRequest {
 	}
 	public void setGetConnTimeoutMillis(int getConnTimeoutMillis) {
 		this.getConnTimeoutMillis = getConnTimeoutMillis;
+	}
+	public String getProxyScheme() {
+		return proxyScheme;
+	}
+	public void setProxyScheme(String proxyScheme) {
+		this.proxyScheme = proxyScheme;
+	}
+	public String getProxyAddr() {
+		return proxyAddr;
+	}
+	public void setProxyAddr(String proxyAddr) {
+		this.proxyAddr = proxyAddr;
+	}
+	public int getProxyPort() {
+		return proxyPort;
+	}
+	public void setProxyPort(int proxyPort) {
+		this.proxyPort = proxyPort;
 	}
 }
