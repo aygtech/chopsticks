@@ -3,6 +3,7 @@ package com.chopsticks.core.rocketmq.modern.handler;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.concurrent.ExecutionException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,7 +81,9 @@ public class ModernHandler extends BaseHandler{
 		}catch (CoreException e) {
 			throw e;
 		}catch (Throwable e) {
-			while(e instanceof ReflectException || e instanceof InvocationTargetException) {
+			while(e instanceof ReflectException 
+					|| e instanceof InvocationTargetException 
+					|| e instanceof ExecutionException) {
 				e = e.getCause();
 			}
 			throw new ModernCoreException(String.format("invoke execute exception : %s", e.getMessage())

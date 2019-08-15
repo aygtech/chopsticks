@@ -18,12 +18,11 @@ import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
-import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.core.rocketmq.Const;
 import com.chopsticks.core.rocketmq.caller.BaseInvokeResult;
+import com.chopsticks.core.rocketmq.caller.BaseInvokeSender;
 import com.chopsticks.core.rocketmq.caller.InvokeRequest;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
-import com.chopsticks.core.rocketmq.caller.BaseInvokeSender;
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.HashMultimap;
@@ -46,9 +45,13 @@ public class BatchInvokerSender extends BaseInvokeSender{
 	
 	public BatchInvokerSender(final DefaultMQProducer producer, final long executeIntervalMillis){
 		super(producer);
+		String group = producer.getProducerGroup();
+		if(group.contains("%")) {
+			group = group.substring(group.indexOf("%") + 1);
+		}
 		executor = new ScheduledThreadPoolExecutor(1
 						, new ThreadFactoryBuilder()
-								.setNameFormat(producer.getProducerGroup() + "-invokeBatchSchedule-%d")
+								.setNameFormat(group + "-invokeBatchSchedule-%d")
 								.setDaemon(true)
 								.build());
 		executor.scheduleAtFixedRate(new Runnable() {
@@ -151,7 +154,7 @@ public class BatchInvokerSender extends BaseInvokeSender{
 		try {
 			InvokeRequest req = JSON.parseObject(msg.getUserProperty(Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
 			req.setCompress(true);
-			int level = Reflect.on(producer).field("defaultMQProducerImpl").field("zipCompressLevel").get();
+			int level = producer.getDefaultMQProducerImpl().getZipCompressLevel();
 			byte[] body = UtilAll.compress(msg.getBody(), level);
 			msg.setBody(body);
 			msg.putUserProperty(Const.INVOKE_REQUEST_KEY, JSON.toJSONString(req));

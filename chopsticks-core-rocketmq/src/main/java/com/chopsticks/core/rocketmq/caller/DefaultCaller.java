@@ -18,18 +18,17 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
-import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
-import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
+import org.apache.rocketmq.remoting.common.RemotingUtil;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -95,6 +94,8 @@ public class DefaultCaller implements Caller {
 	
 	private DefaultMQAdminExt mqAdminExt;
 	
+	private boolean mqAdminExtSupport = true;
+	
 	private static final Cache</*topic + tag*/String, /*consumer exist*/Boolean> INVOKE_TOPIC_TAG_MONITOR = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	private static final Cache</*topic*/String, Set<ConsumerConnection>> INVOKE_TOPIC_MONITOR = CacheBuilder.newBuilder().expireAfterWrite(DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS).build();
 	
@@ -145,12 +146,16 @@ public class DefaultCaller implements Caller {
 	}
 	
 
-
+	protected void beforeAdminExtStart(DefaultMQAdminExt mqAdminExt) {
+	}
 	private DefaultMQAdminExt buildAdminExt() {
 		DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt(getGroupName() + com.chopsticks.core.rocketmq.Const.INVOKE_ADMIN_EXT_SUFFIX, TimeUnit.MINUTES.toMillis(1L));
 		try {
+			beforeAdminExtStart(mqAdminExt);
 			mqAdminExt.setNamesrvAddr(namesrvAddr);
-			mqAdminExt.start();
+			if(mqAdminExtSupport) {
+				mqAdminExt.start();
+			}
 		}catch (Throwable e) {
 			if(e instanceof CoreException) {
 				throw (CoreException)e;
@@ -194,7 +199,8 @@ public class DefaultCaller implements Caller {
 		}
 		started = false;
 	}
-	
+	protected void beforeCallerInvokeConsumerStart(DefaultMQPushConsumer callerInvokeConsumer) {
+	}
 	private DefaultMQPushConsumer buildAndStartCallerInvokeConsumer() {
 		DefaultMQPushConsumer callerInvokeConsumer = null;
 		if(isInvokable()) {
@@ -213,6 +219,7 @@ public class DefaultCaller implements Caller {
 				callerInvokeConsumer.subscribe(topic, com.chopsticks.core.rocketmq.Const.ALL_TAGS);
 				createTopics(Sets.newHashSet(topic));
 				checkConsumerSubscription(callerInvokeConsumer);
+				beforeCallerInvokeConsumerStart(callerInvokeConsumer);
 				callerInvokeConsumer.start();
 				callerInvokeConsumer = com.chopsticks.core.rocketmq.Const.buildConsumer(callerInvokeConsumer);
 				long waitRebalanceMillis = 100L;
@@ -233,7 +240,9 @@ public class DefaultCaller implements Caller {
 		}
 		return callerInvokeConsumer;
 	}
-
+	protected void beforeProducerStart(DefaultMQProducer producer) {
+		
+	}
 	private DefaultMQProducer buildAndStartProducer() {
 		DefaultMQProducer producer = null;
 		producer = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName());
@@ -242,6 +251,7 @@ public class DefaultCaller implements Caller {
 		producer.setRetryAnotherBrokerWhenNotStoreOK(true);
 		producer.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
 		try {
+			beforeProducerStart(producer);
 			producer.start();
 			return producer;
 		}catch (Throwable e) {
@@ -334,6 +344,9 @@ public class DefaultCaller implements Caller {
 		return INVOKE_TOPIC_TAG_MONITOR.get(msg.getTopic() + msg.getTags(), new Callable<Boolean>() {
 			@Override
 			public Boolean call() throws Exception {
+				if(!mqAdminExtSupport) {
+					return true;
+				}
 				boolean examineConsumerConnectionInfo = false;
 				Set<ConsumerConnection> consumerConns = INVOKE_TOPIC_MONITOR.get(msg.getTopic(), new Callable<Set<ConsumerConnection>>() {
 					@Override
@@ -765,6 +778,9 @@ public class DefaultCaller implements Caller {
 	}
 	
 	protected void createTopics(Set<String> topics) {
+		if(!mqAdminExtSupport) {
+			return;
+		}
 		try {
 			Set<String> all = mqAdminExt.fetchAllTopicList().getTopicList();
 			Set<String> newTopics = Sets.newHashSet(topics);
@@ -779,6 +795,9 @@ public class DefaultCaller implements Caller {
 	}
 	
 	protected void checkConsumerSubscription(DefaultMQPushConsumer consumer) {
+		if(!mqAdminExtSupport) {
+			return;
+		}
 		try {
 			ConsumerConnection consumerConn = mqAdminExt.examineConsumerConnectionInfo(consumer.getConsumerGroup());
 			ConcurrentMap<String, SubscriptionData> oldSubscriptionTable = consumerConn.getSubscriptionTable();
@@ -805,5 +824,17 @@ public class DefaultCaller implements Caller {
 				// ignore
 			}
 		}
+	}
+	
+	protected String getLocalAddress() {
+		return RemotingUtil.getLocalAddress();
+	}
+
+	public boolean isMqAdminExtSupport() {
+		return mqAdminExtSupport;
+	}
+
+	public void setMqAdminExtSupport(boolean mqAdminExtSupport) {
+		this.mqAdminExtSupport = mqAdminExtSupport;
 	}
 }

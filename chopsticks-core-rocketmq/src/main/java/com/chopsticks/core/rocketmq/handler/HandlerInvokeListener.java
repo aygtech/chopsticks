@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.common.concurrent.PromiseListener;
+import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.common.utils.TimeUtils;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.handler.HandlerResult;
@@ -192,16 +193,16 @@ public class HandlerInvokeListener extends BaseHandlerListener implements Messag
 												, TimeUtils.yyyyMMddHHmmssSSS(now)
 												, TimeUtils.yyyyMMddHHmmssSSS(processEnd))).setCode(DefaultCoreException.INVOKE_PROCESS_TIMEOUT);
 		}
-		//非批量发送，使用rocketmq默认压缩即可
-//				if(req.isRespCompress() && resp.getRespBody() != null && resp.getRespBody().length > DEFAULT_INVOKE_RESP_COMPRESS_BODY_LENGTH) {
-//					try {
-//						int level = Reflect.on(getClient().getProducer()).field("defaultMQProducerImpl").field("zipCompressLevel").get();
-//						resp.setRespBody(UtilAll.compress(resp.getRespBody(), level));
-//						resp.setCompressRespBody(true);
-//					}catch (Throwable e) {
-//						//ig no compress
-//					}
-//				}
+		if(req.isRespCompress() && resp.getRespBody() != null && resp.getRespBody().length > getClient().getProducer().getMaxMessageSize()) {
+			try {
+				int level = getClient().getProducer().getDefaultMQProducerImpl().getZipCompressLevel();
+				resp.setRespBody(UtilAll.compress(resp.getRespBody(), level));
+				resp.setCompressRespBody(true);
+				log.warn("resp body size is max : {}, reqId : {}", resp.getRespBody().length, req.getReqId());
+			}catch (Throwable e) {
+				//ig no compress
+			}
+		}
 		Message respMsg = new Message(req.getRespTopic(), req.getRespTag(), JSON.toJSONBytes(resp));
 		respMsg.setKeys(Const.buildTraceInvokeReqId(req.getReqId()));
 		try {

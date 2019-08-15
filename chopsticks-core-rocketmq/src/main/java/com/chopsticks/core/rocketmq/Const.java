@@ -102,9 +102,12 @@ public class Const {
 		Reflect consumeMessageService = Reflect.on(consumer)
 											   .field("defaultMQPushConsumerImpl")
 											   .field("consumeMessageService");
-		
+		String group = consumer.getConsumerGroup();
+		if(group.contains("%")) {
+			group = group.substring(group.indexOf("%") + 1); 
+		}
 		consumeMessageService.field("consumeExecutor")
-			   				 .set("threadFactory", new ThreadFactoryBuilder().setNameFormat(consumer.getConsumerGroup() + "_%d")
+			   				 .set("threadFactory", new ThreadFactoryBuilder().setNameFormat(group + "_%d")
 																			 .build());
 		//已经启动并启动好了一个调度线程，不太好改名字了
 //		if(consumeMessageService.fields().containsKey("cleanExpireMsgExecutors")) {

@@ -228,6 +228,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 						orderedNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
+				beforeOrderedNoticeConsumerStart(orderedNoticeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(orderedNoticeConsumer);
 				orderedNoticeConsumer.start();
@@ -287,6 +288,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 						noticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
+				beforeNoticeConsumerStart(noticeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(noticeConsumer);
 				noticeConsumer.start();
@@ -346,6 +348,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 						delayNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
+				beforeNoticeConsumerStart(delayNoticeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(delayNoticeConsumer);
 				delayNoticeConsumer.start();
@@ -366,6 +369,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 		}
 		return delayNoticeConsumer;
 	}
+	
+	protected void beforeNoticeConsumerStart(DefaultMQPushConsumer noticeConsumer) {}
+	protected void beforeDelayNoticeConsumerStart(DefaultMQPushConsumer delayNoticeConsumer) {}
+	protected void beforeOrderedNoticeConsumerStart(DefaultMQPushConsumer orderedNoticeConsumer) {}
+	protected void beforeInvokeConsumerStart(DefaultMQPushConsumer invokeConsumer) {}
 	
 	private DefaultMQPushConsumer buildAndStartInvokeCosumer() {
 		DefaultMQPushConsumer invokeConsumer = null;
@@ -405,6 +413,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 						invokeConsumer.subscribe(topic, Joiner.on("||").join(newTags));
 					}
 				}
+				beforeInvokeConsumerStart(invokeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(invokeConsumer);
 				invokeConsumer.start();
@@ -546,7 +555,6 @@ public class DefaultClient extends DefaultCaller implements Client{
 	public void setOrderedNoticeBeginExecutableTime(long orderedNoticeBeginExecutableTime) {
 		this.orderedNoticeBeginExecutableTime = orderedNoticeBeginExecutableTime;
 	}
-	
 	public void setMaxExecutableTime(long maxExecutableTime) {
 		setInvokeMaxExecutableTime(maxExecutableTime);
 		setNoticeMaxExecutableTime(maxExecutableTime);
