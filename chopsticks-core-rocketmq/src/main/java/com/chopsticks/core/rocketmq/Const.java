@@ -9,6 +9,7 @@ import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import com.alibaba.fastjson.parser.ParserConfig;
 import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.common.utils.SyncSystemMillis;
+import com.chopsticks.common.utils.TimeUtils;
 import com.google.common.base.Optional;
 import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
@@ -143,7 +144,7 @@ public class Const {
 	}
 	
 	public static String buildTraceNoByMethod(String method) {
-		return TRACE_METHOD_PREFIX + method;
+		return TRACE_METHOD_PREFIX + method + TimeUtils.MMddHH(CLIENT_TIME.getNow());
 	}
 	public static String buildTraceNoByOrdered(String orderKey) {
 		return TRACE_ORDERED_PREFIX + orderKey;

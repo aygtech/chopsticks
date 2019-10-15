@@ -70,6 +70,7 @@ public class ModernHandler extends BaseHandler{
 			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(mqCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
+			ModernContextHolder.setInterfaceName(getTopic());
 			methodRet = client.getModernClientProxy().invokeExecuteProxy(obj, params.getMethod(), args);
 			invokeExecutePromise = ModernContextHolder.getInvokeExecutePromise();
 //			if(invokeExecutePromise != null) {
@@ -144,7 +145,9 @@ public class ModernHandler extends BaseHandler{
 				try {
 					args = JSON.parseArray(body).toArray();
 				}catch (Throwable e) {
-					throw new ModernCoreException(String.format("bean : %s, method %s , params : %s build error", obj, params.getMethod(), body), e).setCode(ModernCoreException.MODERN_NOTICE_METHOD_PARAMS_BUILD_ERROR);
+					log.error(String.format("bean : %s, method %s , params : %s build error", obj, params.getMethod(), body), e);
+					return;
+//					throw new ModernCoreException(String.format("bean : %s, method %s , params : %s build error", obj, params.getMethod(), body), e).setCode(ModernCoreException.MODERN_NOTICE_METHOD_PARAMS_BUILD_ERROR);
 				}
 			}
 		}
@@ -162,6 +165,7 @@ public class ModernHandler extends BaseHandler{
 			ModernContextHolder.setReqTime(mqCtx.getReqTime());
 			ModernContextHolder.setExtParams(baseCtx.getExtParams());
 			ModernContextHolder.setTraceNos(mqCtx.getTraceNos());
+			ModernContextHolder.setInterfaceName(getTopic());
 			Thread.currentThread().setName(String.format("%s_%s", baseCtx.getId(), oldThreadName));
 			client.getModernClientProxy().noticeExecuteProxy(obj, params.getMethod(), args);
 //			Reflect.on(obj).call(params.getMethod(), args).get();

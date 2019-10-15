@@ -1,0 +1,1975 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>math</title>
+    <link rel="dns-prefetch" href="//cdn.mathjax.org" />
+    <script src="http://cdn.bootcss.com/mathjax/2.7.5/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>   
+<style>
+* { padding: 0; margin: 0; -webkit-box-sizing: border-box; -moz-box-sizing: border-box; box-sizing: border-box; }
+body { font-size: 9px; line-height: 1.5; font-family:Arial,'Times New Roman','simsun', 'Microsoft YaHei'; }
+h1,h2,h3,h4,h5,h6 { font-weight: normal; }
+ul { list-style: none; }
+img { border: 0; }
+em { font-style: normal; }
+.clearfix:after { display: block; height: 0; content: ""; clear: both; }
+
+.subject_content { border-bottom: 1px solid #b5b6b5; }
+.subject_content:last-child { border-bottom: none; }
+.subject_l { float: left; width: 82%; padding: 10px 20px; border-right: 1px solid #b5b6b5; }
+.subject_l .subject_l_top { font-size: 12px; line-height: 20px; }
+.subject_l .subject_l_top .topic { float: left; margin-left: -6px; }
+.subject_l .subject_l_top span { float: right; margin-left: 12px; }
+.subject_l .select { margin: 8px 0; }
+.subject_l .select .option { float: left; min-width: 20%; margin-right: 20px; }
+
+.evaluate_r { float: right; width: 18%; padding: 10px; line-height: 18px; }
+.evaluate_r .degree { margin-bottom: 10px; border-bottom: 1px dashed #cdcecd; }
+.evaluate_r .degree p { display: inline-block; min-width: 30%; text-align: left; }
+.evaluate_r .degree p span { display: block; text-align: left; }
+.evaluate_r .degree p em { display: inline-block; width: 12px; height: 12px; border-radius: 50%; border: 1px solid #ccc; }
+.evaluate_r .note { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cdcecd; }
+
+.practice { margin-top: 40px; border-top: 1px dashed #cdcecd; }
+.practice h5 { font-size: 14px; padding: 10px 0; }
+.practice .topic_num { padding: 10px 0; }
+.answer_area { margin-top: 20px; min-height: 220px; }
+
+/* 页眉样式 */
+.divHeader { height: 48px; padding: 10px 24px; border-bottom: 1px solid #b5b6b5; }
+.divHeader .divHeader-l { float: left; font-size: 13px; line-height: 20px; }
+.divHeader .divHeader-l span { margin-right: 30px; }
+.divHeader .divHeader-r { float: right; }
+.divHeader .divHeader-r img { height: 28px; }
+.select span{padding:1%}
+
+/* 参考答案样式 */
+.reference_result { padding: 0 20px; }
+.reference_result .result_title { font-size: 16px; text-align: center; line-height: 32px; }
+.result_item { padding: 6px 0; border-bottom: 1px dashed #cdcecd; }
+.result_item p { font-size: 12px; line-height: 18px; margin-top: 6px; }
+.result_item .topic { display: inline-block; min-width: 18px; color: #fff; text-align: center; padding: 0 3px; line-height: 18px; border-radius: 9px; background: #000; }
+.result_item .topic.sub { border-radius: 3px; }
+.result_item .bold { font-weight: bold; }
+</style>
+
+<style type="text/css" media="print">
+@page  {
+    size:  auto;   /* auto is the initial value */
+    margin: 5mm 0mm;  /* this affects the margin in the printer settings */
+}
+</style>
+
+<script type="text/x-mathjax-config">
+  MathJax.Hub.Config({
+      tex2jax: {inlineMath: [['$','$'], ['\(','\)']]}
+  });
+</script>
+
+</head>
+<body>
+<div class="wrapper">
+    <!-- 页眉 -->
+    <div class="divHeader">
+        <div class="divHeader-l">
+            <span>2018-2019第一次月考（理科）</span>
+            <span>高三511-曾培</span>
+        </div>
+        <div class="divHeader-r">
+            <img src="https://xgkj-logo.oss-cn-shenzhen.aliyuncs.com/%E6%95%99%E5%B8%88%E7%89%885.png">
+        </div>
+    </div>
+
+    <!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div><!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+	<!-- 选择题类型 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第一题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0分 /总分5分</span> 
+            </div>
+            <p>已知函数${f(x)= 3^{x}}$，对于定义域内任意的${x_{1}}$，${x_{2}(x_{1} eq x_{2})}$，给出如下结论：<br/>①${f(x_{1}+ x_{2})= f(x_{1})cdot f(x_{2})}$<br/>②${f(x_{1}cdot x_{2})= f(x_{1})+ f(x_{2})}$<br/>③${dfrac{f(x_{1})-f(x_{2})}{x_{1}-x_{2}}gt 0}$<br/>④${f(-x_{1})+ f(-x_{2})= f(x_{1})+ f(x_{2})}$<br/>其中正确结论的序号是（　　）</p>
+            <p class="select clearfix">
+                <span class="option">A.①③</span>
+                <span class="option">B.①④</span>
+                <span class="option">C.②③</span>
+                <span class="option">D.②④</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-1</p>
+                    <p>设${a= (dfrac{2}{3}) ^{frac{1}{3}}}$，${b= (dfrac{1}{3}) ^{frac{2}{3}}}$，${c= (dfrac{2}{3}) ^{frac{2}{3}}}$，则${a}$，${b}$，${c}$大小关系是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a\gt b\gt c}$</span>
+                        <span class="option">B.${a\gt c\gt b}$</span>
+                        <span class="option">C.${c\gt a\gt b}$</span>
+                        <span class="option">D.${b\gt c\gt a}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-2</p>
+                    <p>若函数${y= a^{x}+ b(agt 0}$且${a eq 1)}$的图象经过第二、三、四象限，则有（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\lt -1}$</span>
+                        <span class="option">B.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${a\gt 1}$，${b\lt -1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\gt 1}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">1-3</p>
+                    <p>若${0lt xlt ylt 1}$，则下列各式中正确的是（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${2^{y}\lt 2^{x}}$</span>
+                        <span class="option">B.${\log _{x}4\lt \log _{y}4}$</span>
+                        <span class="option">C.${\log _{3}x\lt \log _{3}y}$</span>
+                        <span class="option">D.${(\dfrac{1}{2})^{x}\lt (\dfrac{1}{2})^{y}}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>指数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第二题】</h4>
+				<span>班级平均分：1.88分</span>
+                <span>得分0.09分 /总分5分</span> 
+            </div>
+            <p>给出四个函数，分别满足：<br/>①${f(x+ y)= f(x)+ f(y)}$；<br/>②${g(x+ y)= g(x)g(y)}$；<br/>③${h(xy)= h(x)+ h(y)}$；<br/>④${t(xy)= t(x)t(y)}$．<br/>又给出四个函数图象正确的匹配方案是（　　）<br/><img src="http://yx-kbs-ks3.haofenshu.com/images/2f880688e460ca694be9a7952deca12e.png@w=513&h=133" alt="go题库" style="vertical-align:middle"/></p>
+            <p class="select clearfix">
+                <span class="option">A.①-丁②-乙③-丙④-甲</span>
+                <span class="option">B.①-乙②-丙③-甲④-丁</span>
+                <span class="option">C.①-丙②-甲③-乙④-丁</span>
+                <span class="option">D.①-丁②-甲③-乙④-丙</span>
+            </p>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <div class="practice_item clearfix">
+                    <p class="topic_num">2-1</p>
+                    <p><img src="http://yx-kbs-ks3.haofenshu.com/images/568bb87e080fd4eee9928f67e8ecbf09.png@w=216&h=227" alt="go题库" style="vertical-align:middle;FLOAT:right;"/>图为函数${f_{1}(x)= a_{1}^{x}}$，${f_{2}(x)= a_{2}^{x}}$，${f_{3}(x)= log  _{a_{3}}x}$在同一直角坐标系下的部分图象，则下列结论正确的是  （　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${a_{3}\gt 1\gt a_{1}\gt a_{2}\gt 0}$</span>
+                        <span class="option">B.${a_{3}\gt 1\gt a_{2}\gt a_{1}\gt 0}$</span>
+                        <span class="option">C.${a_{1}\gt a_{2}\gt 1\gt a_{3}\gt 0}$</span>
+                        <span class="option">D.${a_{2}\gt a_{1}\gt 1\gt a_{3}\gt 0}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">2-2</p>
+                    <p><img src="http://yx-kbs-ks3.haofenshu.com/images/bcfe8160348368c5dcc15c5d1b4530f5.png@w=152&h=156" alt="go题库" style="vertical-align:middle;FLOAT:right"/>如图所示曲线是对数函数${y= log _{a}x}$的图象，已知${a}$的取值为${sqrt{3}，dfrac{4}{3}，dfrac{3}{5}，dfrac{1}{10}}$，则相应图象${C_{1}}$，${C_{2}}$，${C_{3}}$，${C_{4}}$中的${a}$的值依次为（　　）</p>
+                    <p class="select clearfix">
+                        <span class="option">A.${\sqrt{3}，\dfrac{4}{3}，\dfrac{3}{5}，\dfrac{1}{10}}$</span>
+                        <span class="option">B.${\sqrt{3}，\dfrac{4}{3}，\dfrac{1}{10}，\dfrac{3}{5}}$</span>
+                        <span class="option">C.${\dfrac{4}{3}，\sqrt{3}，\dfrac{3}{5}，\dfrac{1}{10}}$</span>
+                        <span class="option">D.${\dfrac{4}{3}，\sqrt{3}，\dfrac{1}{10}，\dfrac{3}{5}}$</span>
+                    </p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">2-3</p>
+                    <p>已知函数${y= log _{a}(x+ b)}$的图象如图所示，则${a}$、${b}$的取值范围分别是（　　）<br/><img src="http://yx-kbs-ks3.haofenshu.com/images/c53910c3cd8b13240ae98802d06f0257.png@w=108&h=96" alt="go题库" style="vertical-align:middle"/></p>
+                    <p class="select clearfix">
+                        <span class="option">A.${0\lt a\lt 1}$，${b\gt 1}$</span>
+                        <span class="option">B.${a\gt 1}$，${b\gt 1}$</span>
+                        <span class="option">C.${0\lt a\lt 1}$，${b\lt 1}$</span>
+                        <span class="option">D.${a\gt 1}$，${b\lt 1}$</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>对数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+
+    <!-- 填空题 -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第二题】</h4>
+                <span>班级平均分：1.88分</span>
+                <span>得分0.09分 /总分5分</span> 
+            </div>
+            <div class="practice_item clearfix">
+                <p><img src="http://yx-kbs-ks3.haofenshu.com/images/e9014b87392a6b47df9e5f3ce2085409.png@w=137&h=132" alt="go题库" style="vertical-align:middle;FLOAT:right"/>如图是幂函数${y= x^{alpha _{i}}(alpha _{i}gt 0,, i= 1,, 2,, 3,, 4,, 5)}$在第一象限内的图象，其中${alpha _{1}= 3}$，${alpha _{2}= 2}$，${alpha _{3}= 1}$，${alpha _{4}= dfrac{1}{2}}$，${alpha _{5}= dfrac{1}{3}}$，已知它们具有性质：<br/>①都经过点${(0,, 0)}$和${(1,, 1)}$；   ②在第一象限都是增函数．<br/>请你根据图象写出它们在${(1,, + infty )}$上的另外一个共同性质：________．</p>
+            </div>
+            <div class="practice_item clearfix">
+                <p>已知函数${f(x)= 3x^{a-2}-2}$的图象过点${(2,, 4)}$，则${a= }$________．</p>
+            </div>
+            <div class="practice_item clearfix">
+                <p>已知函数${y= a^{x-1}(agt 0,, a eq 1)}$的图象恒过定点${A}$，若点${A}$在一次函数${y= mx+ n}$的图象上，其中${mgt 0}$，${ngt 0}$，则${mn}$的最大值为________．</p>
+            </div>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <h5>推荐练习</h5>
+                <div class="practice_item clearfix">
+                    <p>已知函数${f(x)= 3x^{a-2}-2}$的图象过点${(2,, 4)}$，则${a= }$________．</p>
+                </div>
+                <div class="practice_item clearfix">
+                    <p>已知函数${y= a^{x-1}(agt 0,, a eq 1)}$的图象恒过定点${A}$，若点${A}$在一次函数${y= mx+ n}$的图象上，其中${mgt 0}$，${ngt 0}$，则${mn}$的最大值为________．</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>对数函数的图象与性质</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+
+    <!-- 作答题（作答区不同） -->
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第3题】</h4>
+                <span>得分0分 /总分5分</span>
+                <span>班级平均分：0.63分</span>
+            </div>
+            <p>已知f(x)是定义在R上的函数，其导函数为f'(x)，若2f(x) − f'(x) < 2，f(0) = 2018，则不等式f(x) > 2017e2x + 1（其中e为自然对数的底数）的解集为________</p>
+            <div class="answer_area">作答区:</div>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <h5>推荐练习</h5>
+                <div class="practice_item clearfix">
+                    <p class="topic_num">3-1</p>
+                    <p>已知定义在R上的函数满足f(x) + 2f'(x) > 0恒成立，且f(2) = （e为自然对数的底数），则不等式ex ⋅ f(x) − e > 0的解集为________．</p>
+                    <div class="answer_area">作答区:</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>函数零点的判定定理</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+
+    <div class="subject_content clearfix">
+        <!-- 左边题目 -->
+        <div class="subject_l">
+            <div class="subject_l_top clearfix">
+                <h4 class="topic">【第5题】</h4>
+                <span>得分0分 /总分12分</span>
+                <span>班级平均分：0.94分</span>
+            </div>
+            <p>如图，在三棱锥P­ABC中，PA⊥底面ABC，AB=2，AC=4，∠BAC=120°，D为BC的中点.</p>
+            <p><img src="http://yx-kbs-ks3.haofenshu.com/images/bcfe8160348368c5dcc15c5d1b4530f5.png@w=152&h=156" alt="go题库"/></p>
+            <p>（1）求证：AD⊥PB;</p>
+            <p>（2）若二面角A­PB­C的大小为45°，求三棱锥P­ABC的体积;</p>
+            <div class="answer_area">作答区:</div>
+
+            <!-- 推荐练习 -->
+            <div class="practice">
+                <h5>推荐练习</h5>
+                <div class="practice_item clearfix">
+                    <!-- <p class="topic_num">3-1</p> -->
+                    <p><img src="http://yx-kbs-ks3.haofenshu.com/images/bcfe8160348368c5dcc15c5d1b4530f5.png@w=152&h=156" alt="go题库" style="vertical-align:middle;FLOAT:right"/></p>
+                    <p>5­1 如图，在平行四边形ABCM中，AB = AC = 3，∠ACM = 90∘，以AC为折痕将△ACM折起，使点M到达点D的位置，且AB ⊥ DA．</p>
+                    <p>(1)证明：平面ACD ⊥平面ABC；</p>
+                    <p>(2)Q为线段AD上一点，P为线段BC上一点，且BP = DQ = DA，求三棱锥Q − ABP的体积．</p>
+                    <div class="answer_area">作答区:</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧要点 -->
+        <div class="evaluate_r">
+            <p>掌握程度：</p>
+            <div class="degree">
+                <p><span>熟练</span><em></em></p>
+                <p><span>一般</span><em></em></p>
+                <p><span>未掌握</span><em></em></p>
+            </div>
+            <p>所含知识点：</p>
+            <p>函数零点的判定定理</p>
+            <p class="note">笔记：</p>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    <div style="page-break-after: always;"></div>
+    <!-- 页眉 -->
+    <div class="divHeader">
+        <div class="divHeader-l">2018-2019第一次月考（理科）&nbsp;&nbsp;&nbsp;&nbsp;高三511-曾培</div>
+        <div class="divHeader-r"><img src="./math_logo.png"></div>
+    </div>
+
+    <!-- 参考答案 -->
+    <div class="reference_result">
+        <h4 class="result_title">2018­2019第1次月考（理科） 参考答案</h4>
+        <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic">1</p>
+            <p class="bold">【参考答案】</p>
+            <p>B</p>
+            <p class="bold">【解析】</p>
+            <p>由题意可得 > 0，进而可得函数xf(x)单调性，而函数g(x) = 的零点个数等价为函数y = xf(x) − 1的零点个数，进而得到答案．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由f′(x) + x−1f(x) > 0，得 > 0， 当x > 0时，xf'(x) + f(x) > 0，即[xf(x)]' > 0，函数xf(x)单调递增；当x < 0时，xf'(x) + f(x) < 0，即[xf(x)]' < 0，函数xf(x)单调递减．又g(x) = f(x) − x−1 = ，函数g(x) = 的零点个数等价为函数y = xf(x) − 1的零点个数．函数y = xf(x) − 1有两个零点，所以函数g(x) = f(x) − x−1的零点个数为2．故选：B．</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic">2</p>
+            <p class="bold">【解答】</p>
+            <p>解：(1)∵B = ，∴A + C = π − B = ； 又m = 3,根据正弦定理：sin A + sin B = √3 sin C， ∴sin A + = √3 sin C， ∴sin A = √3 sin C − ； 又sin A = sin( − C) = sin cos C − cos sin C = cos C + ，∴ cos C + sin C = √3 sin C − ， ∴ cos C − sin C = − ，即sin(C − ) = ； ∴C = ，A = − = ， ∴sin(A − C) = sin( − ) = sin = . π6 12 π3 56 π3 π2 πππ1</p>
+            <p>(2)当m = c = 2时，a + b = √2c = 2√2， ∴a2 + 2ab + b2 = 8； ∴4ab ≤ a2 + b2 + 2ab = 8， ∴ab ≤ 2，此时a = b = √2； 即△ABC是等腰直角三角形其面积最大值，Smax = ab = × √2 × √2 = 1．</p>
+            <p class="bold">【解析】</p>
+            <p>(1)由B = ，求出A + C的值，再由正弦定理以及m = 3，得出sin A + sin B = √3 sin C，再根据三角恒等变换，求出A，C的值，即可计算sin(A − C). </p>
+            <p>(2)根据m = c = 2，利用基本不等式求出ab的最大值，即可得出△ABC面积的最大值π6</p>
+        </div>
+    </div>
+
+    <!-- 分页 -->
+    <div style="page-break-after: always;"></div>
+    <!-- 页眉 -->
+    <div class="divHeader">
+        <div class="divHeader-l">2018-2019第一次月考（理科）&nbsp;&nbsp;&nbsp;&nbsp;高三511-曾培</div>
+        <div class="divHeader-r"><img src="./math_logo.png"></div>
+    </div>
+
+    <!-- 推荐练习 参考答案 -->
+    <div class="reference_result">
+        <h4 class="result_title">推荐练习 参考答案</h4>
+        <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+		 <!-- 填空题/选择题 -->
+        <div class="result_item">
+            <p class="topic sub">1-1</p>
+            <p class="bold">【参考答案】</p>
+            <p>A</p>
+            <p class="bold">【解析】</p>
+            <p>根据函数与方程的关系，得到xf(x) = −1(x > 0)，构造函数h(x) = xf(x)，求函数的导数，研究函数的单调性和取值范围进行求解即可．</p>
+            <p class="bold">【解答】</p>
+            <p>解：由g(x) = xf(x) + 1 = 0得，xf(x) = −1(x > 0)，设h(x) = xf(x)， 则h'(x) = f(x) + xf'(x)，∵xf'(x) + f(x) > 0， ∴h'(x) > 0，即函数在x > 0时为增函数，∵h(0) = 0 ⋅ f(0) = 0，∴当x > 0时，h(x) > h(0) = 0， 故h(x) = −1无解，故函数g(x) = xf(x) + 1(x > 0)的零点个数为0个.</p>
+            <p>故选：A</p>
+        </div>
+        <!-- 作答题 -->
+        <div class="result_item">
+            <p class="topic sub">4-1</p>
+            <p class="bold">【解答】</p>
+            <p>解：由1 + 2 cos(B + C) = 0，和A + B + C = 180∘,
+                所以cos A = ，sin A = ，
+                又∵a = √3, b = √2,
+                ∴由正弦定理得：sin B = = , 由b < a知B < A，所以B不是最大角，B < 90∘．
+                从而cos B = √1 − sin2 B = ,
+                由上述结果知sin C = sin(A + B) = ( + )，
+                设边BC上的高为h则有h = b sin C = .</p>
+            <p class="bold">【解析】</p>
+            <p>利用三角形的内角和180∘，1 + 2 cos(B + C) = 0，求出A的正弦值，利用正弦定理，求出B的正弦值，然后求出C的正弦值，即可求出边BC上的高．</p>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

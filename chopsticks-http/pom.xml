@@ -5,10 +5,15 @@
 	<parent>
 		<groupId>com.chopsticks.sdk</groupId>
 		<artifactId>chopsticks-parent</artifactId>
-		<version>1.2.4-SNAPSHOT</version>
+		<version>1.2.7-SNAPSHOT</version>
 	</parent>
 	<artifactId>chopsticks-http</artifactId>
 	<dependencies>
+		<dependency>
+			<groupId>org.apache.rocketmq</groupId>
+			<artifactId>rocketmq-client</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>jcl-over-slf4j</artifactId>

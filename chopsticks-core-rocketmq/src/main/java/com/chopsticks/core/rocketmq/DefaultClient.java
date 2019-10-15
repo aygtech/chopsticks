@@ -108,24 +108,26 @@ public class DefaultClient extends DefaultCaller implements Client{
 
 	@Override
 	public synchronized void shutdown() {
-		super.shutdown();
-		if(invokeConsumer != null) {
-			invokeConsumer.shutdown();
-			invokeConsumer = null;
+		if(started) {
+			super.shutdown();
+			if(invokeConsumer != null) {
+				invokeConsumer.shutdown();
+				invokeConsumer = null;
+			}
+			if(delayNoticeConsumer != null) {
+				delayNoticeConsumer.shutdown();
+				delayNoticeConsumer = null;
+			}
+			if(noticeConsumer != null){
+				noticeConsumer.shutdown();
+				noticeConsumer = null;
+			}
+			if(orderedNoticeConsumer != null) {
+				orderedNoticeConsumer.shutdown();
+				orderedNoticeConsumer = null;
+			}
+			started = false;
 		}
-		if(delayNoticeConsumer != null) {
-			delayNoticeConsumer.shutdown();
-			delayNoticeConsumer = null;
-		}
-		if(noticeConsumer != null){
-			noticeConsumer.shutdown();
-			noticeConsumer = null;
-		}
-		if(orderedNoticeConsumer != null) {
-			orderedNoticeConsumer.shutdown();
-			orderedNoticeConsumer = null;
-		}
-		started = false;
 	}
 	
 	@Override
@@ -228,9 +230,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 						orderedNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
-				beforeOrderedNoticeConsumerStart(orderedNoticeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(orderedNoticeConsumer);
+				beforeOrderedNoticeConsumerStart(orderedNoticeConsumer);
 				orderedNoticeConsumer.start();
 				orderedNoticeConsumer = Const.buildConsumer(orderedNoticeConsumer);
 				for(String topic : topics) {
@@ -288,10 +290,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 						noticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
-				beforeNoticeConsumerStart(noticeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(noticeConsumer);
+				beforeNoticeConsumerStart(noticeConsumer);
 				noticeConsumer.start();
+				
 				noticeConsumer = Const.buildConsumer(noticeConsumer);
 				for(String topic : topics) {
 					noticeConsumer.fetchSubscribeMessageQueues(topic);
@@ -348,9 +351,9 @@ public class DefaultClient extends DefaultCaller implements Client{
 						delayNoticeConsumer.subscribe(topic, Joiner.on("||").join(tags));
 					}
 				}
-				beforeNoticeConsumerStart(delayNoticeConsumer);
 				createTopics(topics);
 				checkConsumerSubscription(delayNoticeConsumer);
+				beforeNoticeConsumerStart(delayNoticeConsumer);
 				delayNoticeConsumer.start();
 				delayNoticeConsumer = Const.buildConsumer(delayNoticeConsumer);
 				for(String topic : topics) {
@@ -413,9 +416,10 @@ public class DefaultClient extends DefaultCaller implements Client{
 						invokeConsumer.subscribe(topic, Joiner.on("||").join(newTags));
 					}
 				}
-				beforeInvokeConsumerStart(invokeConsumer);
+				
 				createTopics(topics);
 				checkConsumerSubscription(invokeConsumer);
+				beforeInvokeConsumerStart(invokeConsumer);
 				invokeConsumer.start();
 				invokeConsumer = Const.buildConsumer(invokeConsumer);
 				for(String topic : topics) {

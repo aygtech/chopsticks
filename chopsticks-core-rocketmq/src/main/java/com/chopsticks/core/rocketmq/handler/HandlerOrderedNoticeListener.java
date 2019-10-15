@@ -41,6 +41,12 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 	public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
 		for(MessageExt ext : msgs) {
 			try {
+				if(orderedNoticeConsumer.getMaxReconsumeTimes() < ext.getReconsumeTimes()) {
+					log.warn("retryCount {} < realRetryCount {}"
+							, orderedNoticeConsumer.getMaxReconsumeTimes()
+							, ext.getReconsumeTimes());
+					return ConsumeOrderlyStatus.SUCCESS;
+				}
 				return consumeMessage(ext, context);
 			}catch (Throwable e) {
 				log.error(e.getMessage(), e);

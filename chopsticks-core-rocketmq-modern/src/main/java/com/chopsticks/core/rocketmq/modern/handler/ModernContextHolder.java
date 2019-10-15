@@ -5,6 +5,7 @@ import java.util.Set;
 
 import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.core.modern.handler.ModernNoticeContext;
+import com.google.common.collect.Maps;
 
 public class ModernContextHolder {
 	
@@ -13,6 +14,14 @@ public class ModernContextHolder {
 	private static final ThreadLocal<Set<String>> TRACE_NOS = new ThreadLocal<Set<String>>();
 	private static final ThreadLocal<Long> REQ_TIME = new ThreadLocal<Long>();
 	private static final ThreadLocal<Promise<?>> INVOKE_EXECUTE_PROMISE = new ThreadLocal<Promise<?>>();
+	
+	public static final String INTERFACE_NAME_KEY = "interfaceNameKey";
+	private static final ThreadLocal<Map<String, Object>> EXT = new ThreadLocal<Map<String,Object>>(){
+		@Override
+		protected Map<String, Object> initialValue() {
+			return Maps.newHashMap();
+		}
+	};
 	
 	public static void setNoticeContext(ModernNoticeContext ctx) {
 		NOTICE_CONTEXT.set(ctx);
@@ -36,6 +45,7 @@ public class ModernContextHolder {
 		TRACE_NOS.remove();
 		REQ_TIME.remove();
 		INVOKE_EXECUTE_PROMISE.remove();
+		EXT.remove();
 	}
 	public static void setExtParams(Map<String, String> extParams) {
 		EXT_PARAMS.set(extParams);
@@ -56,4 +66,10 @@ public class ModernContextHolder {
 		return REQ_TIME.get();
 	}
 	
+	public static String getInterfaceName(){
+		return EXT.get().get(INTERFACE_NAME_KEY) + "";
+	}
+	public static void setInterfaceName(String inter) {
+		EXT.get().put(INTERFACE_NAME_KEY, inter);
+	}
 }

@@ -18,12 +18,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
 import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
@@ -181,23 +184,25 @@ public class DefaultCaller implements Caller {
 
 	@Override
 	public synchronized void shutdown() {
-		if(producer != null) {
-			producer.shutdown();
-			producer = null;
-			if(invokeSender != null) {
-				invokeSender.shutdown();
-				invokeSender = null;
+		if(started) {
+			if(producer != null) {
+				producer.shutdown();
+				producer = null;
+				if(invokeSender != null) {
+					invokeSender.shutdown();
+					invokeSender = null;
+				}
+				if(mqAdminExt != null) {
+					mqAdminExt.shutdown();
+					mqAdminExt = null;
+				}
 			}
-			if(mqAdminExt != null) {
-				mqAdminExt.shutdown();
-				mqAdminExt = null;
+			if(callerInvokeConsumer != null) {
+				callerInvokeConsumer.shutdown();
+				callerInvokeConsumer = null;
 			}
+			started = false;
 		}
-		if(callerInvokeConsumer != null) {
-			callerInvokeConsumer.shutdown();
-			callerInvokeConsumer = null;
-		}
-		started = false;
 	}
 	protected void beforeCallerInvokeConsumerStart(DefaultMQPushConsumer callerInvokeConsumer) {
 	}
@@ -811,6 +816,9 @@ public class DefaultCaller implements Caller {
 			ConcurrentMap<String, SubscriptionData> newSubscriptionTable = consumer.getDefaultMQPushConsumerImpl().getRebalanceImpl().getSubscriptionInner();
 			Map<String, Set<String>> newSubscription = Maps.newHashMap();
 			for(Entry<String, SubscriptionData> entry : newSubscriptionTable.entrySet()) {
+				if(entry.getKey().startsWith(MixAll.RETRY_GROUP_TOPIC_PREFIX)) {
+					continue;
+				}
 				newSubscription.put(entry.getKey(), entry.getValue().getTagsSet());
 			}
 			
@@ -820,8 +828,12 @@ public class DefaultCaller implements Caller {
 		}catch (Throwable e) {
 			if(e instanceof CoreException) {
 				throw (CoreException)e;
-			}else {
+			}else if(e instanceof MQBrokerException && ((MQBrokerException)e).getResponseCode() == ResponseCode.CONSUMER_NOT_ONLINE){
 				// ignore
+			}else if(e instanceof MQClientException && ((MQClientException)e).getResponseCode() == ResponseCode.TOPIC_NOT_EXIST){
+				// ignore
+			}else {
+				throw new DefaultCoreException(e);
 			}
 		}
 	}
