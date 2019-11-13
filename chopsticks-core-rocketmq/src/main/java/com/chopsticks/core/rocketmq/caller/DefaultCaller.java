@@ -1,6 +1,7 @@
 package com.chopsticks.core.rocketmq.caller;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.util.Iterator;
@@ -14,6 +15,9 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -21,10 +25,15 @@ import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.exception.MQBrokerException;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
+import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
+import org.apache.rocketmq.client.producer.SendStatus;
+import org.apache.rocketmq.client.producer.TransactionMQProducer;
+import org.apache.rocketmq.client.producer.TransactionSendResult;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
@@ -32,6 +41,7 @@ import org.apache.rocketmq.common.protocol.body.GroupList;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 import org.apache.rocketmq.remoting.common.RemotingUtil;
+import org.apache.rocketmq.remoting.exception.RemotingConnectException;
 import org.apache.rocketmq.tools.admin.DefaultMQAdminExt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,9 +59,12 @@ import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.rocketmq.caller.impl.BatchInvokerSender;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
+import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeResult;
+import com.chopsticks.core.rocketmq.caller.impl.DefaultTransactionListener;
 import com.chopsticks.core.rocketmq.caller.impl.SingleInvokeSender;
 import com.chopsticks.core.rocketmq.exception.DefaultCoreException;
 import com.google.common.base.Optional;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -59,6 +72,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.netty.util.internal.ThreadLocalRandom; 
 
@@ -79,6 +93,15 @@ public class DefaultCaller implements Caller {
 	
 	private DefaultMQProducer producer;
 	
+	private TransactionChecker transactionchecker;
+	private TransactionMQProducer transactionProducer;
+	private static final ExecutorService TRANSACTION_CHECK_EXECUTOR_SERVICE = new ThreadPoolExecutor(Const.AVAILABLE_PROCESSORS
+																									, Const.AVAILABLE_PROCESSORS
+																									, 60L
+																									, TimeUnit.SECONDS
+																									, new LinkedBlockingQueue<Runnable>()
+																									, new ThreadFactoryBuilder().setDaemon(true).setNameFormat("TRANSACTION_CHECK_EXECUTOR_SERVICE-%s").build());
+	
 	private DefaultMQPushConsumer callerInvokeConsumer;
 	
 	private volatile boolean started;
@@ -89,7 +112,8 @@ public class DefaultCaller implements Caller {
 	
 	private static final MessageQueueSelector DEFAULT_MESSAGE_QUEUE_SELECTOR = new OrderedMessageQueueSelector();
 	
-	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(100L);
+//	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(100L);
+	private long batchExecuteIntervalMillis = TimeUnit.MILLISECONDS.toMillis(0L);
 	
 	private BaseInvokeSender invokeSender;
 	
@@ -126,12 +150,19 @@ public class DefaultCaller implements Caller {
 				mqAdminExt = buildAdminExt();
 				callerInvokePromiseMap = new ConcurrentHashMap<String, DefaultTimeoutPromise<BaseInvokeResult>>();
 				producer = buildAndStartProducer();
+				transactionProducer = buildAndStartTransactionProducer();
 				invokeSender = buildInvokeSender(producer, batchExecuteIntervalMillis);
 				callerInvokeConsumer = buildAndStartCallerInvokeConsumer();
 				started = true;	
 			}catch (Throwable e) {
+				if(mqAdminExt != null) {
+					mqAdminExt.shutdown();
+				}
 				if(producer != null) {
 					producer.shutdown();
+				}
+				if(transactionProducer != null) {
+					transactionProducer.shutdown();
 				}
 				if(invokeSender != null) {
 					invokeSender.shutdown();
@@ -147,17 +178,18 @@ public class DefaultCaller implements Caller {
 			}
 		}
 	}
-	
 
 	protected void beforeAdminExtStart(DefaultMQAdminExt mqAdminExt) {
 	}
 	private DefaultMQAdminExt buildAdminExt() {
+		Stopwatch watch = Stopwatch.createStarted();
 		DefaultMQAdminExt mqAdminExt = new DefaultMQAdminExt(getGroupName() + com.chopsticks.core.rocketmq.Const.INVOKE_ADMIN_EXT_SUFFIX, TimeUnit.MINUTES.toMillis(1L));
 		try {
 			beforeAdminExtStart(mqAdminExt);
 			mqAdminExt.setNamesrvAddr(namesrvAddr);
 			if(mqAdminExtSupport) {
 				mqAdminExt.start();
+				log.debug("{} adminExt start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 			}
 		}catch (Throwable e) {
 			if(e instanceof CoreException) {
@@ -188,14 +220,18 @@ public class DefaultCaller implements Caller {
 			if(producer != null) {
 				producer.shutdown();
 				producer = null;
-				if(invokeSender != null) {
-					invokeSender.shutdown();
-					invokeSender = null;
-				}
-				if(mqAdminExt != null) {
-					mqAdminExt.shutdown();
-					mqAdminExt = null;
-				}
+			}
+			if(transactionProducer != null) {
+				transactionProducer.shutdown();
+				transactionProducer = null;
+			}
+			if(invokeSender != null) {
+				invokeSender.shutdown();
+				invokeSender = null;
+			}
+			if(mqAdminExt != null) {
+				mqAdminExt.shutdown();
+				mqAdminExt = null;
 			}
 			if(callerInvokeConsumer != null) {
 				callerInvokeConsumer.shutdown();
@@ -208,6 +244,7 @@ public class DefaultCaller implements Caller {
 	}
 	private DefaultMQPushConsumer buildAndStartCallerInvokeConsumer() {
 		DefaultMQPushConsumer callerInvokeConsumer = null;
+		Stopwatch watch = Stopwatch.createStarted();
 		if(isInvokable()) {
 			callerInvokeConsumer = new DefaultMQPushConsumer(com.chopsticks.core.rocketmq.Const.CONSUMER_PREFIX + getGroupName() + com.chopsticks.core.rocketmq.Const.CALLER_INVOKE_CONSUMER_SUFFIX);
 			callerInvokeConsumer.setNamesrvAddr(namesrvAddr);
@@ -230,8 +267,9 @@ public class DefaultCaller implements Caller {
 				long waitRebalanceMillis = 100L;
 				while(getRespQueue(callerInvokeConsumer).isEmpty()) {
 					TimeUnit.MILLISECONDS.sleep(waitRebalanceMillis);
-					log.warn("continue wait rebalance time {}ms", waitRebalanceMillis);
+					log.info("continue wait rebalance time {}ms", waitRebalanceMillis);
 				}
+				log.trace("{} callerInvokeConsumer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 			}catch (Throwable e) {
 				if(callerInvokeConsumer != null) {
 					callerInvokeConsumer.shutdown();
@@ -249,8 +287,9 @@ public class DefaultCaller implements Caller {
 		
 	}
 	private DefaultMQProducer buildAndStartProducer() {
+		Stopwatch watch = Stopwatch.createStarted();
 		DefaultMQProducer producer = null;
-		producer = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName());
+		producer = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName(), true);
 		producer.setNamesrvAddr(namesrvAddr);
 		producer.setSendMsgTimeout(Long.valueOf(DEFAULT_ASYNC_TIMEOUT_MILLIS).intValue());
 		producer.setRetryAnotherBrokerWhenNotStoreOK(true);
@@ -258,7 +297,7 @@ public class DefaultCaller implements Caller {
 		try {
 			beforeProducerStart(producer);
 			producer.start();
-			return producer;
+			log.trace("{} producer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 		}catch (Throwable e) {
 			if(producer != null) {
 				producer.shutdown();
@@ -269,7 +308,37 @@ public class DefaultCaller implements Caller {
 				throw new DefaultCoreException(e);
 			}
 		}
+		return producer;
 	}
+	
+	private TransactionMQProducer buildAndStartTransactionProducer() {
+		Stopwatch watch = Stopwatch.createStarted();
+		TransactionMQProducer transactionMQProducer = null;
+		if(transactionchecker != null) {
+			transactionMQProducer = new TransactionMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_TRANSACTION_PREFIX + getGroupName());
+			transactionMQProducer.setNamesrvAddr(namesrvAddr);
+			transactionMQProducer.setSendMsgTimeout(Long.valueOf(DEFAULT_ASYNC_TIMEOUT_MILLIS).intValue());
+			transactionMQProducer.setRetryAnotherBrokerWhenNotStoreOK(true);
+			transactionMQProducer.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
+			transactionMQProducer.setExecutorService(TRANSACTION_CHECK_EXECUTOR_SERVICE);
+			transactionMQProducer.setTransactionListener(new DefaultTransactionListener(transactionchecker));
+			try {
+				transactionMQProducer.start();
+				log.trace("{} transactionProducer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
+			} catch(Throwable e) {
+				if(transactionMQProducer != null) {
+					transactionMQProducer.shutdown();
+				}
+				if(e instanceof CoreException) {
+					throw (CoreException)e;
+				}else {
+					throw new DefaultCoreException(e);
+				}
+			}
+		}
+		return transactionMQProducer;
+	}
+	
 	
 	public BaseInvokeResult invoke(BaseInvokeCommand cmd) {
 		return this.invoke(cmd, DEFAULT_SYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
@@ -433,9 +502,26 @@ public class DefaultCaller implements Caller {
 		final DefaultTimeoutPromise<BaseNoticeResult> promise = new DefaultTimeoutPromise<BaseNoticeResult>(DEFAULT_ASYNC_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
 		try {
 			Message msg = buildNoticeMessage(cmd);
-			NoticeSendCallback callback = new NoticeSendCallback(promise);
-			producer.send(msg, callback);
-			promise.addListener(new CallerNoticeTimeoutPromiseListener(callback));
+			// TODO 发送者统一接口，方便后续统一校验和升级，隔离核心发送代码，现在事务消息不支持顺序，延迟
+			if(cmd.isTransaction()) {
+				checkNotNull(transactionProducer, "unsupport transaction");
+				//TODO 不起作用
+				msg.putUserProperty(MessageConst.PROPERTY_CHECK_IMMUNITY_TIME_IN_SECONDS, "2");
+				TransactionSendResult sendResult = transactionProducer.sendMessageInTransaction(msg, null);
+				if(sendResult.getSendStatus() == SendStatus.SEND_OK) {
+					DefaultNoticeResult ret = new DefaultNoticeResult(sendResult.getMsgId());
+					ret.setOriginId(sendResult.getOffsetMsgId());
+					ret.setTransactionId(sendResult.getTransactionId());
+					ret.setSendResult(sendResult);
+					promise.set(ret);
+				}else {
+					promise.setException(new DefaultCoreException(sendResult.getSendStatus().name()));
+				}
+			}else {
+				NoticeSendCallback callback = new NoticeSendCallback(promise);
+				producer.send(msg, callback);
+				promise.addListener(new CallerNoticeTimeoutPromiseListener(callback));
+			}
 		}catch (Throwable e) {
 			promise.setException(e);
 		}
@@ -443,6 +529,7 @@ public class DefaultCaller implements Caller {
 	}
 	
 	public Promise<BaseNoticeResult> asyncNotice(final BaseNoticeCommand cmd, final Object orderKey) {
+		checkArgument(!cmd.isTransaction(), "ordered unsupport transaction");
 		checkArgument(started, "%s must be call method start", getGroupName());
 		checkArgument(orderKey != null, "orderKey cannot be null");
 		checkArgument(!Strings.isNullOrEmpty(cmd.getMethod()), "method cannot be null or empty");
@@ -460,6 +547,7 @@ public class DefaultCaller implements Caller {
 	}
 	
 	private DelayNoticeRequest buildDelayNoticeRequest(BaseNoticeCommand cmd, long timeout, TimeUnit timeoutUnit) {
+		checkArgument(!cmd.isTransaction(), "delay unsupport transaction");
 		DelayNoticeRequest req = new DelayNoticeRequest();
 		req.setReqTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
 		req.setInvokeTime(com.chopsticks.core.rocketmq.Const.CLIENT_TIME.getNow());
@@ -553,10 +641,6 @@ public class DefaultCaller implements Caller {
 		NoticeRequest req = buildNoticeRequest(cmd);
 		Message msg = new Message(buildNoticeTopic(cmd.getTopic()), cmd.getTag(), cmd.getBody());
 		msg.putUserProperty(com.chopsticks.core.rocketmq.Const.NOTICE_REQUEST_KEY, JSON.toJSONString(req));
-		Optional<Entry<Long, Integer>> level = com.chopsticks.core.rocketmq.Const.getDelayLevel(TimeUnit.SECONDS.toMillis(1L));
-		if(level.isPresent()) {
-			msg.setDelayTimeLevel(level.get().getValue());
-		}
 		Set<String> traceNo = Sets.newHashSet(cmd.getTraceNos());
 		traceNo.add(com.chopsticks.core.rocketmq.Const.buildTraceNoByMethod(cmd.getTag()));
 		msg.setKeys(traceNo);
@@ -630,6 +714,10 @@ public class DefaultCaller implements Caller {
 		return producer;
 	}
 	
+	public TransactionMQProducer getTransactionProducer() {
+		return transactionProducer;
+	}
+	
 	protected String getNamesrvAddr() {
 		return namesrvAddr;
 	}
@@ -700,7 +788,7 @@ public class DefaultCaller implements Caller {
 
 	@Override
 	public Promise<? extends NoticeResult> asyncNotice(NoticeCommand cmd) {
-		return this.asyncNotice(cmd, null);
+		return this.asyncNotice(buildBaseNoticeCommand(cmd));
 	}
 
 	@Override
@@ -794,7 +882,11 @@ public class DefaultCaller implements Caller {
 				mqAdminExt.createTopic(mqAdminExt.getCreateTopicKey(), topic, com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
 			}
 		}catch (Throwable e) {
-			throw new DefaultCoreException(e);
+			if(e instanceof RemotingConnectException) {
+				throw new DefaultCoreException("network connection error...").setCode(DefaultCoreException.NETWORK_CONNECTION_ERROR);
+			}else {
+				throw new DefaultCoreException(e);
+			}
 		}
 		
 	}
@@ -845,8 +937,30 @@ public class DefaultCaller implements Caller {
 	public boolean isMqAdminExtSupport() {
 		return mqAdminExtSupport;
 	}
-
+	public void setTransactionchecker(TransactionChecker transactionchecker) {
+		this.transactionchecker = transactionchecker;
+	}
 	public void setMqAdminExtSupport(boolean mqAdminExtSupport) {
 		this.mqAdminExtSupport = mqAdminExtSupport;
 	}
+	
+	public void transactionCommit(BaseNoticeResult result) throws Throwable{
+		if(transactionProducer != null && result.getSendResult() != null) {
+			// TODO async save message， commit fast, broker miss transaction message
+			TimeUnit.MILLISECONDS.sleep(500L);
+			transactionProducer.getDefaultMQProducerImpl().endTransaction(result.getSendResult(), LocalTransactionState.COMMIT_MESSAGE, null);
+		}else {
+			log.warn("not transaction result : {}", result);
+		}
+	}
+	
+	public void transactionRollback(BaseNoticeResult result, Throwable e) throws Throwable{
+		if(transactionProducer != null && result.getSendResult() != null) {
+			transactionProducer.getDefaultMQProducerImpl().endTransaction(result.getSendResult(), LocalTransactionState.ROLLBACK_MESSAGE, e);
+		}else {
+			log.warn("not transaction result : {}", result);
+		}
+	}
+	
+	
 }

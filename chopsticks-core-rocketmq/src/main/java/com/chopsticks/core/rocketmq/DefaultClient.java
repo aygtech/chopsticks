@@ -25,6 +25,7 @@ import com.chopsticks.core.rocketmq.handler.HandlerNoticeListener;
 import com.chopsticks.core.rocketmq.handler.HandlerOrderedNoticeListener;
 import com.chopsticks.core.rocketmq.handler.impl.BaseHandlerWapper;
 import com.google.common.base.Joiner;
+import com.google.common.base.Stopwatch;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
@@ -192,10 +193,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	
 	private DefaultMQPushConsumer buildAndStartOrderedNoticeCosumer() {
+		Stopwatch watch = Stopwatch.createStarted();
 		DefaultMQPushConsumer orderedNoticeConsumer = null;
 		if(isOrderedNoticeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.ORDERED_NOTICE_CONSUMER_SUFFIX;
-			orderedNoticeConsumer = new DefaultMQPushConsumer(groupName);
+			orderedNoticeConsumer = new DefaultMQPushConsumer(groupName, true);
 			orderedNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
 			orderedNoticeConsumer.setConsumeThreadMin(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumer.setConsumeThreadMax(getOrderedNoticeExecutableNum());
@@ -238,6 +240,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 				for(String topic : topics) {
 					orderedNoticeConsumer.fetchSubscribeMessageQueues(topic);
 				}
+				log.trace("{} orderedNoticeConsumer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 			}catch (Throwable e) {
 				if(orderedNoticeConsumer != null) {
 					orderedNoticeConsumer.shutdown();
@@ -253,10 +256,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 	}
 	
 	private DefaultMQPushConsumer buildAndStartNoticeCosumer() {
+		Stopwatch watch = Stopwatch.createStarted();
 		DefaultMQPushConsumer noticeConsumer = null;
 		if(isNoticeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.NOTICE_CONSUMER_SUFFIX;
-			noticeConsumer = new DefaultMQPushConsumer(groupName);
+			noticeConsumer = new DefaultMQPushConsumer(groupName, true);
 			noticeConsumer.setNamesrvAddr(getNamesrvAddr());
 			noticeConsumer.setConsumeThreadMin(getNoticeExecutableNum());
 			noticeConsumer.setConsumeThreadMax(getNoticeExecutableNum());
@@ -294,11 +298,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 				checkConsumerSubscription(noticeConsumer);
 				beforeNoticeConsumerStart(noticeConsumer);
 				noticeConsumer.start();
-				
 				noticeConsumer = Const.buildConsumer(noticeConsumer);
 				for(String topic : topics) {
 					noticeConsumer.fetchSubscribeMessageQueues(topic);
 				}
+				log.trace("{} noticeConsumer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 			}catch (Throwable e) {
 				if(noticeConsumer != null) {
 					noticeConsumer.shutdown();
@@ -314,10 +318,11 @@ public class DefaultClient extends DefaultCaller implements Client{
 	}
 	
 	private DefaultMQPushConsumer buildAndStartDelayNoticeCosumer() {
+		Stopwatch watch = Stopwatch.createStarted();
 		DefaultMQPushConsumer delayNoticeConsumer = null;
 		if(isDelayNoticeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.DELAY_NOTICE_CONSUMER_SUFFIX;
-			delayNoticeConsumer = new DefaultMQPushConsumer(groupName);
+			delayNoticeConsumer = new DefaultMQPushConsumer(groupName, true);
 			delayNoticeConsumer.setNamesrvAddr(getNamesrvAddr());
 			delayNoticeConsumer.setConsumeThreadMin(getDelayNoticeExecutableNum());
 			delayNoticeConsumer.setConsumeThreadMax(getDelayNoticeExecutableNum());
@@ -359,6 +364,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 				for(String topic : topics) {
 					delayNoticeConsumer.fetchSubscribeMessageQueues(topic);
 				}
+				log.trace("{} delayNoticeConsumer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 			}catch (Throwable e) {
 				if(delayNoticeConsumer != null) {
 					delayNoticeConsumer.shutdown();
@@ -380,6 +386,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 	
 	private DefaultMQPushConsumer buildAndStartInvokeCosumer() {
 		DefaultMQPushConsumer invokeConsumer = null;
+		Stopwatch watch = Stopwatch.createStarted();
 		if(isInvokeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.INVOKE_CONSUMER_SUFFIX;
 			invokeConsumer = new DefaultMQPushConsumer(groupName);
@@ -425,6 +432,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 				for(String topic : topics) {
 					invokeConsumer.fetchSubscribeMessageQueues(topic);
 				}
+				log.trace("{} invokeConsumer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 			}catch (Throwable e) {
 				if(invokeConsumer != null) {
 					invokeConsumer.shutdown();

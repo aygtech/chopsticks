@@ -65,6 +65,7 @@ public class Const {
 
 	public static final String PRODUCER_PREFIX = "PID_";
 	public static final String CONSUMER_PREFIX = "CID_";
+	public static final String PRODUCER_TRANSACTION_PREFIX = "PID_TX_";
 	
 	public static final String TRACE_METHOD_PREFIX = "TRACE_METHOD_";
 	public static final String TRACE_INVOKE_REQ_PREFIX = "TRACE_REQ_";

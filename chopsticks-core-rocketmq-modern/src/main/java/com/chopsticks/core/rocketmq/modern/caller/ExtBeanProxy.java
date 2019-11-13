@@ -13,33 +13,22 @@ import com.chopsticks.core.rocketmq.caller.BaseNoticeResult;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultInvokeCommand;
 import com.chopsticks.core.rocketmq.caller.impl.DefaultNoticeCommand;
 import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
+import com.chopsticks.core.rocketmq.modern.caller.impl.DefaultModernNoticeCommand;
 import com.chopsticks.core.rocketmq.modern.handler.ModernContextHolder;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 public class ExtBeanProxy extends BaseProxy {
 	private String clazzName;
-	private DefaultModernClient client;
 
 	public ExtBeanProxy(String clazzName, DefaultModernClient client) {
+		super(client);
 		this.clazzName = clazzName;
-		this.client = client;
 	}
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		client.getModernClientProxy().beforeExtBeanInvoke(proxy, getMethod(method), args);
-		if(method.getName().toLowerCase().contains("asyncInvoke".toLowerCase())) {
-			return asyncInvoke(method, args);
-		}else if(method.getName().toLowerCase().contains("invoke".toLowerCase())) {
-			return asyncInvoke(method, args).get();
-		}else if(method.getName().toLowerCase().contains("asyncNotice".toLowerCase())) {
-			return asyncNotice(method, args);
-		}else if(method.getName().toLowerCase().contains("notice".toLowerCase())) {
-			return asyncNotice(method, args).get();
-		}else {
-			throw new RuntimeException("unsupport method");
-		}
+		return innerInvoke(proxy, method, args);
 	}
 	
 	private Promise<BaseNoticeResult> asyncNotice(Method method, Object[] args){
@@ -48,6 +37,9 @@ public class ExtBeanProxy extends BaseProxy {
 		
 		final DefaultNoticeCommand noticeCmd = new DefaultNoticeCommand(clazzName, cmd.getMethod(), body);
 		if(cmd instanceof BaseModernCommand) {
+			if(cmd instanceof DefaultModernNoticeCommand) {
+				noticeCmd.setTransaction(((DefaultModernNoticeCommand)cmd).isTransaction());
+			}
 			Map<String, String> extParams = Maps.newHashMap(getExtParams());
 			extParams.putAll(((BaseModernCommand)cmd).getExtParams());
 			noticeCmd.setExtParams(extParams);
@@ -122,5 +114,20 @@ public class ExtBeanProxy extends BaseProxy {
 			public void onFailure(Throwable t) {}
 		});
 		return baseResult;
+	}
+
+	@Override
+	public Object innerInvoke(Object proxy, Method method, Object[] args) throws Throwable {
+		if(method.getName().toLowerCase().contains("asyncInvoke".toLowerCase())) {
+			return asyncInvoke(method, args);
+		}else if(method.getName().toLowerCase().contains("invoke".toLowerCase())) {
+			return asyncInvoke(method, args).get();
+		}else if(method.getName().toLowerCase().contains("asyncNotice".toLowerCase())) {
+			return asyncNotice(method, args);
+		}else if(method.getName().toLowerCase().contains("notice".toLowerCase())) {
+			return asyncNotice(method, args).get();
+		}else {
+			throw new RuntimeException("unsupport method");
+		}
 	}
 }

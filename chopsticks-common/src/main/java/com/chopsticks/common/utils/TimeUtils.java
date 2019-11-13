@@ -5,12 +5,14 @@ import java.text.SimpleDateFormat;
 public class TimeUtils {
 	
 	private static final ThreadLocal<SimpleDateFormat> yyyyMMddHHmmssSSS = new ThreadLocal<SimpleDateFormat>() {
+		@Override
 		protected SimpleDateFormat initialValue() {
 			return new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		} 
 	};
 	
 	private static final ThreadLocal<SimpleDateFormat> MMddHH = new ThreadLocal<SimpleDateFormat>() {
+		@Override
 		protected SimpleDateFormat initialValue() {
 			return new SimpleDateFormat("MMddHH");
 		} 

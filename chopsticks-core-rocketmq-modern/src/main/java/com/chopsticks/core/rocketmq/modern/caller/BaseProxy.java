@@ -9,6 +9,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.annotation.JSONType;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.chopsticks.core.rocketmq.modern.Const;
+import com.chopsticks.core.rocketmq.modern.DefaultModernClient;
 import com.chopsticks.core.rocketmq.modern.exception.ModernCoreException;
 import com.google.common.base.Charsets;
 import com.google.common.base.Strings;
@@ -18,6 +19,12 @@ import com.google.common.collect.Maps;
 public abstract class BaseProxy implements InvocationHandler {
 	private static final String DEFAULT_TRACE_NO_PREFIX = "DEFAULT_TRACE_";
 	private Map<String, String> extParams = Maps.newHashMap();
+	
+	protected DefaultModernClient client;
+	
+	BaseProxy(DefaultModernClient client){
+		this.client = client;
+	}
 	
 	protected String getTopic(Class<?> clazz) {
 		JSONType jsonType = FluentIterable.from(clazz.getDeclaredAnnotations())
@@ -35,7 +42,7 @@ public abstract class BaseProxy implements InvocationHandler {
 	}
 	
 	protected String getDefaultTraceNo() {
-		return DEFAULT_TRACE_NO_PREFIX + UUID.randomUUID().toString();
+		return getDefaultTraceNoPrefix() + UUID.randomUUID().toString();
 	}
 
 	public static String getDefaultTraceNoPrefix() {
@@ -65,4 +72,6 @@ public abstract class BaseProxy implements InvocationHandler {
 		this.extParams = extParams;
 		return this;
 	}
+	
+	public abstract Object innerInvoke(Object proxy, Method method, Object[] args) throws Throwable;
 }

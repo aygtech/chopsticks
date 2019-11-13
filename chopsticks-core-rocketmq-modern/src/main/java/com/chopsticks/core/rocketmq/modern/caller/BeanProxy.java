@@ -18,16 +18,19 @@ import com.google.common.collect.Sets;
 public class BeanProxy extends BaseProxy {
 
 	private Class<?> clazz;
-	private DefaultModernClient client;
 
 	public BeanProxy(Class<?> clazz, DefaultModernClient client) {
+		super(client);
 		this.clazz = clazz;
-		this.client = client;
 	}
 
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		client.getModernClientProxy().beforeBeanInvoke(proxy, getMethod(method), args);
+		return innerInvoke(proxy, method, args);
+	}
+
+	@Override
+	public Object innerInvoke(Object proxy, Method method, Object[] args) throws Throwable {
 		byte[] body = buildBody(args);
 		DefaultInvokeCommand invokeCmd = new DefaultInvokeCommand(getTopic(clazz), getMethod(method), body);
 		if(ModernContextHolder.getTraceNos() == null || ModernContextHolder.getTraceNos().isEmpty()) {
@@ -66,4 +69,5 @@ public class BeanProxy extends BaseProxy {
 		}
 		return ret;
 	}
+	
 }

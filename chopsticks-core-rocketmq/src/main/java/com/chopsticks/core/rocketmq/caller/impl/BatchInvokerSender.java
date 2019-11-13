@@ -136,6 +136,7 @@ public class BatchInvokerSender extends BaseInvokeSender{
 			executor.shutdown();
 		}
 	}
+	@Override
 	public void send(Message message, DefaultTimeoutPromise<BaseInvokeResult> promise) {
 		Message compressMsg = message.getBody().length > DEFAULT_COMPRESS_BODY_LENGTH ? compressInvokeMsgBody(message) : message;
 		BatchMessage batchMsg = new BatchMessage();
@@ -154,6 +155,7 @@ public class BatchInvokerSender extends BaseInvokeSender{
 		try {
 			InvokeRequest req = JSON.parseObject(msg.getUserProperty(Const.INVOKE_REQUEST_KEY), InvokeRequest.class);
 			req.setCompress(true);
+			//TODO waiting apache doc
 			int level = producer.getDefaultMQProducerImpl().getZipCompressLevel();
 			byte[] body = UtilAll.compress(msg.getBody(), level);
 			msg.setBody(body);

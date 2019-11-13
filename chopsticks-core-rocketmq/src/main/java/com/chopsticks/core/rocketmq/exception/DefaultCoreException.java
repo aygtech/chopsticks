@@ -33,6 +33,9 @@ public class DefaultCoreException extends CoreException {
 	public static final int INVOKE_CONSUMER_START_TIMEOUT = 10024;
 	public static final int SUBSCRIPTION_NOT_MATCH = 10025;
 	public static final int MESSAGE_BODY_ERROR = 10026;
+	public static final int NETWORK_CONNECTION_ERROR = 10027;
+	public static final int USER_TRANSACTION_CHECK_ERROR = 10028;
+	public static final int NOT_TRANSACTION_RETULT = 10029;
 
 	public DefaultCoreException() {
 		super();
