@@ -30,6 +30,7 @@ import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
+import org.apache.rocketmq.common.MQVersion;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
@@ -49,6 +50,7 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.common.concurrent.impl.DefaultTimeoutPromise;
+import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.core.Const;
 import com.chopsticks.core.caller.Caller;
 import com.chopsticks.core.caller.InvokeCommand;
@@ -288,19 +290,26 @@ public class DefaultCaller implements Caller {
 	}
 	private DefaultMQProducer buildAndStartProducer() {
 		Stopwatch watch = Stopwatch.createStarted();
-		DefaultMQProducer producer = null;
-		producer = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName(), true);
-		producer.setNamesrvAddr(namesrvAddr);
-		producer.setSendMsgTimeout(Long.valueOf(DEFAULT_ASYNC_TIMEOUT_MILLIS).intValue());
-		producer.setRetryAnotherBrokerWhenNotStoreOK(true);
-		producer.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
+		DefaultMQProducer producerInstance = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName());
+//		DefaultMQProducer producerInstance = new DefaultMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_PREFIX + getGroupName(), true);
+//		if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
+//			Object traceDispatcher = Reflect.on(producerInstance).field("traceDispatcher").get();
+//			if(traceDispatcher != null) {
+//				DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
+//				traceProducer.setProducerGroup(producerInstance.getProducerGroup() + traceProducer.getProducerGroup());
+//			}
+//		}
+		producerInstance.setNamesrvAddr(namesrvAddr);
+		producerInstance.setSendMsgTimeout(Long.valueOf(DEFAULT_ASYNC_TIMEOUT_MILLIS).intValue());
+		producerInstance.setRetryAnotherBrokerWhenNotStoreOK(true);
+		producerInstance.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
 		try {
-			beforeProducerStart(producer);
-			producer.start();
+			beforeProducerStart(producerInstance);
+			producerInstance.start();
 			log.trace("{} producer start time : {} s", getGroupName(), watch.elapsed(TimeUnit.SECONDS));
 		}catch (Throwable e) {
-			if(producer != null) {
-				producer.shutdown();
+			if(producerInstance != null) {
+				producerInstance.shutdown();
 			}
 			if(e instanceof CoreException) {
 				throw (CoreException)e;
@@ -308,7 +317,7 @@ public class DefaultCaller implements Caller {
 				throw new DefaultCoreException(e);
 			}
 		}
-		return producer;
+		return producerInstance;
 	}
 	
 	private TransactionMQProducer buildAndStartTransactionProducer() {
@@ -317,6 +326,7 @@ public class DefaultCaller implements Caller {
 		if(transactionchecker != null) {
 			transactionMQProducer = new TransactionMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_TRANSACTION_PREFIX + getGroupName());
 			transactionMQProducer.setNamesrvAddr(namesrvAddr);
+			transactionMQProducer.setCompressMsgBodyOverHowmuch(Integer.MAX_VALUE);
 			transactionMQProducer.setSendMsgTimeout(Long.valueOf(DEFAULT_ASYNC_TIMEOUT_MILLIS).intValue());
 			transactionMQProducer.setRetryAnotherBrokerWhenNotStoreOK(true);
 			transactionMQProducer.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
@@ -946,8 +956,6 @@ public class DefaultCaller implements Caller {
 	
 	public void transactionCommit(BaseNoticeResult result) throws Throwable{
 		if(transactionProducer != null && result.getSendResult() != null) {
-			// TODO async save message， commit fast, broker miss transaction message
-			TimeUnit.MILLISECONDS.sleep(500L);
 			transactionProducer.getDefaultMQProducerImpl().endTransaction(result.getSendResult(), LocalTransactionState.COMMIT_MESSAGE, null);
 		}else {
 			log.warn("not transaction result : {}", result);

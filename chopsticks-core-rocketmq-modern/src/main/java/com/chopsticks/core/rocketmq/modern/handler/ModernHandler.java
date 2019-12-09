@@ -9,6 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.common.concurrent.PromiseListener;
 import com.chopsticks.common.concurrent.impl.DefaultPromise;
@@ -99,7 +100,7 @@ public class ModernHandler extends BaseHandler{
 		}
 		byte[] respBody = null;
 		if(methodRet != null && methodRet != obj) {
-			respBody = JSON.toJSONString(methodRet).getBytes(Charsets.UTF_8);
+			respBody = JSON.toJSONString(methodRet, SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 		}
 		DefaultHandlerResult ret = new DefaultHandlerResult(respBody);
 		if(invokeExecutePromise != null) {
@@ -126,7 +127,7 @@ public class ModernHandler extends BaseHandler{
 							promise.setException(new ModernCoreException(String.format("promise value %s not match %s", result.getClass(), returnType)).setCode(ModernCoreException.INVOKE_RETURN_TYPE_NOT_MATCH));
 							return;
 						}
-						respBody = JSON.toJSONString(result).getBytes(Charsets.UTF_8);
+						respBody = JSON.toJSONString(result, SerializerFeature.WriteClassName).getBytes(Charsets.UTF_8);
 					}
 					promise.set(new DefaultHandlerResult(respBody));
 				};

@@ -19,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import com.alibaba.fastjson.JSON;
 import com.chopsticks.common.concurrent.Promise;
 import com.chopsticks.common.concurrent.PromiseListener;
-import com.chopsticks.common.utils.Reflect;
 import com.chopsticks.common.utils.TimeUtils;
 import com.chopsticks.core.exception.CoreException;
 import com.chopsticks.core.handler.HandlerResult;

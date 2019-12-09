@@ -17,7 +17,11 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder;
 public class Const {
 
 	static {
-		ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
+		try {
+			ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
+		}catch (Throwable e) {
+			System.setProperty("fastjson.parser.autoTypeSupport", "true");
+		}
 	}
 
 	public static final SyncSystemMillis CLIENT_TIME = new SyncSystemMillis(TimeUnit.MILLISECONDS.toMillis(500L));
