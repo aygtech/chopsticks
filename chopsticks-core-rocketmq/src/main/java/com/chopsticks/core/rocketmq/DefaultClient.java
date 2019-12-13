@@ -201,13 +201,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 		if(isOrderedNoticeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.ORDERED_NOTICE_CONSUMER_SUFFIX;
 			orderedNoticeConsumerInstance = new DefaultMQPushConsumer(groupName, true);
-			if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
-				Object traceDispatcher = Reflect.on(orderedNoticeConsumerInstance).field("traceDispatcher").get();
-				if(traceDispatcher != null) {
-					DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
-					traceProducer.setProducerGroup(orderedNoticeConsumerInstance.getConsumerGroup() + traceProducer.getProducerGroup());
-				}
-			}
+//			if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
+//				Object traceDispatcher = Reflect.on(orderedNoticeConsumerInstance).field("traceDispatcher").get();
+//				if(traceDispatcher != null) {
+//					DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
+//					traceProducer.setProducerGroup(orderedNoticeConsumerInstance.getConsumerGroup() + traceProducer.getProducerGroup());
+//				}
+//			}
 			orderedNoticeConsumerInstance.setNamesrvAddr(getNamesrvAddr());
 			orderedNoticeConsumerInstance.setConsumeThreadMin(getOrderedNoticeExecutableNum());
 			orderedNoticeConsumerInstance.setConsumeThreadMax(getOrderedNoticeExecutableNum());
@@ -271,13 +271,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 		if(isNoticeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.NOTICE_CONSUMER_SUFFIX;
 			noticeConsumerInstance = new DefaultMQPushConsumer(groupName, true);
-			if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
-				Object traceDispatcher = Reflect.on(noticeConsumerInstance).field("traceDispatcher").get();
-				if(traceDispatcher != null) {
-					DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
-					traceProducer.setProducerGroup(noticeConsumerInstance.getConsumerGroup() + traceProducer.getProducerGroup());
-				}
-			}
+//			if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
+//				Object traceDispatcher = Reflect.on(noticeConsumerInstance).field("traceDispatcher").get();
+//				if(traceDispatcher != null) {
+//					DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
+//					traceProducer.setProducerGroup(noticeConsumerInstance.getConsumerGroup() + traceProducer.getProducerGroup());
+//				}
+//			}
 			noticeConsumerInstance.setNamesrvAddr(getNamesrvAddr());
 			noticeConsumerInstance.setConsumeThreadMin(getNoticeExecutableNum());
 			noticeConsumerInstance.setConsumeThreadMax(getNoticeExecutableNum());
@@ -340,13 +340,13 @@ public class DefaultClient extends DefaultCaller implements Client{
 		if(isDelayNoticeExecutable()) {
 			String groupName = Const.CONSUMER_PREFIX + getGroupName() + Const.DELAY_NOTICE_CONSUMER_SUFFIX;
 			delayNoticeConsumerInstance = new DefaultMQPushConsumer(groupName, true);
-			if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
-				Object traceDispatcher = Reflect.on(delayNoticeConsumerInstance).field("traceDispatcher").get();
-				if(traceDispatcher != null) {
-					DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
-					traceProducer.setProducerGroup(delayNoticeConsumerInstance.getConsumerGroup() + traceProducer.getProducerGroup());
-				}
-			}
+//			if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_5_2.ordinal()) {
+//				Object traceDispatcher = Reflect.on(delayNoticeConsumerInstance).field("traceDispatcher").get();
+//				if(traceDispatcher != null) {
+//					DefaultMQProducer traceProducer = Reflect.on(traceDispatcher).field("traceProducer").get();
+//					traceProducer.setProducerGroup(delayNoticeConsumerInstance.getConsumerGroup() + traceProducer.getProducerGroup());
+//				}
+//			}
 			delayNoticeConsumerInstance.setNamesrvAddr(getNamesrvAddr());
 			delayNoticeConsumerInstance.setConsumeThreadMin(getDelayNoticeExecutableNum());
 			delayNoticeConsumerInstance.setConsumeThreadMax(getDelayNoticeExecutableNum());

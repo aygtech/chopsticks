@@ -30,7 +30,6 @@ import org.apache.rocketmq.client.producer.MessageQueueSelector;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
-import org.apache.rocketmq.common.MQVersion;
 import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
@@ -326,7 +325,6 @@ public class DefaultCaller implements Caller {
 		if(transactionchecker != null) {
 			transactionMQProducer = new TransactionMQProducer(com.chopsticks.core.rocketmq.Const.PRODUCER_TRANSACTION_PREFIX + getGroupName());
 			transactionMQProducer.setNamesrvAddr(namesrvAddr);
-			transactionMQProducer.setCompressMsgBodyOverHowmuch(Integer.MAX_VALUE);
 			transactionMQProducer.setSendMsgTimeout(Long.valueOf(DEFAULT_ASYNC_TIMEOUT_MILLIS).intValue());
 			transactionMQProducer.setRetryAnotherBrokerWhenNotStoreOK(true);
 			transactionMQProducer.setDefaultTopicQueueNums(com.chopsticks.core.rocketmq.Const.DEFAULT_TOPIC_QUEUE_SIZE);
@@ -515,8 +513,6 @@ public class DefaultCaller implements Caller {
 			// TODO 发送者统一接口，方便后续统一校验和升级，隔离核心发送代码，现在事务消息不支持顺序，延迟
 			if(cmd.isTransaction()) {
 				checkNotNull(transactionProducer, "unsupport transaction");
-				//TODO 不起作用
-				msg.putUserProperty(MessageConst.PROPERTY_CHECK_IMMUNITY_TIME_IN_SECONDS, "2");
 				TransactionSendResult sendResult = transactionProducer.sendMessageInTransaction(msg, null);
 				if(sendResult.getSendStatus() == SendStatus.SEND_OK) {
 					DefaultNoticeResult ret = new DefaultNoticeResult(sendResult.getMsgId());

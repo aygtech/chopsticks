@@ -44,7 +44,8 @@ public class HandlerNoticeListener extends BaseHandlerListener implements Messag
 			try {
 				return consumeMessage(ext, context);
 			}catch (Throwable e) {
-				log.error(e.getMessage(), e);
+//				log.error(e.getMessage(), e);
+			    log.error(e.getMessage());
 				if(noticeConsumer.getMaxReconsumeTimes() <= ext.getReconsumeTimes()) {
 					return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
 				}else {
