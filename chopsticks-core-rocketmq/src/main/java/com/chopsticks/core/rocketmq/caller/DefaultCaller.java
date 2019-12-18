@@ -4,10 +4,12 @@ import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
+import java.net.InetSocketAddress;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -27,6 +29,7 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.producer.DefaultMQProducer;
 import org.apache.rocketmq.client.producer.LocalTransactionState;
 import org.apache.rocketmq.client.producer.MessageQueueSelector;
+import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
@@ -34,6 +37,8 @@ import org.apache.rocketmq.common.MixAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageConst;
+import org.apache.rocketmq.common.message.MessageDecoder;
+import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.common.protocol.ResponseCode;
 import org.apache.rocketmq.common.protocol.body.ConsumerConnection;
@@ -73,6 +78,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.net.HostAndPort;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 
 import io.netty.util.internal.ThreadLocalRandom; 
@@ -965,6 +971,18 @@ public class DefaultCaller implements Caller {
 			log.warn("not transaction result : {}", result);
 		}
 	}
-	
+	public void transactionCommit(String msgId) {
+	    try {
+	        MessageExt msg = mqAdminExt.viewMessage(MixAll.RMQ_SYS_TRANS_HALF_TOPIC, msgId);
+            String offsetMsgId = Reflect.on(msg).field("msgId").get();
+	        InetSocketAddress addr = (InetSocketAddress)msg.getStoreHost();
+	        Properties brokerCfg = mqAdminExt.getBrokerConfig(addr.getAddress().getHostAddress() + ":" + addr.getPort());
+	        MessageQueue mq = new MessageQueue(MixAll.RMQ_SYS_TRANS_HALF_TOPIC, brokerCfg.getProperty("brokerName"), msg.getQueueId());
+	        SendResult ret = new SendResult(SendStatus.SEND_OK, msgId, offsetMsgId, mq, msg.getQueueOffset());
+	        transactionProducer.getDefaultMQProducerImpl().endTransaction(ret, LocalTransactionState.COMMIT_MESSAGE, null);
+	    }catch (Throwable e) {
+        
+	    }
+    }
 	
 }

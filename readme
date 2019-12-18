@@ -133,3 +133,5 @@
 	3.优化客户端代理机制
 	4.优化 fastjson 的 autotype 容错处理
 	5.支持 springboot starter
+1.2.9
+    1.新增事务调用运维兜底方法client.transactionCommit(msgId)
