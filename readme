@@ -135,3 +135,4 @@
 	5.支持 springboot starter
 1.2.9
     1.新增事务调用运维兜底方法client.transactionCommit(msgId)
+    2.修复rocketmq底层msgid多jvm下生成重复问题

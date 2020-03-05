@@ -5,6 +5,9 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Strings.isNullOrEmpty;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +21,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -33,9 +37,12 @@ import org.apache.rocketmq.client.producer.SendResult;
 import org.apache.rocketmq.client.producer.SendStatus;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.producer.TransactionSendResult;
+import org.apache.rocketmq.common.MQVersion;
 import org.apache.rocketmq.common.MixAll;
+import org.apache.rocketmq.common.UtilAll;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.Message;
+import org.apache.rocketmq.common.message.MessageClientIDSetter;
 import org.apache.rocketmq.common.message.MessageConst;
 import org.apache.rocketmq.common.message.MessageDecoder;
 import org.apache.rocketmq.common.message.MessageExt;
@@ -89,6 +96,26 @@ import io.netty.util.internal.ThreadLocalRandom;
  *
  */
 public class DefaultCaller implements Caller {
+    
+    static {
+        if(MQVersion.CURRENT_VERSION <= MQVersion.Version.V4_6_0.ordinal()) {
+            byte[] ip;
+            try {
+                ip = UtilAll.getIP();
+            } catch (Exception e) {
+                ip = MessageClientIDSetter.createFakeIP();
+            }
+            ByteBuffer tempBuffer = ByteBuffer.allocate(ip.length + 2 + 4);
+            tempBuffer.position(0);
+            tempBuffer.put(ip);
+            tempBuffer.position(ip.length);
+            tempBuffer.putShort((short)UtilAll.getPid());
+            tempBuffer.position(ip.length + 2);
+            tempBuffer.putInt(MessageClientIDSetter.class.getClassLoader().hashCode());
+            String fix = UtilAll.bytes2string(tempBuffer.array());
+            Reflect.setFinalStaticField(MessageClientIDSetter.class, "FIX_STRING", fix);
+        }
+    }
 	
 	private static final Logger log = LoggerFactory.getLogger(DefaultCaller.class);
 	
@@ -981,8 +1008,7 @@ public class DefaultCaller implements Caller {
 	        SendResult ret = new SendResult(SendStatus.SEND_OK, msgId, offsetMsgId, mq, msg.getQueueOffset());
 	        transactionProducer.getDefaultMQProducerImpl().endTransaction(ret, LocalTransactionState.COMMIT_MESSAGE, null);
 	    }catch (Throwable e) {
-        
+	        log.error(e.getMessage(), e);
 	    }
     }
-	
 }
