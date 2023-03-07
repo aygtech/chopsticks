@@ -122,6 +122,8 @@ public class DefaultCaller implements Caller {
 	private static final Map<String, String> SAFE_NAMES = ImmutableMap.of("\\.", "_-_");
 	
 	private String namesrvAddr;
+
+	private Boolean filterTags;
 	
 	private String groupName;
 	
@@ -763,6 +765,15 @@ public class DefaultCaller implements Caller {
 	public void setNamesrvAddr(String namesrvAddr) {
 		this.namesrvAddr = namesrvAddr;
 	}
+
+	public Boolean getFilterTags() {
+		return filterTags;
+	}
+
+	public void setFilterTags(Boolean filterTags) {
+		this.filterTags = filterTags;
+	}
+
 	public String getGroupName() {
 		return groupName;
 	}

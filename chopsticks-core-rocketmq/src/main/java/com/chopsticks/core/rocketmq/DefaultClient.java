@@ -229,7 +229,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					Collection<String> tags = entry.getValue();
 					topic = buildOrderedNoticeTopic(topic);
 					topics.add(topic);
-					if(tags.contains(Const.ALL_TAGS)) {
+					if(tags.contains(Const.ALL_TAGS) || (null != getFilterTags() && !getFilterTags())) {
 						orderedNoticeConsumerInstance.subscribe(topic, Const.ALL_TAGS);
 					}else {
 						Set<String> newTags = Sets.newHashSet(tags);
@@ -298,7 +298,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					Collection<String> tags = entry.getValue();
 					topic = buildNoticeTopic(topic);
 					topics.add(topic);
-					if(tags.contains(Const.ALL_TAGS)) {
+					if(tags.contains(Const.ALL_TAGS) || (null != getFilterTags() && !getFilterTags())) {
 						noticeConsumerInstance.subscribe(topic, Const.ALL_TAGS);
 					}else {
 						Set<String> newTags = Sets.newHashSet(tags);
@@ -367,7 +367,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					Collection<String> tags = entry.getValue();
 					topic = buildDelayNoticeTopic(topic);
 					topics.add(topic);
-					if(tags.contains(Const.ALL_TAGS)) {
+					if(tags.contains(Const.ALL_TAGS) || (null != getFilterTags() && !getFilterTags())) {
 						delayNoticeConsumerInstance.subscribe(topic, Const.ALL_TAGS);
 					}else {
 						Set<String> newTags = Sets.newHashSet(tags);
@@ -434,7 +434,7 @@ public class DefaultClient extends DefaultCaller implements Client{
 					Collection<String> tags = entry.getValue();
 					topic = buildInvokeTopic(topic);
 					topics.add(topic);
-					if(tags.contains(Const.ALL_TAGS)) {
+					if(tags.contains(Const.ALL_TAGS) || (null != getFilterTags() && !getFilterTags())) {
 						invokeConsumer.subscribe(topic, Const.ALL_TAGS);
 					}else {
 						Set<String> newTags = Sets.newHashSet(tags);
