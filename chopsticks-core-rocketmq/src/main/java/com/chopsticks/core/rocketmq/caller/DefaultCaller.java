@@ -954,7 +954,30 @@ public class DefaultCaller implements Caller {
 			}
 			
 			if(!newSubscription.equals(oldSubscription)) {
-				throw new DefaultCoreException(String.format("%s service not match", getGroupName())).setCode(DefaultCoreException.SUBSCRIPTION_NOT_MATCH);
+				log.warn(String.format("%s service not match", getGroupName()));
+				newSubscription.forEach((k,v) ->{
+					if (!oldSubscription.containsKey(k)) {
+						log.warn("find new service {}", k);
+					} else if (null !=v && !v.equals(oldSubscription.get(k))) {
+						v.forEach(tag ->{
+							if (null != oldSubscription.get(k) && !oldSubscription.get(k).contains(tag)) {
+								log.warn("find new tag {}  of service {}", tag, k);
+							}
+						});
+					}
+				});
+				oldSubscription.forEach((k,v) ->{
+					if (!newSubscription.containsKey(k)) {
+						log.warn("lost old service {}", k);
+					} else if (null !=v && !v.equals(newSubscription.get(k))) {
+						v.forEach(tag ->{
+							if (null != newSubscription.get(k) && !newSubscription.get(k).contains(tag)) {
+								log.warn("lost old tag {}  of service {}", tag, k);
+							}
+						});
+					}
+				});
+//				throw new DefaultCoreException(String.format("%s service not match", getGroupName())).setCode(DefaultCoreException.SUBSCRIPTION_NOT_MATCH);
 			}
 		}catch (Throwable e) {
 			if(e instanceof CoreException) {

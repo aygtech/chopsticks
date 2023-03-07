@@ -136,3 +136,13 @@
 1.2.9
     1.新增事务调用运维兜底方法client.transactionCommit(msgId)
     2.修复rocketmq底层msgid多jvm下生成重复问题
+1.3.0
+    1.DefaultCaller.checkConsumerSubscription 当检测到服务topic不匹配时，只打印告警日志，不抛出异常，让服务正常启动
+    2.DefaultClient初始化各类Consumer时，设置.subscribe(topic, Const.ALL_TAGS)，避免消息过虑tag而丢失
+    3.BaseHandlerListener下的各子监听器，在检查topicTags.keySet().contains(topic)不存在时，原来提交CONSUME_SUCCESS，改提交RECONSUME_LATER
+
+
+
+
+
+

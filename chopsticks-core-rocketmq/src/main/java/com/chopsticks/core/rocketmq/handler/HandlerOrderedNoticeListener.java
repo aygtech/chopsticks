@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
 import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeOrderlyStatus;
 import org.apache.rocketmq.client.consumer.listener.MessageListenerOrderly;
@@ -82,8 +83,8 @@ public class HandlerOrderedNoticeListener extends BaseHandlerListener implements
 			}
 		}
 		if(!topicTags.keySet().contains(topic)) {
-			log.warn("cancel consume topic : {}, tag : {}, msgId : {}", topic, ext.getTags(), msgId);
-			return ConsumeOrderlyStatus.SUCCESS;
+			log.error(" consume message error,can't find service, {}-{}, msgId : {}", topic, ext.getTags(), msgId);
+			return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
 		}
 		BaseHandler handler = getHandler(topic, ext.getTags());
 		if(handler == null) {

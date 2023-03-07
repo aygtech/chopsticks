@@ -71,8 +71,8 @@ public class HandlerDelayNoticeListener extends BaseHandlerListener implements M
 		}
 		topic = topic.replace(Const.DELAY_NOTICE_TOPIC_SUFFIX, "");
 		if(!topicTags.keySet().contains(topic)) {
-			log.warn("cancel consume {}-{}, msgId : {}", topic, ext.getTags(), msgId);
-			return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+			log.error(" consume message error,can't find service, {}-{}, msgId : {}", topic, ext.getTags(), msgId);
+			return ConsumeConcurrentlyStatus.RECONSUME_LATER;
 		}
 		
 		String dealyNoticeReqStr = ext.getProperty(Const.DELAY_NOTICE_REQUEST_KEY);
